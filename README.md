@@ -113,6 +113,25 @@ A cooking app powered with local LLM using Ollama.
 - Touch-friendly interface with smooth animations
 - Optimized for both desktop and mobile experiences
 
+### 📅 Meal Planner (Calendar)
+- **Day View**: Browse and manage meals planned for a single day with full date details
+- **Week View**: Compact 7-day grid showing the entire week at a glance (Monday–Sunday)
+- **Custom Range View**: Pick any start and end date to view a custom planning period
+- **Date Navigation**: Previous/Next buttons to move between days or weeks
+- **Plan a Meal**: Modal form to assign any meal to a date with category and optional notes
+- **Edit & Remove**: Inline controls on each planned meal for quick updates or removal
+- **Category Organization**: Meals grouped by category (🌅 Breakfast, 🍱 Lunch, 🌙 Dinner, 🍿 Snack, 🍰 Dessert, 🥤 Drink)
+- **Quick-Add Buttons**: Per-category "+" shortcuts on each day card for fast meal planning
+- **Nutrition Totals**: Automatic calculation across the selected period:
+  - 🔥 Total Calories (kcal)
+  - 💰 Estimated Total Price ($)
+  - 💪 Total Protein (g)
+  - 🌾 Total Carbohydrates (g)
+  - 🥑 Total Fat (g)
+  - 🥦 Total Fiber (g)
+- **Price Calculation**: Uses the default product per ingredient; falls back to the first listed product when no default is set
+- **Ingredient-Based Nutrition**: Totals derive from the ingredient composition of each planned meal
+
 ## Tech Stack
 
 - [React 19](https://react.dev/)
@@ -148,7 +167,7 @@ Demmi uses **Redux Toolkit** for centralized state management across the applica
 
 ### Redux Store Structure
 
-The Redux store is organized into four main slices:
+The Redux store is organized into five main slices:
 
 1. **Ingredients Slice** (`ingredientsSlice.ts`)
    - Manages ingredient inventory
@@ -158,7 +177,7 @@ The Redux store is organized into four main slices:
 2. **Meals Slice** (`mealsSlice.ts`)
    - Manages meal recipes collection
    - Actions: `createMeal`, `updateMeal`, `deleteMeal`
-   - State: Array of meals with full CRUD support
+   - State: Array of meals with full CRUD support (each meal includes an `ingredients` array for nutrition/price calculations)
 
 3. **Chats Slice** (`chatsSlice.ts`)
    - Manages chat conversations and messages
@@ -169,6 +188,11 @@ The Redux store is organized into four main slices:
    - Manages user authentication state
    - Actions: `setUser`, `setLoading`, `clearUser`
    - State: User object and loading status
+
+5. **Calendar Slice** (`calendarSlice.ts`)
+   - Manages the meal planner / calendar feature
+   - Actions: `addPlannedMeal`, `updatePlannedMeal`, `removePlannedMeal`
+   - State: Array of planned meal entries (each entry links a `Meal` to a date, category, and optional notes)
 
 ### Usage
 
@@ -279,6 +303,20 @@ interface Meal {
   servingSize: number;
   instructions: string[];
   imageUrl: string;
+  ingredients: MealIngredient[]; // ingredient quantities used in this meal
+}
+
+interface MealIngredient {
+  ingredientId: string; // references an Ingredient
+  servings: number;     // number of ingredient servings used
+}
+
+interface PlannedMeal {
+  id: string;
+  mealId: string;       // references a Meal
+  date: number;         // start-of-day timestamp (ms)
+  category: MealCategory;
+  notes: string | null;
 }
 ```
 

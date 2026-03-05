@@ -70,6 +70,7 @@ export function MealDetail() {
       servingSize: parseInt(servingSize, 10) || 1,
       imageUrl: imageUrl,
       instructions: instructionsList,
+      ingredients: existingMeal?.ingredients ?? [],
     };
 
     if (isEditing && existingMeal) {

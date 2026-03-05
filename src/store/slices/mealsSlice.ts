@@ -16,6 +16,7 @@ const mealsSlice = createSlice({
     createMeal: (state, action: PayloadAction<Omit<Meal, 'id'>>) => {
       const newMeal: Meal = {
         ...action.payload,
+        ingredients: action.payload.ingredients ?? [],
         id: `meal-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
       };
 

@@ -4,6 +4,8 @@ export const mockMeals: Meal[] = [
   {
     id: 'meal-001',
     title: 'Classic Pancakes',
+    // ingredients: whole milk (ing-003) x2 servings
+    ingredients: [{ ingredientId: 'ing-003', servings: 2 }],
     description: 'Fluffy, golden pancakes perfect for a weekend breakfast. Light and delicious with your favorite toppings.',
     category: 'breakfast',
     prepTime: 10,
@@ -23,6 +25,12 @@ export const mockMeals: Meal[] = [
   {
     id: 'meal-002',
     title: 'Grilled Chicken Caesar Salad',
+    // ingredients: chicken breast (ing-001) x2 servings, olive oil (ing-006) x1 serving, tomatoes (ing-010) x1 serving
+    ingredients: [
+      { ingredientId: 'ing-001', servings: 2 },
+      { ingredientId: 'ing-006', servings: 1 },
+      { ingredientId: 'ing-010', servings: 1 },
+    ],
     description: 'A healthy and satisfying lunch featuring grilled chicken breast, crispy romaine lettuce, and creamy Caesar dressing.',
     category: 'lunch',
     prepTime: 15,
@@ -42,6 +50,12 @@ export const mockMeals: Meal[] = [
   {
     id: 'meal-003',
     title: 'Spaghetti Carbonara',
+    // ingredients: olive oil (ing-006) x1 serving, garlic powder (ing-007) x1 serving, cheddar cheese (ing-012) x2 servings
+    ingredients: [
+      { ingredientId: 'ing-006', servings: 1 },
+      { ingredientId: 'ing-007', servings: 1 },
+      { ingredientId: 'ing-012', servings: 2 },
+    ],
     description: 'Rich and creamy Italian pasta dish made with eggs, cheese, pancetta, and black pepper. A classic comfort food.',
     category: 'dinner',
     prepTime: 10,
@@ -61,6 +75,8 @@ export const mockMeals: Meal[] = [
   {
     id: 'meal-004',
     title: 'Trail Mix Energy Balls',
+    // ingredients: almonds (ing-008) x1 serving
+    ingredients: [{ ingredientId: 'ing-008', servings: 1 }],
     description: 'No-bake energy bites packed with oats, nuts, and dried fruit. Perfect for a quick snack on the go.',
     category: 'snack',
     prepTime: 15,
@@ -80,6 +96,7 @@ export const mockMeals: Meal[] = [
   {
     id: 'meal-005',
     title: 'Chocolate Lava Cake',
+    ingredients: [],
     description: 'Decadent individual chocolate cakes with a molten center. A restaurant-quality dessert made at home.',
     category: 'dessert',
     prepTime: 15,
@@ -101,6 +118,8 @@ export const mockMeals: Meal[] = [
   {
     id: 'meal-006',
     title: 'Mango Smoothie',
+    // ingredients: whole milk (ing-003) x1 serving
+    ingredients: [{ ingredientId: 'ing-003', servings: 1 }],
     description: 'Refreshing tropical smoothie made with ripe mangoes, yogurt, and a hint of honey. Perfect for breakfast or a snack.',
     category: 'drink',
     prepTime: 5,
@@ -120,6 +139,8 @@ export const mockMeals: Meal[] = [
   {
     id: 'meal-007',
     title: 'Avocado Toast',
+    // ingredients: olive oil (ing-006) x0.5 servings
+    ingredients: [{ ingredientId: 'ing-006', servings: 0.5 }],
     description: 'Simple yet delicious breakfast featuring creamy avocado on crispy toast with a perfect soft-boiled egg.',
     category: 'breakfast',
     prepTime: 5,
@@ -140,6 +161,12 @@ export const mockMeals: Meal[] = [
   {
     id: 'meal-008',
     title: 'Beef Tacos',
+    // ingredients: ground beef (ing-011) x4 servings, cheddar cheese (ing-012) x2 servings, tomatoes (ing-010) x2 servings
+    ingredients: [
+      { ingredientId: 'ing-011', servings: 4 },
+      { ingredientId: 'ing-012', servings: 2 },
+      { ingredientId: 'ing-010', servings: 2 },
+    ],
     description: 'Flavorful seasoned beef in crispy taco shells with fresh toppings. A crowd-pleasing dinner option.',
     category: 'dinner',
     prepTime: 15,

@@ -1,5 +1,10 @@
 export type MealCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert' | 'drink';
 
+export interface MealIngredient {
+  ingredientId: string;
+  servings: number; // number of ingredient servings used in this meal
+}
+
 export interface Meal {
   id: string;
   title: string;
@@ -10,4 +15,5 @@ export interface Meal {
   servingSize: number;
   instructions: string[];
   imageUrl: string;
+  ingredients: MealIngredient[]; // ingredients and quantities used in this meal
 }
