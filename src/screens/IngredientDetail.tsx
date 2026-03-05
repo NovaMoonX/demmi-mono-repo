@@ -15,15 +15,20 @@ import {
   INGREDIENT_TYPE_EMOJIS,
   MEASUREMENT_UNIT_LABELS,
 } from '@lib/ingredients';
-import { useIngredients } from '@hooks/useIngredients';
+import { useAppSelector, useAppDispatch } from '@store/hooks';
+import {
+  createIngredient,
+  updateIngredient,
+  deleteIngredient,
+} from '@store/slices/ingredientsSlice';
 import { capitalize } from '@/utils';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 
 export function IngredientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { ingredients, createIngredient, updateIngredient, deleteIngredient } =
-    useIngredients();
+  const dispatch = useAppDispatch();
+  const ingredients = useAppSelector((state) => state.ingredients.items);
   const { confirm } = useActionModal();
 
   const isEditing = id !== 'new';
@@ -238,9 +243,9 @@ export function IngredientDetail() {
     };
 
     if (isEditing && existingIngredient) {
-      updateIngredient(existingIngredient.id, ingredientData);
+      dispatch(updateIngredient({ id: existingIngredient.id, updates: ingredientData }));
     } else {
-      createIngredient(ingredientData);
+      dispatch(createIngredient(ingredientData));
     }
 
     navigate('/ingredients');
@@ -258,7 +263,7 @@ export function IngredientDetail() {
     });
 
     if (confirmed) {
-      deleteIngredient(existingIngredient.id);
+      dispatch(deleteIngredient(existingIngredient.id));
       navigate('/ingredients');
     }
   };

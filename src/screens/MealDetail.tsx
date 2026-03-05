@@ -3,13 +3,15 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Input, Textarea, Select, Button, DynamicList } from '@moondreamsdev/dreamer-ui/components';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { Meal, MealCategory } from '@lib/meals';
-import { useMeals } from '@hooks/useMeals';
+import { useAppSelector, useAppDispatch } from '@store/hooks';
+import { createMeal, updateMeal, deleteMeal } from '@store/slices/mealsSlice';
 import type { DynamicListItem } from '@moondreamsdev/dreamer-ui/components';
 
 export function MealDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { meals, createMeal, updateMeal, deleteMeal } = useMeals();
+  const dispatch = useAppDispatch();
+  const meals = useAppSelector((state) => state.meals.items);
   const { confirm } = useActionModal();
 
   const isEditing = id !== 'new';
@@ -71,9 +73,9 @@ export function MealDetail() {
     };
 
     if (isEditing && existingMeal) {
-      updateMeal(existingMeal.id, mealData);
+      dispatch(updateMeal({ id: existingMeal.id, updates: mealData }));
     } else {
-      createMeal(mealData);
+      dispatch(createMeal(mealData));
     }
     
     navigate('/meals');
@@ -91,7 +93,7 @@ export function MealDetail() {
     });
 
     if (confirmed) {
-      deleteMeal(existingMeal.id);
+      dispatch(deleteMeal(existingMeal.id));
       navigate('/meals');
     }
   };

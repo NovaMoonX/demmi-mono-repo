@@ -7,10 +7,17 @@ import { ChatHistoryToggleIcon } from '@components/ChatHistoryToggleIcon';
 import { ChatHistory } from '@components/ChatHistory';
 import { ChatMessage } from '@components/ChatMessage';
 import { useIsMobileDevice } from '@hooks/useIsMobileDevice';
+import { useAppSelector, useAppDispatch } from '@store/hooks';
+import { store } from '@store/index';
 import {
-  ChatConversation,
+  setCurrentChat,
+  createConversation,
+  addMessage,
+  deleteConversation,
+  togglePinConversation,
+} from '@store/slices/chatsSlice';
+import {
   ChatMessage as ChatMessageType,
-  mockChatConversations,
   generateMockResponse,
 } from '@lib/chat';
 
@@ -18,8 +25,9 @@ import {
 const SCROLL_DELAY_MS = 100;
 
 export function Chat() {
-  const [conversations, setConversations] = useState<ChatConversation[]>(mockChatConversations);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(mockChatConversations[0]?.id || null);
+  const dispatch = useAppDispatch();
+  const conversations = useAppSelector((state) => state.chats.conversations);
+  const currentChatId = useAppSelector((state) => state.chats.currentChatId);
   const [inputValue, setInputValue] = useState('');
   const isMobileDevice = useIsMobileDevice();
   const [isHistoryOpen, setIsHistoryOpen] = useState(() => !isMobileDevice);
@@ -57,16 +65,14 @@ export function Chat() {
 
     // If no current chat, create a new one
     if (!currentChatId) {
-      const newChat: ChatConversation = {
-        id: `chat-${Date.now()}`,
+      const newConversation = {
         title: messageContent.slice(0, 50) + (messageContent.length > 50 ? '...' : ''),
         messages: [userMessage],
         isPinned: false,
         lastUpdated: Date.now(),
       };
 
-      setConversations((prev) => [newChat, ...prev]);
-      setCurrentChatId(newChat.id);
+      dispatch(createConversation(newConversation));
 
       // Simulate AI response
       setTimeout(() => {
@@ -77,32 +83,16 @@ export function Chat() {
           timestamp: Date.now(),
         };
 
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === newChat.id
-              ? {
-                  ...c,
-                  messages: [...c.messages, assistantMessage],
-                  lastUpdated: Date.now(),
-                }
-              : c
-          )
-        );
+        // Get the current chat ID from the Redux store after createConversation has set it
+        const currentChatId = store.getState().chats.currentChatId;
+        if (currentChatId) {
+          dispatch(addMessage({ chatId: currentChatId, message: assistantMessage }));
+        }
         setIsSending(false);
       }, 1000);
     } else {
       // Add message to existing chat
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === currentChatId
-            ? {
-                ...c,
-                messages: [...c.messages, userMessage],
-                lastUpdated: Date.now(),
-              }
-            : c
-        )
-      );
+      dispatch(addMessage({ chatId: currentChatId, message: userMessage }));
 
       // Simulate AI response
       setTimeout(() => {
@@ -113,45 +103,27 @@ export function Chat() {
           timestamp: Date.now(),
         };
 
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === currentChatId
-              ? {
-                  ...c,
-                  messages: [...c.messages, assistantMessage],
-                  lastUpdated: Date.now(),
-                }
-              : c
-          )
-        );
+        dispatch(addMessage({ chatId: currentChatId, message: assistantMessage }));
         setIsSending(false);
       }, 1000);
     }
   };
 
   const handleNewChat = () => {
-    setCurrentChatId(null);
+    dispatch(setCurrentChat(null));
     setInputValue('');
   };
 
+  const handleSelectChat = (chatId: string) => {
+    dispatch(setCurrentChat(chatId));
+  };
+
   const handleTogglePin = (chatId: string) => {
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === chatId ? { ...c, isPinned: !c.isPinned } : c
-      )
-    );
+    dispatch(togglePinConversation(chatId));
   };
 
   const handleDeleteChat = (chatId: string) => {
-    setConversations((prev) => {
-      const remainingChats = prev.filter((c) => c.id !== chatId);
-      
-      if (chatId === currentChatId) {
-        setCurrentChatId(remainingChats[0]?.id || null);
-      }
-      
-      return remainingChats;
-    });
+    dispatch(deleteConversation(chatId));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -176,7 +148,7 @@ export function Chat() {
           <ChatHistory
             conversations={conversations}
             currentChatId={currentChatId}
-            onSelectChat={setCurrentChatId}
+            onSelectChat={handleSelectChat}
             onNewChat={handleNewChat}
             onTogglePin={handleTogglePin}
             onDeleteChat={handleDeleteChat}

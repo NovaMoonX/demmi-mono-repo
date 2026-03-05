@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Select, Input, Toggle, Button } from '@moondreamsdev/dreamer-ui/components';
 import { MealCard } from '@components/MealCard';
-import { useMeals } from '@hooks/useMeals';
+import { useAppSelector } from '@store/hooks';
 import { Meal } from '@lib/meals';
 
 export function Meals() {
-  const { meals } = useMeals();
+  const meals = useAppSelector((state) => state.meals.items);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');

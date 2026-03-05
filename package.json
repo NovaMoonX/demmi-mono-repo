@@ -14,9 +14,11 @@
   },
   "dependencies": {
     "@moondreamsdev/dreamer-ui": "^1.7.26",
+    "@reduxjs/toolkit": "^2.11.2",
     "firebase": "^12.9.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^7.13.0"
   },
   "devDependencies": {

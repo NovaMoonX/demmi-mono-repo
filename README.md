@@ -118,6 +118,8 @@ A cooking app powered with local LLM using Ollama.
 - [React 19](https://react.dev/)
 - [React Router](https://reactrouter.com/)
 - [TailwindCSS 4](https://tailwindcss.com/)
+- [Redux Toolkit](https://redux-toolkit.js.org/) - State management
+- [React Redux](https://react-redux.js.org/) - React bindings for Redux
 - [Dreamer UI](https://www.npmjs.com/package/@moondreamsdev/dreamer-ui) - Component library
 - [Firebase](https://firebase.google.com/) - Authentication and backend services
 - [Vite](https://vite.dev/) - Build tool
@@ -139,6 +141,59 @@ Built with [Dreamer UI](https://www.npmjs.com/package/@moondreamsdev/dreamer-ui)
 - Responsive sidebar navigation
 - Card and layout components
 - Badge components for categorization
+
+## State Management
+
+Demmi uses **Redux Toolkit** for centralized state management across the application. All application state is managed through Redux slices with type-safe actions and reducers.
+
+### Redux Store Structure
+
+The Redux store is organized into four main slices:
+
+1. **Ingredients Slice** (`ingredientsSlice.ts`)
+   - Manages ingredient inventory
+   - Actions: `createIngredient`, `updateIngredient`, `deleteIngredient`
+   - State: Array of ingredients with full CRUD support
+
+2. **Meals Slice** (`mealsSlice.ts`)
+   - Manages meal recipes collection
+   - Actions: `createMeal`, `updateMeal`, `deleteMeal`
+   - State: Array of meals with full CRUD support
+
+3. **Chats Slice** (`chatsSlice.ts`)
+   - Manages chat conversations and messages
+   - Actions: `setCurrentChat`, `createConversation`, `addMessage`, `updateConversation`, `deleteConversation`, `togglePinConversation`
+   - State: Array of conversations and current chat ID
+
+4. **User Slice** (`userSlice.ts`)
+   - Manages user authentication state
+   - Actions: `setUser`, `setLoading`, `clearUser`
+   - State: User object and loading status
+
+### Usage
+
+The app provides typed Redux hooks for type-safe state access:
+
+```typescript
+import { useAppDispatch, useAppSelector } from '@store/hooks';
+
+// In a component
+const dispatch = useAppDispatch();
+const meals = useAppSelector((state) => state.meals.items);
+
+// Dispatch actions
+dispatch(createMeal(newMealData));
+dispatch(updateMeal({ id: mealId, updates: mealData }));
+dispatch(deleteMeal(mealId));
+```
+
+### Benefits
+
+- **Centralized State**: All app state in one predictable location
+- **Type Safety**: Full TypeScript support with typed actions and selectors
+- **DevTools Integration**: Redux DevTools for debugging and time-travel debugging
+- **Immutable Updates**: Redux Toolkit uses Immer for safe, mutable-style state updates
+- **Persistence Ready**: Easy to integrate with redux-persist for state persistence
 
 ## Data Schema
 
@@ -279,7 +334,7 @@ src/
 │   └── AuthContext.tsx      # Authentication context provider
 ├── hooks/            # Custom React hooks
 │   ├── useAuth.tsx          # Authentication hook
-│   └── useMeals.ts          # Meal state management hook
+│   └── useIsMobileDevice.ts # Device detection hook
 ├── lib/              # Utilities and data
 │   ├── app/           # App constants
 │   ├── chat/          # Chat types and mock data
@@ -290,11 +345,20 @@ src/
 ├── screens/          # Page components
 │   ├── Auth.tsx             # Authentication screen
 │   ├── Chat.tsx             # AI chat interface
+│   ├── IngredientDetail.tsx # Detailed ingredient view for create/edit
 │   ├── Ingredients.tsx      # Ingredient inventory screen
 │   ├── MealDetail.tsx       # Detailed meal view for create/edit
 │   ├── Meals.tsx            # Meal browsing screen with search/filters
 │   ├── VerifyEmail.tsx      # Email verification screen
 │   └── ...
+├── store/            # Redux state management
+│   ├── index.ts       # Store configuration
+│   ├── hooks.ts       # Typed Redux hooks (useAppDispatch, useAppSelector)
+│   └── slices/        # Redux slices
+│       ├── chatsSlice.ts       # Chat conversations state
+│       ├── ingredientsSlice.ts # Ingredients inventory state
+│       ├── mealsSlice.ts       # Meals collection state
+│       └── userSlice.ts        # User authentication state
 └── ui/               # Layout components
     ├── Layout.tsx     # App shell layout
     ├── Loading.tsx    # Loading state UI

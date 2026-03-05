@@ -2,7 +2,6 @@ import { capitalize } from '@/utils';
 import {
   INGREDIENT_TYPE_COLORS,
   INGREDIENT_TYPE_EMOJIS,
-  mockIngredients,
 } from '@lib/ingredients';
 import {
   Badge,
@@ -15,12 +14,14 @@ import {
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '@store/hooks';
 
 const FALLBACK_IMAGE_URL =
   'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="400"%3E%3Crect width="800" height="400" fill="%23e2e8f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" fill="%2394a3b8"%3EImage not available%3C/text%3E%3C/svg%3E';
 
 export function Ingredients() {
   const navigate = useNavigate();
+  const ingredients = useAppSelector((state) => state.ingredients.items);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [outOfStockOnly, setOutOfStockOnly] = useState(false);
@@ -29,7 +30,7 @@ export function Ingredients() {
   const filteredIngredients = useMemo(() => {
     const query = searchQuery.toLowerCase();
 
-    const filtered = mockIngredients.filter((ingredient) => {
+    const filtered = ingredients.filter((ingredient) => {
       const matchesSearch = ingredient.name.toLowerCase().includes(query);
       const matchesType =
         typeFilter === 'all' || ingredient.type === typeFilter;
