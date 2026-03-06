@@ -209,11 +209,10 @@ interface DayCardProps {
   compact: boolean;
   onAdd: (date: number, category?: MealCategory) => void;
   onEdit: (pm: PlannedMeal) => void;
-  onDelete: (pm: PlannedMeal) => void;
   onViewDetail: (day: number) => void;
 }
 
-function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd, onEdit, onDelete, onViewDetail }: DayCardProps) {
+function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd, onEdit, onViewDetail }: DayCardProps) {
   const hasMeals = plannedMeals.length > 0;
 
   const dayTotals = useMemo(
@@ -268,48 +267,28 @@ function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd, onEdit
                   <span>{CATEGORY_EMOJIS[cat]}</span>
                   <span className="capitalize">{cat}</span>
                 </p>
-                <div className="space-y-1.5 pl-3">
+                <div className="space-y-1">
                   {catMeals.map((pm) => {
                     const meal = meals.find((m) => m.id === pm.mealId);
                     return (
                       <div
                         key={pm.id}
-                        className="flex items-start sm:items-center justify-between bg-muted/40 rounded-lg px-3 py-1.5 gap-2"
+                        className="flex items-center justify-between rounded py-1 gap-2 cursor-pointer hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={() => onEdit(pm)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit(pm); } }}
+                        aria-label={`Edit ${meal?.title ?? 'meal'}`}
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
-                          <Badge
-                            variant="base"
-                            className={join('capitalize shrink-0 text-xs self-start sm:self-auto', CATEGORY_COLORS[cat])}
-                          >
-                            {cat}
-                          </Badge>
-                          <span className="text-sm font-medium text-foreground truncate">
-                            {meal?.title ?? 'Unknown Meal'}
-                          </span>
-                          {pm.notes && (
-                            <span className="text-xs text-muted-foreground truncate hidden sm:block">
-                              — {pm.notes}
-                            </span>
-                          )}
-                        </div>
-                        <div className="hidden sm:flex items-center gap-1 shrink-0">
-                          <Button
-                            variant="tertiary"
-                            size="sm"
-                            onClick={() => onEdit(pm)}
-                            aria-label="Edit planned meal"
-                          >
-                            ✏️
-                          </Button>
-                          <Button
-                            variant="tertiary"
-                            size="sm"
-                            onClick={() => onDelete(pm)}
-                            aria-label="Remove planned meal"
-                          >
-                            🗑️
-                          </Button>
-                        </div>
+                        <span className="text-sm font-medium text-foreground truncate">
+                          {meal?.title ?? 'Unknown Meal'}
+                        </span>
+                        <Badge
+                          variant="base"
+                          className={join('shrink-0 text-xs', CATEGORY_COLORS[cat])}
+                        >
+                          {CATEGORY_EMOJIS[cat]}
+                        </Badge>
                       </div>
                     );
                   })}
@@ -382,11 +361,11 @@ function DayDetailModal({ day, plannedMeals, meals, ingredients, onClose, onEdit
       title={`📊 ${formatDateFull(day)}`}
       actions={[{ label: 'Close', variant: 'secondary', onClick: onClose }]}
     >
-      <div className="min-w-0 sm:min-w-[560px]">
+      <div className="w-full">
         {rows.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">No meals planned for this day.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-w-full">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b border-border text-xs text-muted-foreground">
@@ -416,7 +395,8 @@ function DayDetailModal({ day, plannedMeals, meals, ingredients, onClose, onEdit
                         variant="base"
                         className={join('capitalize text-xs', CATEGORY_COLORS[pm.category])}
                       >
-                        {CATEGORY_EMOJIS[pm.category]} {pm.category}
+                        <span className="hidden sm:inline">{CATEGORY_EMOJIS[pm.category] + ' '}</span>
+                        {pm.category}
                       </Badge>
                     </td>
                     <td className="py-2 pr-3">
@@ -717,7 +697,6 @@ export function CalendarScreen() {
               ingredients={ingredients}
               onAdd={openAddModal}
               onEdit={openEditModal}
-              onDelete={handleDelete}
               onViewDetail={setDetailDay}
             />
           ))}
