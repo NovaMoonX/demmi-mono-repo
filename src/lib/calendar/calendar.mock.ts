@@ -1,0 +1,40 @@
+import { PlannedMeal } from './calendar.types';
+
+function startOfDay(date: Date): number {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function generateDemoCalendarData(): Omit<PlannedMeal, 'id'>[] {
+  const today = startOfDay(new Date());
+  const yesterday = today - DAY_MS;
+  const tomorrow = today + DAY_MS;
+  const dayAfterTomorrow = today + 2 * DAY_MS;
+
+  return [
+    // Yesterday
+    { mealId: 'meal-007', date: yesterday, category: 'breakfast', notes: null },
+    { mealId: 'meal-004', date: yesterday, category: 'snack', notes: null },
+    { mealId: 'meal-002', date: yesterday, category: 'lunch', notes: null },
+    { mealId: 'meal-003', date: yesterday, category: 'dinner', notes: 'Made enough for leftovers' },
+    // Today
+    { mealId: 'meal-001', date: today, category: 'breakfast', notes: 'Add blueberries on top' },
+    { mealId: 'meal-006', date: today, category: 'drink', notes: 'Morning smoothie' },
+    { mealId: 'meal-002', date: today, category: 'lunch', notes: null },
+    { mealId: 'meal-004', date: today, category: 'snack', notes: null },
+    { mealId: 'meal-008', date: today, category: 'dinner', notes: 'Taco night!' },
+    { mealId: 'meal-005', date: today, category: 'dessert', notes: 'Special treat' },
+    // Tomorrow
+    { mealId: 'meal-007', date: tomorrow, category: 'breakfast', notes: null },
+    { mealId: 'meal-006', date: tomorrow, category: 'drink', notes: null },
+    { mealId: 'meal-002', date: tomorrow, category: 'lunch', notes: 'Meal prepped' },
+    { mealId: 'meal-003', date: tomorrow, category: 'dinner', notes: null },
+    // Day after tomorrow
+    { mealId: 'meal-001', date: dayAfterTomorrow, category: 'breakfast', notes: null },
+    { mealId: 'meal-008', date: dayAfterTomorrow, category: 'dinner', notes: null },
+    { mealId: 'meal-004', date: dayAfterTomorrow, category: 'snack', notes: null },
+  ];
+}

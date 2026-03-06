@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthForm } from '@moondreamsdev/dreamer-ui/components';
 import { useAuth } from '@hooks/useAuth';
+import { useAppDispatch } from '@store/hooks';
+import { enableDemo, loadDemoData } from '@store/slices/demoSlice';
 
 export function Auth() {
   const navigate = useNavigate();
   const { signIn, signUp, signInWithGoogle } = useAuth();
+  const dispatch = useAppDispatch();
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleEmailSubmit = async ({
@@ -58,6 +61,12 @@ export function Auth() {
     navigate('/');
   };
 
+  const handleTryDemo = async () => {
+    dispatch(enableDemo());
+    await dispatch(loadDemoData());
+    navigate('/');
+  };
+
   const validatePassword = (password: string): string | undefined => {
     if (password.length < 6) {
       return 'Password must be at least 6 characters';
@@ -86,6 +95,17 @@ export function Auth() {
           validatePassword={validatePassword}
           className="rounded-lg bg-card p-6 shadow-lg"
         />
+        <div className="mt-6 text-center">
+          <p className="text-sm text-muted-foreground mb-2">
+            Just want to explore?
+          </p>
+          <button
+            onClick={handleTryDemo}
+            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+          >
+            🎭 Try Demo Mode
+          </button>
+        </div>
       </div>
     </div>
   );

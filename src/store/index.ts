@@ -4,6 +4,7 @@ import mealsReducer from './slices/mealsSlice';
 import chatsReducer from './slices/chatsSlice';
 import userReducer from './slices/userSlice';
 import calendarReducer from './slices/calendarSlice';
+import demoReducer from './slices/demoSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     chats: chatsReducer,
     user: userReducer,
     calendar: calendarReducer,
+    demo: demoReducer,
   },
 });
 

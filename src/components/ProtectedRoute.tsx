@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
+import { useAppSelector } from '@store/hooks';
 import Loading from '@ui/Loading';
 
 interface ProtectedRouteProps {
@@ -9,16 +10,18 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
+  const isDemoActive = useAppSelector((state) => state.demo.isActive);
 
   if (loading) {
     return <Loading />;
   }
 
-  if (!user) {
+  if (!user && !isDemoActive) {
     return <Navigate to="/auth" replace />;
   }
 
-  if (!user.emailVerified) {
+  // Only check email verification for real authenticated users; demo users bypass this entirely
+  if (user && !user.emailVerified) {
     return <Navigate to="/verify-email" replace />;
   }
 

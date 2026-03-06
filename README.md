@@ -4,12 +4,21 @@ A cooking app powered with local LLM using Ollama.
 
 ## Features
 
+### 🎭 Demo Mode
+- **Try Before You Sign Up**: A subtle "Try Demo Mode" link below the auth form lets curious users explore the app without an account
+- **Full App Access**: Demo mode bypasses authentication and gives access to all tabs (Chat, Meals, Ingredients, Calendar)
+- **Pre-loaded Mock Data**: Chats, meals, and ingredients are populated with realistic demo content on launch
+- **Dynamic Calendar Data**: Calendar demo data is always generated relative to the current day — yesterday, today, tomorrow, and the day after are auto-populated with planned meals so it always looks accurate
+- **Persistent Demo Banner**: An amber banner is always visible at the top of the screen while in demo mode, clearly indicating preview status ("🎭 Demo Mode — changes won't be saved")
+- **Exit Demo**: Both the top banner and the sidebar provide an "Exit Demo" button that clears demo data and returns to the auth page
+- **Redux-Powered**: Demo state is managed via a dedicated `demoSlice` with async thunks (`loadDemoData`, `clearDemoData`) for clean data loading and teardown
+
 ### 🔐 Authentication & Security
 - **Email Authentication**: Secure sign up and login using Firebase Authentication
 - **Google Authentication**: One-click sign in with Google via Firebase Authentication
 - **Email Verification**: Required email verification for new accounts
 - **Auto Verification Check**: Refresh-safe verification status checks with automatic redirect
-- **Protected Routes**: Automatic redirection to auth screen for unauthenticated users
+- **Protected Routes**: Automatic redirection to auth screen for unauthenticated users (demo mode bypasses this)
 - **Session Management**: Persistent authentication state across page reloads
 - **Password Requirements**: Minimum 6 characters for secure accounts
 - **Auth Form UI**: Beautiful authentication interface using Dreamer UI's AuthForm component

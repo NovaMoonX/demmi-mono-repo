@@ -34,9 +34,12 @@ const calendarSlice = createSlice({
     removePlannedMeal: (state, action: PayloadAction<string>) => {
       state.plannedMeals = state.plannedMeals.filter((pm) => pm.id !== action.payload);
     },
+    resetCalendar: (state) => {
+      state.plannedMeals = [];
+    },
   },
 });
 
-export const { addPlannedMeal, updatePlannedMeal, removePlannedMeal } = calendarSlice.actions;
+export const { addPlannedMeal, updatePlannedMeal, removePlannedMeal, resetCalendar } = calendarSlice.actions;
 
 export default calendarSlice.reducer;

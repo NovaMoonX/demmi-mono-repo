@@ -6,6 +6,8 @@ import { useTheme } from '@moondreamsdev/dreamer-ui/hooks';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { DotsVertical } from '@moondreamsdev/dreamer-ui/symbols';
 import { useAuth } from '@hooks/useAuth';
+import { useAppSelector, useAppDispatch } from '@store/hooks';
+import { disableDemo, clearDemoData } from '@store/slices/demoSlice';
 
 type Tab = {
   id: string;
@@ -26,6 +28,8 @@ export function Sidebar() {
   const location = useLocation();
   const { resolvedTheme, toggleTheme } = useTheme();
   const { user, logOut } = useAuth();
+  const dispatch = useAppDispatch();
+  const isDemoActive = useAppSelector((state) => state.demo.isActive);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -37,6 +41,13 @@ export function Sidebar() {
   const handleSignOut = async () => {
     await logOut();
     handleClose();
+  };
+
+  const handleExitDemo = async () => {
+    await dispatch(clearDemoData());
+    dispatch(disableDemo());
+    handleClose();
+    navigate('/auth');
   };
 
   const handleClose = () => {
@@ -74,9 +85,10 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={join(
-          'fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-40 transition-transform duration-300 flex flex-col',
+          'fixed left-0 h-full w-64 bg-card border-r border-border z-40 transition-transform duration-300 flex flex-col',
           isMobileOpen ? 'translate-x-0' : '-translate-x-full',
-          'md:translate-x-0'
+          'md:translate-x-0',
+          isDemoActive ? 'top-10' : 'top-0'
         )}
       >
         <div className="px-4 pt-5 pb-2">
@@ -139,20 +151,31 @@ export function Sidebar() {
                 alt="User account"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate text-foreground" title={user?.email || ''}>
-                  {user?.email}
+                <p className="text-sm font-medium truncate text-foreground" title={isDemoActive ? 'Demo Mode' : (user?.email || '')}>
+                  {isDemoActive ? 'Demo Mode' : user?.email}
                 </p>
               </div>
             </div>
 
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              onClick={handleSignOut}
-            >
-              Sign Out
-            </Button>
+            {isDemoActive ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                onClick={handleExitDemo}
+              >
+                Exit Demo
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                onClick={handleSignOut}
+              >
+                Sign Out
+              </Button>
+            )}
           </div>
         </div>
       </aside>
