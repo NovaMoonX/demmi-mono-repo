@@ -76,7 +76,6 @@ export const clearDemoData = createAsyncThunk<void, void, { dispatch: AppDispatc
 export const initializeDemoSession = createAsyncThunk<void, void, { dispatch: AppDispatch }>(
   'demo/initializeDemoSession',
   async (_, { dispatch }) => {
-    console.log('calling'); // REMOVE
     const isDemoSessionActive = getStoredDemoSessionActive();
 
     if (!isDemoSessionActive) {

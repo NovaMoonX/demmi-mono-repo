@@ -113,8 +113,11 @@ A cooking app powered with local LLM using Ollama.
   - **Delete Meals**: Delete button on detailed view with confirmation dialog
   - **File Upload**: Upload meal images with live preview
   - **Dynamic Instructions**: Use DynamicList component for adding, reordering, and removing instruction steps (editing controls available only in edit mode)
-  - **Ingredient Association**: Search and select ingredients from your inventory to associate with the meal; set the number of servings for each ingredient; add new ingredients on the fly via a link to the ingredient creation screen
-  - Form includes: title, description, category, prep time, cook time, servings, image upload, ingredient selector, and interactive instructions list
+  - **Dynamic Ingredient List**: Use DynamicList to add ingredients from your inventory, set quantity/unit per ingredient, remove entries, and reorder ingredient rows while editing a meal
+  - **Ingredient Row Display**: Each ingredient row displays in recipe format (e.g. "2 cups flour") with an Edit action
+  - **Ingredient Modal Entry**: Adding or editing an ingredient opens a modal with ingredient, quantity, and unit fields (unit is fully editable to allow custom units per meal)
+  - **Create Ingredients Inline**: Jump directly to `/ingredients/new` from meal editing and return with the new ingredient ready to add
+  - Form includes: title, description, category, prep time, cook time, servings, image upload, dynamic ingredient list, and interactive instructions list
 - **Responsive Grid**: Adapts from 1 column (mobile) to 3 columns (desktop)
 - **Mock Data**: 8 sample meals across all categories for demonstration
 - **User-Centric Content**: Displays your meal recipes with personalized messaging

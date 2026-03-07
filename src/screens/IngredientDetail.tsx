@@ -5,6 +5,7 @@ import {
   Select,
   Button,
   Badge,
+  Label,
 } from '@moondreamsdev/dreamer-ui/components';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import {
@@ -38,7 +39,8 @@ export function IngredientDetail() {
     : undefined;
 
   // Navigation state set by MealDetail when the user comes here to create an ingredient for a meal
-  const fromMealPath = (location.state as { fromMealPath?: string } | null)?.fromMealPath ?? null;
+  const fromMealPath =
+    (location.state as { fromMealPath?: string } | null)?.fromMealPath ?? null;
 
   const [name, setName] = useState(existingIngredient?.name || '');
   const [type, setType] = useState<IngredientType>(
@@ -247,7 +249,12 @@ export function IngredientDetail() {
     };
 
     if (isEditing && existingIngredient) {
-      dispatch(updateIngredient({ id: existingIngredient.id, updates: ingredientData }));
+      dispatch(
+        updateIngredient({
+          id: existingIngredient.id,
+          updates: ingredientData,
+        }),
+      );
       navigate(fromMealPath ?? '/ingredients');
     } else {
       const newIngredientId = `ingredient-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
@@ -391,18 +398,19 @@ export function IngredientDetail() {
 
           {unit === 'other' && (
             <div className='flex flex-col'>
-              <label
+              <Label
                 htmlFor='otherUnit'
                 className='text-foreground mb-1 block text-sm font-medium'
+                description='Enter unit in its singular form (e.g "serving" instead of "servings")'
               >
                 Custom Unit *
-              </label>
+              </Label>
               <Input
                 id='otherUnit'
                 type='text'
                 value={otherUnit}
                 onChange={(e) => setOtherUnit(e.target.value)}
-                placeholder='e.g., servings, portions'
+                placeholder='e.g., serving, portion'
                 required
               />
             </div>
@@ -596,7 +604,7 @@ export function IngredientDetail() {
                     >
                       <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
                         <div className='flex-1'>
-                          <div className='flex flex-col justify-center items-start gap-2'>
+                          <div className='flex flex-col items-start justify-center gap-2'>
                             {defaultProductId === product.id && (
                               <Badge variant='primary'>Default</Badge>
                             )}
@@ -636,7 +644,7 @@ export function IngredientDetail() {
                                 : 'secondary'
                             }
                             onClick={() => handleSetDefaultProduct(product.id)}
-                            className='flex-1 py-1 text-xs lg:flex-none md:py-2 md:text-sm'
+                            className='flex-1 py-1 text-xs md:py-2 md:text-sm lg:flex-none'
                           >
                             {defaultProductId === product.id
                               ? 'Unset Default'
@@ -646,7 +654,7 @@ export function IngredientDetail() {
                             type='button'
                             variant='secondary'
                             onClick={() => handleEditProduct(product)}
-                            className='flex-1 py-1 text-xs lg:flex-none md:py-2 md:text-sm'
+                            className='flex-1 py-1 text-xs md:py-2 md:text-sm lg:flex-none'
                           >
                             Edit
                           </Button>
@@ -654,7 +662,7 @@ export function IngredientDetail() {
                             type='button'
                             variant='destructive'
                             onClick={() => handleDeleteProduct(product.id)}
-                            className='flex-1 py-1 text-xs lg:flex-none md:py-2 md:text-sm'
+                            className='flex-1 py-1 text-xs md:py-2 md:text-sm lg:flex-none'
                           >
                             Delete
                           </Button>
