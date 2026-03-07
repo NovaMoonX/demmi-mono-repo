@@ -8,4 +8,4 @@ export interface PlannedMeal {
   notes: string | null;
 }
 
-export type CalendarView = 'day' | 'week' | 'custom';
+export type CalendarView = 'month' | 'day' | 'week' | 'custom';

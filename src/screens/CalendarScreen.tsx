@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   Button,
+  Calendar,
   Card,
   Badge,
   Modal,
@@ -60,8 +61,7 @@ function getStartOfDay(ts: number): number {
 function getWeekStart(ts: number): number {
   const d = new Date(getStartOfDay(ts));
   const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
+  d.setDate(d.getDate() - day);
   return d.getTime();
 }
 
@@ -220,6 +220,15 @@ function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd, onEdit
     [plannedMeals, meals, ingredients]
   );
 
+  const mealStats = useMemo(() => {
+    if (compact) return new Map<string, NutrientTotals>();
+    const map = new Map<string, NutrientTotals>();
+    for (const pm of plannedMeals) {
+      map.set(pm.id, calculateTotals([pm], meals, ingredients));
+    }
+    return map;
+  }, [compact, plannedMeals, meals, ingredients]);
+
   return (
     <Card className="p-4 transition-transform hover:scale-[1.02]">
       <div className="flex items-center justify-between mb-3">
@@ -236,7 +245,7 @@ function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd, onEdit
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          {hasMeals && (
+          {hasMeals && compact && (
             <Button
               variant="tertiary"
               size="sm"
@@ -270,25 +279,41 @@ function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd, onEdit
                 <div className="space-y-1">
                   {catMeals.map((pm) => {
                     const meal = meals.find((m) => m.id === pm.mealId);
+                    const mealEmoji = meal ? CATEGORY_EMOJIS[meal.category] : CATEGORY_EMOJIS[cat];
+                    const stats = !compact ? mealStats.get(pm.id) : undefined;
                     return (
                       <div
                         key={pm.id}
-                        className="flex items-center justify-between rounded py-1 gap-2 cursor-pointer hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="rounded py-1 gap-2 cursor-pointer hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         onClick={() => onEdit(pm)}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit(pm); } }}
                         aria-label={`Edit ${meal?.title ?? 'meal'}`}
                       >
-                        <span className="text-sm font-medium text-foreground truncate">
-                          {meal?.title ?? 'Unknown Meal'}
-                        </span>
-                        <Badge
-                          variant="base"
-                          className={join('shrink-0 text-xs', CATEGORY_COLORS[cat])}
-                        >
-                          {CATEGORY_EMOJIS[cat]}
-                        </Badge>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-foreground truncate">
+                            {meal?.title ?? 'Unknown Meal'}
+                          </span>
+                          <Badge
+                            variant="base"
+                            className={join('shrink-0 text-xs ml-2', CATEGORY_COLORS[cat])}
+                          >
+                            {mealEmoji}
+                          </Badge>
+                        </div>
+                        {!compact && pm.notes && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{pm.notes}</p>
+                        )}
+                        {!compact && stats && (
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mt-1">
+                            <span>🔥 {Math.round(stats.calories)} kcal</span>
+                            <span>💪 {Math.round(stats.protein)}g</span>
+                            <span>🌾 {Math.round(stats.carbs)}g</span>
+                            <span>🥑 {Math.round(stats.fat)}g</span>
+                            <span>💰 ${stats.price.toFixed(2)}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -300,10 +325,25 @@ function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd, onEdit
       )}
 
       {hasMeals && (
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
-          <span>🔥 {Math.round(dayTotals.calories)} kcal</span>
-          <span>💪 {Math.round(dayTotals.protein)}g</span>
-          <span>💰 ${dayTotals.price.toFixed(2)}</span>
+        <div className="mt-3 pt-3 border-t border-border">
+          {compact ? (
+            <>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>🔥 {Math.round(dayTotals.calories)} kcal</span>
+                <span>💪 {Math.round(dayTotals.protein)}g</span>
+                <span>💰 ${dayTotals.price.toFixed(2)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground/60 mt-1">Tap 📊 for full breakdown</p>
+            </>
+          ) : (
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-foreground">
+              <span>🔥 {Math.round(dayTotals.calories)} kcal</span>
+              <span>💪 {Math.round(dayTotals.protein)}g</span>
+              <span>🌾 {Math.round(dayTotals.carbs)}g</span>
+              <span>🥑 {Math.round(dayTotals.fat)}g</span>
+              <span>💰 ${dayTotals.price.toFixed(2)}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -445,10 +485,68 @@ function DayDetailModal({ day, plannedMeals, meals, ingredients, onClose, onEdit
   );
 }
 
+// ─── Month View ───────────────────────────────────────────────────────────────
+
+interface MonthViewProps {
+  plannedMeals: PlannedMeal[];
+  onDateSelect: (date: number) => void;
+}
+
+function MonthView({ plannedMeals, onDateSelect }: MonthViewProps) {
+  const renderCell = (date: Date, isSelected: boolean, _isDisabled: boolean, _isToday: boolean) => {
+    const dayTs = getStartOfDay(date.getTime());
+    const dayMeals = plannedMeals.filter((pm) => getStartOfDay(pm.date) === dayTs);
+
+    const hasBreakfast = dayMeals.some((pm) => pm.category === 'breakfast');
+    const hasLunch = dayMeals.some((pm) => pm.category === 'lunch');
+    const hasDinner = dayMeals.some((pm) => pm.category === 'dinner');
+
+    return (
+      <div className="flex flex-col items-center w-full">
+        <span className={join('text-sm leading-none', isSelected && 'font-bold')}>
+          {date.getDate()}
+        </span>
+        <div className="flex gap-0.5 mt-1 h-1.5 items-center">
+          {hasBreakfast && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
+          {hasLunch && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+          {hasDinner && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full">
+      <Calendar
+        view="month"
+        mode="single"
+        size="auto"
+        showNavigation={true}
+        renderCell={renderCell}
+        onDateSelect={(date) => onDateSelect(getStartOfDay(date.getTime()))}
+      />
+      <div className="flex items-center gap-5 mt-4 text-xs text-muted-foreground justify-center">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+          Breakfast
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+          Lunch
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+          Dinner
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
 export function CalendarScreen() {
-  const [view, setView] = useState<CalendarView>('week');
+  const [view, setView] = useState<CalendarView>('month');
   const [selectedDate, setSelectedDate] = useState(() => getStartOfDay(Date.now()));
   const [customStart, setCustomStart] = useState(() => getStartOfDay(Date.now()));
   const [customEnd, setCustomEnd] = useState(() =>
@@ -587,11 +685,34 @@ export function CalendarScreen() {
     }
   };
 
+  const handleDeleteFromModal = async () => {
+    if (!editingPlannedMeal) return;
+    const meal = meals.find((m) => m.id === editingPlannedMeal.mealId);
+
+    const confirmed = await confirm({
+      title: 'Remove Planned Meal',
+      message: `Remove "${meal?.title ?? 'this meal'}" from your plan? This cannot be undone.`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      destructive: true,
+    });
+
+    if (confirmed) {
+      dispatch(removePlannedMeal(editingPlannedMeal.id));
+      handleModalClose();
+    }
+  };
+
   const isWeekOrCustom = view === 'week' || view === 'custom';
 
   const handleDetailEdit = (pm: PlannedMeal) => {
     setDetailDay(null);
     openEditModal(pm);
+  };
+
+  const handleMonthDateSelect = (date: number) => {
+    setSelectedDate(date);
+    setView('day');
   };
 
   return (
@@ -601,7 +722,7 @@ export function CalendarScreen() {
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-4xl font-bold text-foreground">Meal Planner</h1>
           <Button onClick={() => openAddModal()} variant="primary">
-            Plan Meal
+            Add Meal
           </Button>
         </div>
         <p className="text-muted-foreground mb-6">
@@ -614,18 +735,20 @@ export function CalendarScreen() {
           onValueChange={(v) => setView(v as CalendarView)}
           variant="pills"
           tabsList={[
+            { value: 'month', label: '🗓️ Month' },
             { value: 'day', label: '📅 Day' },
             { value: 'week', label: '📆 Week' },
-            { value: 'custom', label: '🗓️ Custom' },
+            { value: 'custom', label: '⚙️ Custom' },
           ]}
         >
+          <TabsContent value="month" />
           <TabsContent value="day" />
           <TabsContent value="week" />
           <TabsContent value="custom" />
         </Tabs>
 
-        {/* Date navigation for Day/Week */}
-        {view !== 'custom' && (
+        {/* Date navigation for Day/Week only */}
+        {view !== 'custom' && view !== 'month' && (
           <div className="flex flex-wrap items-center gap-2 mt-4">
             <Button variant="secondary" size="sm" onClick={handlePrev}>
               ←
@@ -671,36 +794,43 @@ export function CalendarScreen() {
         )}
       </div>
 
-      {/* Totals */}
-      <TotalsCard totals={totals} />
+      {/* Month View */}
+      {view === 'month' && (
+        <MonthView plannedMeals={plannedMeals} onDateSelect={handleMonthDateSelect} />
+      )}
+
+      {/* Totals (hidden for month view) */}
+      {view !== 'month' && <TotalsCard totals={totals} />}
 
       {/* Meal Plan Grid */}
-      {view === 'custom' && customEnd < customStart ? (
-        <div className="text-center py-12 text-muted-foreground">
-          End date must be on or after the start date.
-        </div>
-      ) : (
-        <div
-          className={join(
-            isWeekOrCustom
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-              : 'space-y-6'
-          )}
-        >
-          {visibleDays.map((day) => (
-            <DayCard
-              key={day}
-              day={day}
-              compact={isWeekOrCustom}
-              plannedMeals={visiblePlannedMeals.filter((pm) => getStartOfDay(pm.date) === day)}
-              meals={meals}
-              ingredients={ingredients}
-              onAdd={openAddModal}
-              onEdit={openEditModal}
-              onViewDetail={setDetailDay}
-            />
-          ))}
-        </div>
+      {view !== 'month' && (
+        view === 'custom' && customEnd < customStart ? (
+          <div className="text-center py-12 text-muted-foreground">
+            End date must be on or after the start date.
+          </div>
+        ) : (
+          <div
+            className={join(
+              isWeekOrCustom
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                : 'space-y-6'
+            )}
+          >
+            {visibleDays.map((day) => (
+              <DayCard
+                key={day}
+                day={day}
+                compact={isWeekOrCustom}
+                plannedMeals={visiblePlannedMeals.filter((pm) => getStartOfDay(pm.date) === day)}
+                meals={meals}
+                ingredients={ingredients}
+                onAdd={openAddModal}
+                onEdit={openEditModal}
+                onViewDetail={setDetailDay}
+              />
+            ))}
+          </div>
+        )
       )}
 
       {/* Day Detail Modal */}
@@ -718,11 +848,11 @@ export function CalendarScreen() {
       <Modal
         isOpen={showModal}
         onClose={handleModalClose}
-        title={editingPlannedMeal ? 'Edit Planned Meal' : 'Plan a Meal'}
+        title={editingPlannedMeal ? 'Edit Planned Meal' : 'Add a Meal'}
         actions={[
           { label: 'Cancel', variant: 'secondary', onClick: handleModalClose },
           {
-            label: editingPlannedMeal ? 'Save Changes' : 'Add to Plan',
+            label: editingPlannedMeal ? 'Save Changes' : 'Add Meal',
             variant: 'primary',
             onClick: handleSubmit,
           },
@@ -764,6 +894,18 @@ export function CalendarScreen() {
               rows={2}
             />
           </div>
+          {editingPlannedMeal && (
+            <div className="pt-2 border-t border-border">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => { void handleDeleteFromModal(); }}
+                className="w-full text-destructive border-destructive/40 hover:bg-destructive/10"
+              >
+                🗑️ Delete Planned Meal
+              </Button>
+            </div>
+          )}
         </div>
       </Modal>
     </div>
