@@ -113,7 +113,8 @@ A cooking app powered with local LLM using Ollama.
   - **Delete Meals**: Delete button on detailed view with confirmation dialog
   - **File Upload**: Upload meal images with live preview
   - **Dynamic Instructions**: Use DynamicList component for adding, reordering, and removing instruction steps (editing controls available only in edit mode)
-  - Form includes: title, description, category, prep time, cook time, servings, image upload, and interactive instructions list
+  - **Ingredient Association**: Search and select ingredients from your inventory to associate with the meal; set the number of servings for each ingredient; add new ingredients on the fly via a link to the ingredient creation screen
+  - Form includes: title, description, category, prep time, cook time, servings, image upload, ingredient selector, and interactive instructions list
 - **Responsive Grid**: Adapts from 1 column (mobile) to 3 columns (desktop)
 - **Mock Data**: 8 sample meals across all categories for demonstration
 - **User-Centric Content**: Displays your meal recipes with personalized messaging
@@ -378,6 +379,7 @@ src/
 │   ├── ChatHistory.tsx      # Chat sidebar navigation
 │   ├── ChatMessage.tsx      # Message bubble component
 │   ├── MealCard.tsx         # Meal card display component (clickable)
+│   ├── MealIngredientSelector.tsx # Ingredient picker for meal create/edit
 │   ├── ProtectedRoute.tsx   # Route protection wrapper
 │   └── Sidebar.tsx          # Main app sidebar
 ├── contexts/         # React context providers

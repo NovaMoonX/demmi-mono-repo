@@ -2,16 +2,18 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Input, Textarea, Select, Button, DynamicList } from '@moondreamsdev/dreamer-ui/components';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
-import { Meal, MealCategory } from '@lib/meals';
+import { Meal, MealCategory, MealIngredient } from '@lib/meals';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import { createMeal, updateMeal, deleteMeal } from '@store/slices/mealsSlice';
 import type { DynamicListItem } from '@moondreamsdev/dreamer-ui/components';
+import { MealIngredientSelector } from '@components/MealIngredientSelector';
 
 export function MealDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const meals = useAppSelector((state) => state.meals.items);
+  const allIngredients = useAppSelector((state) => state.ingredients.items);
   const { confirm } = useActionModal();
 
   const isEditing = id !== 'new';
@@ -29,6 +31,9 @@ export function MealDetail() {
       id: `inst-${index}`,
       content: inst,
     })) || []
+  );
+  const [mealIngredients, setMealIngredients] = useState<MealIngredient[]>(
+    existingMeal?.ingredients ?? []
   );
 
   const categoryOptions = [
@@ -70,7 +75,7 @@ export function MealDetail() {
       servingSize: parseInt(servingSize, 10) || 1,
       imageUrl: imageUrl,
       instructions: instructionsList,
-      ingredients: existingMeal?.ingredients ?? [],
+      ingredients: mealIngredients,
     };
 
     if (isEditing && existingMeal) {
@@ -226,6 +231,17 @@ export function MealDetail() {
               />
             </div>
           )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Ingredients
+          </label>
+          <MealIngredientSelector
+            ingredients={allIngredients}
+            selectedIngredients={mealIngredients}
+            onChange={setMealIngredients}
+          />
         </div>
 
         <div>
