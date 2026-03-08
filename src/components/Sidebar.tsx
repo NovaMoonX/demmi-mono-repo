@@ -26,6 +26,7 @@ const tabs: Tab[] = [
     path: '/ingredients',
   },
   { id: 'calendar', label: 'Calendar', emoji: '📅', path: '/calendar' },
+  { id: 'shopping-list', label: 'Shopping List', emoji: '🛒', path: '/shopping-list' },
 ];
 
 export function Sidebar() {

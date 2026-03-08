@@ -7,7 +7,7 @@ A cooking app powered with local LLM using Ollama.
 ### 🎭 Demo Mode
 - **Try Before You Sign Up**: A subtle "Try Demo Mode" link below the auth form lets curious users explore the app without an account
 - **Full App Access**: Demo mode bypasses authentication and gives access to all tabs (Chat, Meals, Ingredients, Calendar)
-- **Pre-loaded Mock Data**: Chats, meals, and ingredients are populated with realistic demo content on launch
+- **Pre-loaded Mock Data**: Chats, meals, ingredients, calendar, and shopping list are populated with realistic demo content on launch
 - **Dynamic Calendar Data**: Calendar demo data is always generated relative to the current day — yesterday, today, tomorrow, and the day after are auto-populated with planned meals so it always looks accurate
 - **Persistent Demo Banner**: An amber banner is always visible at the top of the screen while in demo mode, clearly indicating preview status ("🎭 Demo Mode — changes won't be saved")
 - **Exit Demo**: Both the top banner and the sidebar provide an "Exit Demo" button that clears demo data and returns to the auth page
@@ -57,6 +57,7 @@ A cooking app powered with local LLM using Ollama.
   - **Ingredients**: Manage your ingredients
   - **Meals**: Browse and manage meal recipes
   - **Calendar**: Schedule your cooking
+  - **Shopping List**: Manage your grocery list
   - **Account**: User settings and profile
 - **Theme Toggle**: Switch component for seamless light/dark mode switching
 - **Mobile Responsive**: Collapsible sidebar with hamburger menu on mobile devices
@@ -147,6 +148,22 @@ A cooking app powered with local LLM using Ollama.
   - 🥦 Total Fiber (g)
 - **Price Calculation**: Uses the default product per ingredient; falls back to the first listed product when no default is set
 - **Ingredient-Based Nutrition**: Totals derive from the ingredient composition of each planned meal
+
+### 🛒 Shopping List
+- **Grouped by Category**: Items are automatically grouped and displayed by category (🥩 Meat, 🐟 Seafood, 🥬 Produce, 🥛 Dairy, 🌾 Grains, 🫘 Legumes, 🥜 Nuts, 🫒 Oils, 🧂 Spices, 📦 Other)
+- **Two Item Types**:
+  - **Simple Text**: Add any free-text item (e.g. "Dish soap") to the list
+  - **Ingredient-Linked**: Link an item to a stored ingredient and optionally to a specific product/retailer
+- **Amount & Unit**: Optionally specify a quantity and unit (lb, oz, kg, g, cup, tbsp, tsp, piece, ml, l, other) per item
+- **Notes**: Attach a free-text note to any item (e.g. "Organic if possible")
+- **Check Off Items**: Tap the checkbox to tick off items as you shop; checked items dim to reduce visual noise
+- **Progress Bar**: A live progress bar in the header shows how many items have been checked off
+- **Show/Hide Checked**: Toggle to hide already-checked items and focus on what's left
+- **Clear Checked**: Remove all checked items at once with a single confirmation
+- **Edit & Delete**: Inline Edit and Delete actions on each item row
+- **Auto-fill from Ingredient**: Selecting a stored ingredient auto-fills the item name, category, and default unit
+- **Mock Data**: 9 sample shopping list items across all categories for demonstration
+- **Redux-Powered**: All state managed in a dedicated `shoppingListSlice` with actions: `addShoppingListItem`, `updateShoppingListItem`, `toggleShoppingListItem`, `deleteShoppingListItem`, `clearCheckedItems`, `setShoppingList`, `resetShoppingList`
 
 ## Tech Stack
 

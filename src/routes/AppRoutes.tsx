@@ -6,6 +6,7 @@ import IngredientDetail from '@screens/IngredientDetail';
 import Meals from '@screens/Meals';
 import MealDetail from '@screens/MealDetail';
 import CalendarScreen from '@screens/CalendarScreen';
+import { ShoppingList } from '@screens/ShoppingList';
 import Account from '@screens/Account';
 import Auth from '@screens/Auth';
 import VerifyEmail from '@screens/VerifyEmail';
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
       {
         path: 'calendar',
         element: <CalendarScreen />,
+      },
+      {
+        path: 'shopping-list',
+        element: <ShoppingList />,
       },
       {
         path: 'account',
