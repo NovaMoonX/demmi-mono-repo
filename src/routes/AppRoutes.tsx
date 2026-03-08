@@ -1,75 +1,126 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Outlet } from 'react-router-dom';
 
-import Chat from '@screens/Chat';
-import Ingredients from '@screens/Ingredients';
-import IngredientDetail from '@screens/IngredientDetail';
-import Meals from '@screens/Meals';
-import MealDetail from '@screens/MealDetail';
-import CalendarScreen from '@screens/CalendarScreen';
-import { ShoppingList } from '@screens/ShoppingList';
-import Account from '@screens/Account';
-import Auth from '@screens/Auth';
-import VerifyEmail from '@screens/VerifyEmail';
+import Home from '@screens/Home';
 import Layout from '@ui/Layout';
 import Loading from '@ui/Loading';
-import ProtectedRoute from '@components/ProtectedRoute';
+import ProtectedRoutes from './ProtectedRoutes';
+import ErrorFallback from '@screens/ErrorFallback';
 
 export const router = createBrowserRouter([
   {
-    path: '/auth',
-    element: <Auth />,
-  },
-  {
-    path: '/verify-email',
-    element: <VerifyEmail />,
-  },
-  {
     path: '/',
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
+    element: <Outlet />,
+    ErrorBoundary: ErrorFallback,
     children: [
       {
         index: true,
-        element: <Chat />,
+        element: <Home />,
       },
-      {
-        path: 'ingredients',
-        element: <Ingredients />,
-      },
-      {
-        path: 'ingredients/:id',
-        element: <IngredientDetail />,
-      },
-      {
-        path: 'meals',
-        element: <Meals />,
-      },
-      {
-        path: 'meals/:id',
-        element: <MealDetail />,
-      },
-      {
-        path: 'calendar',
-        element: <CalendarScreen />,
-      },
-      {
-        path: 'shopping-list',
-        element: <ShoppingList />,
-      },
-      {
-        path: 'account',
-        element: <Account />,
-      },
-      // About page (lazy loaded)
       {
         path: 'about',
         HydrateFallback: Loading,
         lazy: async () => {
           const { default: About } = await import('@screens/About');
           return { Component: About };
+        },
+      },
+      {
+        path: 'auth',
+        HydrateFallback: Loading,
+        lazy: async () => {
+          const { default: Auth } = await import('@screens/Auth');
+          return { Component: Auth };
+        },
+      },
+      {
+        path: 'verify-email',
+        HydrateFallback: Loading,
+        lazy: async () => {
+          const { default: VerifyEmail } = await import('@screens/VerifyEmail');
+          return { Component: VerifyEmail };
+        },
+      },
+      // Protected routes - require authentication and email verification (unless demo mode is active)
+      {
+        element: <ProtectedRoutes />,
+        children: [
+          {
+            element: <Layout />,
+            children: [
+              {
+                path: 'chat',
+                HydrateFallback: Loading,
+                lazy: async () => {
+                  const { default: Chat } = await import('@screens/Chat');
+                  return { Component: Chat };
+                },
+              },
+              {
+                path: 'ingredients',
+                HydrateFallback: Loading,
+                lazy: async () => {
+                  const { default: Ingredients } = await import('@screens/Ingredients');
+                  return { Component: Ingredients };
+                },
+              },
+              {
+                path: 'ingredients/:id',
+                HydrateFallback: Loading,
+                lazy: async () => {
+                  const { default: IngredientDetail } = await import('@screens/IngredientDetail');
+                  return { Component: IngredientDetail };
+                },
+              },
+              {
+                path: 'meals',
+                HydrateFallback: Loading,
+                lazy: async () => {
+                  const { default: Meals } = await import('@screens/Meals');
+                  return { Component: Meals };
+                },
+              },
+              {
+                path: 'meals/:id',
+                HydrateFallback: Loading,
+                lazy: async () => {
+                  const { default: MealDetail } = await import('@screens/MealDetail');
+                  return { Component: MealDetail };
+                },
+              },
+              {
+                path: 'calendar',
+                HydrateFallback: Loading,
+                lazy: async () => {
+                  const { default: CalendarScreen } = await import('@screens/CalendarScreen');
+                  return { Component: CalendarScreen };
+                },
+              },
+              {
+                path: 'shopping-list',
+                HydrateFallback: Loading,
+                lazy: async () => {
+                  const { ShoppingList } = await import('@screens/ShoppingList');
+                  return { Component: ShoppingList };
+                },
+              },
+              {
+                path: 'account',
+                HydrateFallback: Loading,
+                lazy: async () => {
+                  const { default: Account } = await import('@screens/Account');
+                  return { Component: Account };
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: '*',
+        HydrateFallback: Loading,
+        lazy: async () => {
+          const { default: NotFound } = await import('@screens/NotFound');
+          return { Component: NotFound };
         },
       },
     ],

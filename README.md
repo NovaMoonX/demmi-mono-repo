@@ -51,6 +51,42 @@ A cooking app powered with local LLM using Ollama.
 - **Light & Dark Modes**: Full support for both themes with automatic color adjustments
 - **Demmi Brand Logo**: Demeter-inspired wheat emblem displayed in the app navigation
 
+### � Home Page
+- **Hero Section**: Eye-catching landing experience featuring the Demmi logo and gradient title
+- **Feature Showcase**: Six key features displayed in an organized grid with emojis and descriptions
+- **Multiple CTAs**: Prominent "Get Started" and "Try Demo Mode" buttons for clear user action paths
+- **Three-Section Layout**: Hero introduction, feature highlights, and final call-to-action for optimal conversion flow
+- **Responsive Design**: Fully responsive layout that adapts from mobile to desktop with smooth transitions
+- **Brand Integration**: Wheat emblem logo prominently displayed with orange accent gradient branding
+- **Feature Highlights**:
+  - 💬 AI Chat Assistant
+  - 🍽️ Recipe Management
+  - 🍎 Ingredient Tracking
+  - 📅 Meal Planning
+  - 🛒 Shopping Lists
+  - 🎭 Demo Mode Access
+
+### 📖 About Page
+- **Origin Story**: Personal narrative about the frustration with disconnected AI threads (ChatGPT, etc.)
+- **The Thread Problem**: Explains how isolated AI conversations lack mutual connection and actionable context
+- **Cooking-Specific Pain Points**: 
+  - AI can't see your kitchen inventory
+  - No memory of previous meal discussions
+  - Suggestions aren't based on what you actually have
+  - No connection to pricing, nutrition, or planning
+- **Connected Context Solution**: How Demmi ties everything together
+  - AI has access to your ingredient inventory
+  - Conversations connect to saved meals and recipes
+  - Pricing and nutrition are calculated, not estimated
+  - Calendar, shopping lists, and meal planning all integrated
+- **Local AI Philosophy**: Why Ollama matters
+  - Privacy: data never leaves your device
+  - Control: no subscriptions, no usage limits
+  - Independence: works offline, no cloud dependency
+- **Comparison Table**: Generic AI tools vs. Demmi across Context, Actionability, Privacy, and Integration
+- **Accessible from Home**: "Learn More" button in final CTA section links to About page
+- **Responsive Layout**: Optimized reading experience with clear sections and compelling narrative
+
 ### 🎨 Navigation
 - **Sidebar Navigation**: ChatGPT-style sidebar with intuitive navigation
   - **Chat**: AI-powered cooking assistant
@@ -415,6 +451,7 @@ src/
 │   └── meals/         # Meal types and mock data
 ├── routes/           # Router configuration
 ├── screens/          # Page components
+│   ├── About.tsx            # About/manifesto page
 │   ├── Auth.tsx             # Authentication screen
 │   ├── Chat.tsx             # AI chat interface
 │   ├── IngredientDetail.tsx # Detailed ingredient view for create/edit

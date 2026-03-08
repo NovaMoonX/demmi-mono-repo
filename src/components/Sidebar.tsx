@@ -8,6 +8,7 @@ import { DotsVertical } from '@moondreamsdev/dreamer-ui/symbols';
 import { useAuth } from '@hooks/useAuth';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import { endDemoSession } from '@store/slices/demoSlice';
+import { Link } from 'react-router-dom';
 
 type Tab = {
   id: string;
@@ -17,7 +18,7 @@ type Tab = {
 };
 
 const tabs: Tab[] = [
-  { id: 'chat', label: 'Chat', emoji: '💬', path: '/' },
+  { id: 'chat', label: 'Chat', emoji: '💬', path: '/chat' },
   { id: 'meals', label: 'Meals', emoji: '🍽️', path: '/meals' },
   {
     id: 'ingredients',
@@ -100,12 +101,12 @@ export function Sidebar() {
         )}
       >
         <div className='px-4 pt-5 pb-2'>
-          <div className='flex items-center gap-3'>
+          <Link to='/' className='flex items-center gap-3 hover:opacity-80 transition-opacity'>
             <img src={'/logo.svg'} alt='Demmi logo' className='h-9 w-9' />
             <div>
               <p className='text-foreground text-lg font-semibold'>Demmi</p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Tabs section */}

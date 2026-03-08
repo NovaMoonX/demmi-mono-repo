@@ -1,14 +1,9 @@
-import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import { useAppSelector } from '@store/hooks';
 import Loading from '@ui/Loading';
 
-interface ProtectedRouteProps {
-  children: ReactNode;
-}
-
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoutes() {
   const { user, loading } = useAuth();
   const isDemoActive = useAppSelector((state) => state.demo.isActive);
   const isDemoHydrated = useAppSelector((state) => state.demo.isHydrated);
@@ -26,7 +21,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/verify-email" replace />;
   }
 
-  return <>{children}</>;
+  return <Outlet />;
 }
 
-export default ProtectedRoute;
+export default ProtectedRoutes;

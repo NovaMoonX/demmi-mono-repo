@@ -28,7 +28,7 @@ export function VerifyEmail() {
       }
 
       if (currentUser.emailVerified) {
-        const redirectResult = navigate('/');
+        const redirectResult = navigate('/chat');
         return redirectResult;
       }
 
