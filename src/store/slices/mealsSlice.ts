@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Meal } from '@lib/meals';
+import { generatedId } from '@utils/generatedId';
 
 interface MealsState {
   items: Meal[];
@@ -17,7 +18,7 @@ const mealsSlice = createSlice({
       const newMeal: Meal = {
         ...action.payload,
         ingredients: action.payload.ingredients ?? [],
-        id: `meal-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        id: generatedId('meal'),
       };
 
       state.items.push(newMeal);

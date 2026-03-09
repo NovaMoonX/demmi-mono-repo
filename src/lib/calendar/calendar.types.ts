@@ -9,3 +9,12 @@ export interface PlannedMeal {
 }
 
 export type CalendarView = 'month' | 'day' | 'week' | 'custom';
+
+export interface NutrientTotals {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  price: number;
+}

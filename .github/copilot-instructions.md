@@ -16,6 +16,9 @@
 - **Always use 2 spaces for indentation** (NOT 4 spaces or tabs)
 - Ensure consistent indentation across all files
 - Configure your editor to use 2 spaces for TypeScript, JavaScript, TSX, and JSX files
+- **DO NOT add comments for file structure sections** like `// ─── Constants ───` or `// ─── Component ───`
+  - These comments are visual noise and should be omitted
+  - Code organization should be self-evident from the structure itself
 
 ### 5. Return Value Debugging
 - Always store return values in variables before returning them for easier debugging
@@ -89,17 +92,39 @@ className={join('base-class', isActive ? 'active' : 'inactive')}
 Follow the existing structure:
 ```
 src/
-├── components/ # Reusable UI components
-├── contexts/   # React context providers (Should always import the context from its hook file)
-├── hooks/      # Custom React hooks (should always declare the context they use)
-├── lib/        # Utilities and constants
-├── routes/     # Router configuration
-├── screens/    # Page/route components
-├── store/      # State management (i.e. Redux store)
-├── styles/     # Additional CSS/styling files
-├── ui/         # Layout and core UI components
-├── utils/      # Utility functions
+├── components/         # Reusable UI components (organized in subfolders by screen/feature)
+│   ├── calendar/       # Calendar-related components (e.g., TotalsCard, DayCard, MonthView)
+│   ├── chat/           # Chat-related components
+│   ├── meals/          # Meals-related components
+│   └── shopping/       # Shopping list components (e.g., ItemRow, ItemFormModal)
+├── contexts/           # React context providers (Should always import the context from its hook file)
+├── hooks/              # Custom React hooks (should always declare the context they use)
+├── lib/                # Domain logic, types, constants, and utilities per feature
+│   ├── calendar/       # Calendar types, constants
+│   ├── ingredients/    # Ingredient types, constants, emojis, colors
+│   ├── meals/          # Meal types, constants, emojis, colors
+│   └── shoppingList/   # Shopping list types
+├── routes/             # Router configuration
+├── screens/            # Page/route components (main views)
+├── store/              # State management (Redux store and slices)
+├── styles/             # Additional CSS/styling files
+├── ui/                 # Layout and core UI components
+├── utils/              # Shared utility functions (capitalize, generatedId, etc.)
 ```
+
+**Components folder rules:**
+- Organize components into subfolders by screen/tab/feature (e.g., `calendar/`, `meals/`, `shopping/`)
+- Extract sub-components from screen files into dedicated component files
+- Each subfolder should have a barrel `index.ts` that re-exports all components, types, and utilities
+- Component files may include utility functions specific to that component
+- Never dump all components directly in `components/` root — always use a subfolder
+
+**Lib folder rules:**
+- Each feature domain gets its own subfolder (e.g., `meals/`, `ingredients/`, `calendar/`)
+- Use `.types.ts` for TypeScript interfaces and types
+- Use `.constants.ts` for constants, colors, emojis, and options
+- Use `.mock.ts` for mock data (development only)
+- Export everything through barrel `index.ts` files
 
 ### 9. Import Patterns
 ```tsx
@@ -113,11 +138,15 @@ import { APP_TITLE } from '@lib/app';
 import Home from '@screens/Home';
 import Layout from '@ui/Layout';
 import { router } from '@routes/AppRoutes';
-import MyComponent from '@components/MyComponent';
+import { MealCard } from '@components/meals';
+import { ChatHistory } from '@components/chat';
+import { TotalsCard, DayCard, MonthView } from '@components/calendar';
+import { ItemRow, ItemFormModal } from '@components/shopping';
 import { useCustomHook } from '@hooks/useCustomHook';
 import { MyContext } from '@contexts/MyContext';
 import { store } from '@store';
 import { helper } from '@utils/helper';
+import { generatedId } from '@utils/generatedId';
 ```
 
 ### 10. Available Import Aliases
@@ -133,19 +162,134 @@ import { helper } from '@utils/helper';
 - `@ui/` → `src/ui/`
 - `@utils/` → `src/utils/`
 
+### 11. ID Generation
+- **ALWAYS** use `generatedId(entity)` from `@utils/generatedId` for all ID creation
+- **NEVER** use `Date.now()`, `Math.random()`, or template literals to create IDs inline
+- Uses **nanoid** for URL-friendly entities (appear in routes): `'meal'`, `'ingredient'`, `'planned'`
+- Uses **uuid v4** for other entities: `'chat'`, `'msg'`, `'sl'`, `'prod'`
+- The `entity` param is a typed union — use the right entity type for the context
+
+```tsx
+// ❌ NEVER DO THIS - inline ID generation
+id: `meal-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+id: `msg-${Date.now()}`
+
+// ✅ ALWAYS DO THIS - use generatedId utility
+import { generatedId } from '@utils/generatedId';
+id: generatedId('meal')      // nanoid - URL-friendly
+id: generatedId('msg')       // uuid v4
+id: generatedId('ingredient') // nanoid - URL-friendly
+```
+
+### 12. Number Parsing
+- **ALWAYS** use `Number()` for converting strings to numbers
+- **NEVER** use `parseFloat()` or `parseInt()` — use `Number()` instead
+
+```tsx
+// ❌ NEVER DO THIS
+parseFloat(someString)
+parseInt(someString, 10)
+
+// ✅ ALWAYS DO THIS
+Number(someString)
+Number(someString) || 0  // with fallback
+```
+
+### 13. Label Component
+- **ALWAYS** use the `Label` component from `@moondreamsdev/dreamer-ui/components` for form labels
+- **NEVER** use the native HTML `<label>` element
+- **NEVER** add `className` to `Label` — the component handles its own styling
+
+```tsx
+// ❌ NEVER DO THIS
+<label htmlFor="name" className="text-foreground mb-1 block text-sm font-medium">
+  Name
+</label>
+<Label htmlFor="name" className="text-sm text-muted-foreground">Name</Label>
+
+// ✅ ALWAYS DO THIS
+import { Label } from '@moondreamsdev/dreamer-ui/components';
+<Label htmlFor="name">Name</Label>
+```
+
+### 14. Nullish Coalescing (`??` vs `||`)
+- **ALWAYS** use `??` (nullish coalescing) instead of `||` by default
+- Only use `||` when you explicitly need to handle falsy values like empty strings (`''`), `0`, or `NaN`
+
+```tsx
+// ❌ Use || only when falsy check is intentional
+existingItem?.category || 'breakfast'   // use ?? instead
+existingItem?.products || []            // use ?? instead
+conversations[0]?.id || null            // use ?? instead
+
+// ✅ Use ?? for null/undefined fallbacks
+existingItem?.category ?? 'breakfast'
+existingItem?.products ?? []
+conversations[0]?.id ?? null
+
+// ✅ Keep || for explicit falsy checks
+productUrl || null           // converts empty string '' to null (intentional)
+form.note.trim() || null     // converts empty string to null (intentional)
+Number(x) || 0               // handles NaN (intentional)
+```
+
+### 15. View / Edit Mode for Detail Pages
+- Detail pages for **existing items** must support a **read-only view mode** by default
+- Creating a **new item** always shows the form directly (no view mode)
+- Use `const [isViewMode, setIsViewMode] = useState(isEditing)` to initialize
+
+```tsx
+const isEditing = id !== 'new';
+const [isViewMode, setIsViewMode] = useState(isEditing);
+
+// Cancel in edit form:
+const handleCancel = () => {
+  if (isEditing) {
+    setIsViewMode(true);  // return to view mode
+  } else {
+    navigate('/items');   // leave create form
+  }
+};
+
+// View mode: show read-only UI with "Edit" and "Delete" buttons
+if (isViewMode && isEditing && existingItem) {
+  return <ViewModeUI onEdit={() => setIsViewMode(false)} ... />;
+}
+
+// Edit/Create form (default when not view mode)
+return <form>...</form>;
+```
+
 ## Quick Reference
 - Component syntax: `export function ComponentName`
 - **Indentation: Always use 2 spaces (NOT 4 spaces or tabs)**
+- **NO file structure comments** like `// ─── Constants ───`
 - **Class names: ALWAYS use `join()` for conditionals - NEVER template literals**
 - Check Dreamer UI first
 - Use import aliases: `@components/`, `@hooks/`, `@lib/`, `@screens/`, `@ui/`, etc.
+- **Components: Extract to subfolders under `src/components/` by feature (calendar/, shopping/, meals/)**
+- **Lib: Organize by domain with `.types.ts`, `.constants.ts`, and barrel `index.ts` exports**
 - Follow structured folder organization with proper separation of concerns
+- **ID generation: ALWAYS use `generatedId(entity)` from `@utils/generatedId`**
+- **Number parsing: ALWAYS use `Number()`, NEVER `parseFloat()` or `parseInt()`**
+- **Form labels: ALWAYS use `Label` from Dreamer UI, NEVER native `<label>` or className on Label**
+- **Nullish coalescing: Use `??` by default, only `||` for explicit falsy checks**
+- **Detail pages: Always implement view/edit mode for existing items**
 
 ## ⚠️ Critical Reminders
 - **2 spaces for indentation - ALWAYS**
+- **NO file structure comments** (e.g., `// ─── Constants ───`) - code should be self-documenting
 - **Template literals with `${` in className are FORBIDDEN**
 - **Always import and use `join` from `@moondreamsdev/dreamer-ui/utils`**
 - **Before writing any conditional className, ask: "Am I using join()?"**
+- **`parseFloat` and `parseInt` are FORBIDDEN - use `Number()` instead**
+- **Inline ID generation (Date.now, Math.random) is FORBIDDEN - use `generatedId()`**
+- **HTML `<label>` is FORBIDDEN - use `Label` from `@moondreamsdev/dreamer-ui/components`**
+- **`className` on `Label` is FORBIDDEN - Label handles its own styling**
+- **Components must be organized in subfolders by feature under `src/components/`**
+- **Extract screen sub-components to separate files in `@components/<feature>/`**
+- **Use `.types.ts` and `.constants.ts` in `@lib/<feature>/` for domain logic**
+- **Use `??` instead of `||` unless explicitly handling falsy values (empty string, NaN, 0)**
 
 ## 📚 Documentation Maintenance
 

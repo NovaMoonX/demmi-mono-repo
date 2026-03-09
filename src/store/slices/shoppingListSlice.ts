@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { ShoppingListItem } from '@lib/shoppingList';
+import { generatedId } from '@utils/generatedId';
 
 interface ShoppingListState {
   items: ShoppingListItem[];
@@ -20,7 +21,7 @@ const shoppingListSlice = createSlice({
       const { id: presetId, createdAt: presetCreatedAt, ...rest } = action.payload;
       const newItem: ShoppingListItem = {
         ...rest,
-        id: presetId ?? `sl-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        id: presetId ?? generatedId('sl'),
         createdAt: presetCreatedAt ?? Date.now(),
       };
 

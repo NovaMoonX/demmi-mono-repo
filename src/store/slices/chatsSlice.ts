@@ -3,6 +3,7 @@ import {
   ChatConversation,
   ChatMessage,
 } from '@lib/chat';
+import { generatedId } from '@utils/generatedId';
 
 interface ChatsState {
   conversations: ChatConversation[];
@@ -24,7 +25,7 @@ const chatsSlice = createSlice({
     createConversation: (state, action: PayloadAction<Omit<ChatConversation, 'id'>>) => {
       const newConversation: ChatConversation = {
         ...action.payload,
-        id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        id: generatedId('chat'),
       };
 
       state.conversations.unshift(newConversation);
@@ -64,7 +65,7 @@ const chatsSlice = createSlice({
       );
 
       if (state.currentChatId === action.payload) {
-        state.currentChatId = state.conversations[0]?.id || null;
+        state.currentChatId = state.conversations[0]?.id ?? null;
       }
     },
     togglePinConversation: (state, action: PayloadAction<string>) => {
@@ -78,7 +79,7 @@ const chatsSlice = createSlice({
     },
     setConversations: (state, action: PayloadAction<ChatConversation[]>) => {
       state.conversations = action.payload;
-      state.currentChatId = action.payload[0]?.id || null;
+      state.currentChatId = action.payload[0]?.id ?? null;
     },
     resetChats: (state) => {
       state.conversations = [];

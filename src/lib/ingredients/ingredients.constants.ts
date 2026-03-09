@@ -1,5 +1,18 @@
 import { IngredientType, MeasurementUnit } from './ingredients.types';
 
+export const INGREDIENT_TYPES: IngredientType[] = [
+  'meat',
+  'produce',
+  'dairy',
+  'grains',
+  'legumes',
+  'oils',
+  'spices',
+  'nuts',
+  'seafood',
+  'other',
+];
+
 export const INGREDIENT_TYPE_COLORS: Record<IngredientType, string> = {
   meat: 'bg-red-500/20 text-red-700 dark:bg-red-500/10 dark:text-red-400',
   produce:
@@ -44,3 +57,7 @@ export const MEASUREMENT_UNIT_LABELS: Record<MeasurementUnit, string> = {
   piece: 'Piece',
   other: 'Other (custom)',
 };
+
+export const MEASUREMENT_UNIT_OPTIONS: { value: string; text: string }[] = Object.entries(
+  MEASUREMENT_UNIT_LABELS
+).map(([value, text]) => ({ value, text }));

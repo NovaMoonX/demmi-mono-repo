@@ -3,9 +3,9 @@ import { Button } from '@moondreamsdev/dreamer-ui/components';
 import { Textarea } from '@moondreamsdev/dreamer-ui/components';
 import { ScrollArea } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
-import { ChatHistoryToggleIcon } from '@components/ChatHistoryToggleIcon';
-import { ChatHistory } from '@components/ChatHistory';
-import { ChatMessage } from '@components/ChatMessage';
+import { ChatHistoryToggleIcon } from '@components/chat/ChatHistoryToggleIcon';
+import { ChatHistory } from '@components/chat/ChatHistory';
+import { ChatMessage } from '@components/chat/ChatMessage';
 import { useIsMobileDevice } from '@hooks/useIsMobileDevice';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import { store } from '@store/index';
@@ -20,6 +20,7 @@ import {
   ChatMessage as ChatMessageType,
   generateMockResponse,
 } from '@lib/chat';
+import { generatedId } from '@utils/generatedId';
 
 // Delay to allow UI to render before scrolling to bottom
 const SCROLL_DELAY_MS = 100;
@@ -57,7 +58,7 @@ export function Chat() {
 
     // Create user message
     const userMessage: ChatMessageType = {
-      id: `msg-${Date.now()}`,
+      id: generatedId('msg'),
       role: 'user',
       content: messageContent,
       timestamp: Date.now(),
@@ -77,7 +78,7 @@ export function Chat() {
       // Simulate AI response
       setTimeout(() => {
         const assistantMessage: ChatMessageType = {
-          id: `msg-${Date.now()}`,
+          id: generatedId('msg'),
           role: 'assistant',
           content: generateMockResponse(messageContent),
           timestamp: Date.now(),
@@ -97,7 +98,7 @@ export function Chat() {
       // Simulate AI response
       setTimeout(() => {
         const assistantMessage: ChatMessageType = {
-          id: `msg-${Date.now()}`,
+          id: generatedId('msg'),
           role: 'assistant',
           content: generateMockResponse(messageContent),
           timestamp: Date.now(),
@@ -177,7 +178,7 @@ export function Chat() {
             </div>
             <div className="flex flex-1 flex-col items-end text-right">
               <h2 className="text-lg font-semibold text-foreground">
-                {currentChat?.title || 'New Chat'}
+                {currentChat?.title ?? 'New Chat'}
               </h2>
               {currentChat && (
                 <p className="text-sm text-muted-foreground">

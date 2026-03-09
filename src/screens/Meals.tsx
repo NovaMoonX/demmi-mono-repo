@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Select, Input, Toggle, Button } from '@moondreamsdev/dreamer-ui/components';
-import { MealCard } from '@components/MealCard';
+import { MealCard } from '@components/meals/MealCard';
 import { useAppSelector } from '@store/hooks';
-import { Meal } from '@lib/meals';
+import { Meal, MEAL_CATEGORY_OPTIONS } from '@lib/meals';
 
 export function Meals() {
   const meals = useAppSelector((state) => state.meals.items);
@@ -15,12 +15,7 @@ export function Meals() {
 
   const categoryOptions = [
     { value: 'all', text: 'All Categories' },
-    { value: 'breakfast', text: '🌅 Breakfast' },
-    { value: 'lunch', text: '🍱 Lunch' },
-    { value: 'dinner', text: '🌙 Dinner' },
-    { value: 'snack', text: '🍿 Snack' },
-    { value: 'dessert', text: '🍰 Dessert' },
-    { value: 'drink', text: '🥤 Drink' },
+    ...MEAL_CATEGORY_OPTIONS,
   ];
 
   const timeOptions = [

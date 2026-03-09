@@ -70,8 +70,8 @@ export function MealIngredientSelector({
   };
 
   const handleServingsChange = (ingredientId: string, value: string) => {
-    const parsed = parseFloat(value);
-    const servings = isNaN(parsed) || parsed < MIN_SERVINGS ? MIN_SERVINGS : parsed;
+    const parsed = Number(value);
+    const servings = Number.isNaN(parsed) || parsed < MIN_SERVINGS ? MIN_SERVINGS : parsed;
     const updated = selectedIngredients.map((si) =>
       si.ingredientId === ingredientId ? { ...si, servings } : si,
     );

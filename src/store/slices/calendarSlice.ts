@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PlannedMeal } from '@lib/calendar';
+import { generatedId } from '@utils/generatedId';
 
 interface CalendarState {
   plannedMeals: PlannedMeal[];
@@ -16,7 +17,7 @@ const calendarSlice = createSlice({
     addPlannedMeal: (state, action: PayloadAction<Omit<PlannedMeal, 'id'>>) => {
       const newPlannedMeal: PlannedMeal = {
         ...action.payload,
-        id: `planned-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        id: generatedId('planned'),
       };
 
       state.plannedMeals.push(newPlannedMeal);

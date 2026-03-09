@@ -1,14 +1,5 @@
 import { useState, useMemo } from 'react';
-import {
-  Button,
-  Badge,
-  Input,
-  Textarea,
-  Select,
-  Modal,
-  Checkbox,
-} from '@moondreamsdev/dreamer-ui/components';
-import { join } from '@moondreamsdev/dreamer-ui/utils';
+import { Button, Badge } from '@moondreamsdev/dreamer-ui/components';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import {
@@ -18,329 +9,18 @@ import {
   deleteShoppingListItem,
   clearCheckedItems,
 } from '@store/slices/shoppingListSlice';
-import {
-  INGREDIENT_TYPE_COLORS,
-  INGREDIENT_TYPE_EMOJIS,
-  MEASUREMENT_UNIT_LABELS,
-} from '@lib/ingredients';
+import { INGREDIENT_TYPE_COLORS, INGREDIENT_TYPE_EMOJIS, INGREDIENT_TYPES } from '@lib/ingredients';
 import type { ShoppingListItem } from '@lib/shoppingList';
-import type { IngredientType, MeasurementUnit, Ingredient } from '@lib/ingredients';
-import { capitalize } from '@/utils';
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const CATEGORY_ORDER: Array<IngredientType | 'other'> = [
-  'meat',
-  'seafood',
-  'produce',
-  'dairy',
-  'grains',
-  'legumes',
-  'nuts',
-  'oils',
-  'spices',
-  'other',
-];
-
-const CATEGORY_COLOR_MAP: Record<IngredientType | 'other', string> = {
-  ...INGREDIENT_TYPE_COLORS,
-  other: 'bg-gray-500/20 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400',
-};
-
-const CATEGORY_EMOJI_MAP: Record<IngredientType | 'other', string> = {
-  ...INGREDIENT_TYPE_EMOJIS,
-  other: '📦',
-};
-
-const CATEGORY_OPTIONS: { value: string; text: string }[] = [
-  ...CATEGORY_ORDER.map((cat) => ({
-    value: cat,
-    text: `${CATEGORY_EMOJI_MAP[cat]} ${capitalize(cat)}`,
-  })),
-];
-
-const UNIT_OPTIONS: { value: string; text: string }[] = Object.entries(
-  MEASUREMENT_UNIT_LABELS
-).map(([value, text]) => ({ value, text }));
-
-// ─── Empty form state ─────────────────────────────────────────────────────────
-
-interface ItemFormState {
-  name: string;
-  ingredientId: string | null;
-  productId: string | null;
-  amount: string;
-  unit: MeasurementUnit | '';
-  category: IngredientType | 'other';
-  note: string;
-}
-
-function emptyForm(): ItemFormState {
-  return {
-    name: '',
-    ingredientId: null,
-    productId: null,
-    amount: '',
-    unit: '',
-    category: 'other',
-    note: '',
-  };
-}
-
-function itemToForm(item: ShoppingListItem): ItemFormState {
-  return {
-    name: item.name,
-    ingredientId: item.ingredientId,
-    productId: item.productId,
-    amount: item.amount !== null ? String(item.amount) : '',
-    unit: item.unit ?? '',
-    category: item.category,
-    note: item.note ?? '',
-  };
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-interface ItemRowProps {
-  item: ShoppingListItem;
-  ingredients: Ingredient[];
-  onToggle: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}
-
-function ItemRow({ item, ingredients, onToggle, onEdit, onDelete }: ItemRowProps) {
-  const unitLabel = item.unit ?? null;
-  
-  // Look up product info if available
-  const productInfo = useMemo(() => {
-    if (!item.ingredientId || !item.productId) return null;
-    const ingredient = ingredients.find((ing) => ing.id === item.ingredientId);
-    if (!ingredient) return null;
-    const product = ingredient.products.find((p) => p.id === item.productId);
-    const result = product ?? null;
-    return result;
-  }, [item.ingredientId, item.productId, ingredients]);
-
-  return (
-    <div
-      className={join(
-        'border-border flex items-start gap-3 rounded-lg border p-3 transition-colors',
-        item.checked ? 'bg-muted/40 opacity-60' : 'bg-card',
-      )}
-    >
-      <Checkbox size={18} checked={item.checked} onCheckedChange={onToggle} className='mt-0.5' />
-
-      {/* Content */}
-      <div className='min-w-0 flex-1'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <span
-            className={join(
-              'text-foreground text-sm font-medium',
-              item.checked && 'line-through',
-            )}
-          >
-            {item.name}
-          </span>
-          {(item.amount !== null) && (
-            <span className='text-muted-foreground text-xs'>
-              {item.amount}{unitLabel ? ` ${unitLabel}` : ''}
-            </span>
-          )}
-        </div>
-        {productInfo && (
-          <p className='text-muted-foreground mt-0.5 text-xs'>
-            🏪 {productInfo.retailer} – {productInfo.label}
-          </p>
-        )}
-        {item.note && (
-          <p className='text-muted-foreground mt-0.5 text-xs'>{item.note}</p>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className='flex shrink-0 items-center gap-1'>
-        <Button variant='tertiary' size='sm' onClick={onEdit} className='h-7 px-2 text-xs'>
-          Edit
-        </Button>
-        <Button
-          variant='tertiary'
-          size='sm'
-          onClick={onDelete}
-          className='text-destructive hover:text-destructive h-7 px-2 text-xs'
-        >
-          Delete
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Item form modal ──────────────────────────────────────────────────────────
-
-interface ItemFormModalProps {
-  isOpen: boolean;
-  mode: 'add' | 'edit';
-  form: ItemFormState;
-  ingredientOptions: { value: string; text: string }[];
-  productOptions: { value: string; text: string }[];
-  onFormChange: (updates: Partial<ItemFormState>) => void;
-  onSubmit: () => void;
-  onClose: () => void;
-}
-
-function ItemFormModal({
-  isOpen,
-  mode,
-  form,
-  ingredientOptions,
-  productOptions,
-  onFormChange,
-  onSubmit,
-  onClose,
-}: ItemFormModalProps) {
-  const isIngredientLinked = form.ingredientId !== null;
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={mode === 'add' ? '➕ Add Item' : '✏️ Edit Item'}
-    >
-      <div className='flex flex-col gap-4 pt-2'>
-        {/* Item type toggle */}
-        <div className='flex gap-2'>
-          <button
-            onClick={() => onFormChange({ ingredientId: null, productId: null })}
-            className={join(
-              'flex-1 rounded-lg border px-3 py-2 text-sm transition-colors',
-              !isIngredientLinked
-                ? 'border-accent bg-accent/10 text-accent font-medium'
-                : 'border-border text-foreground/70 hover:bg-muted',
-            )}
-          >
-            📝 Simple text
-          </button>
-          <button
-            onClick={() => onFormChange({ ingredientId: '' })}
-            className={join(
-              'flex-1 rounded-lg border px-3 py-2 text-sm transition-colors',
-              isIngredientLinked
-                ? 'border-accent bg-accent/10 text-accent font-medium'
-                : 'border-border text-foreground/70 hover:bg-muted',
-            )}
-          >
-            🍎 Ingredient
-          </button>
-        </div>
-
-        {/* Ingredient selector */}
-        {isIngredientLinked && ingredientOptions.length > 0 && (
-          <div>
-            <label className='text-foreground mb-1 block text-sm font-medium'>
-              Ingredient
-            </label>
-            <Select
-              options={[{ value: '', text: 'Select ingredient…' }, ...ingredientOptions]}
-              value={form.ingredientId ?? ''}
-              onChange={(val) =>
-                onFormChange({ ingredientId: val || null, productId: null })
-              }
-            />
-          </div>
-        )}
-
-        {/* Product selector */}
-        {isIngredientLinked && productOptions.length > 0 && (
-          <div>
-            <label className='text-foreground mb-1 block text-sm font-medium'>
-              Product <span className='text-muted-foreground font-normal'>(optional)</span>
-            </label>
-            <Select
-              options={[{ value: '', text: 'No specific product' }, ...productOptions]}
-              value={form.productId ?? ''}
-              onChange={(val) => onFormChange({ productId: val || null })}
-            />
-          </div>
-        )}
-
-        {/* Name */}
-        <div>
-          <label className='text-foreground mb-1 block text-sm font-medium'>
-            Name <span className='text-destructive'>*</span>
-          </label>
-          <Input
-            value={form.name}
-            onChange={(e) => onFormChange({ name: e.target.value })}
-            placeholder={isIngredientLinked ? 'Ingredient name' : 'e.g. Dish soap'}
-          />
-        </div>
-
-        {/* Amount + Unit */}
-        <div className='flex gap-3'>
-          <div className='flex-1'>
-            <label className='text-foreground mb-1 block text-sm font-medium'>
-              Amount <span className='text-muted-foreground font-normal'>(optional)</span>
-            </label>
-            <Input
-              type='number'
-              min='0'
-              step='any'
-              value={form.amount}
-              onChange={(e) => onFormChange({ amount: e.target.value })}
-              placeholder='e.g. 2'
-            />
-          </div>
-          <div className='flex-1'>
-            <label className='text-foreground mb-1 block text-sm font-medium'>
-              Unit <span className='text-muted-foreground font-normal'>(optional)</span>
-            </label>
-            <Select
-              options={[{ value: '', text: 'No unit' }, ...UNIT_OPTIONS]}
-              value={form.unit}
-              onChange={(val) => onFormChange({ unit: val as MeasurementUnit | '' })}
-            />
-          </div>
-        </div>
-
-        {/* Category */}
-        <div>
-          <label className='text-foreground mb-1 block text-sm font-medium'>
-            Category
-          </label>
-          <Select
-            options={CATEGORY_OPTIONS}
-            value={form.category}
-            onChange={(val) => onFormChange({ category: val as IngredientType | 'other' })}
-          />
-        </div>
-
-        {/* Note */}
-        <div>
-          <label className='text-foreground mb-1 block text-sm font-medium'>
-            Note <span className='text-muted-foreground font-normal'>(optional)</span>
-          </label>
-          <Textarea
-            value={form.note}
-            onChange={(e) => onFormChange({ note: e.target.value })}
-            placeholder='Any extra details…'
-            rows={2}
-          />
-        </div>
-
-        {/* Actions */}
-        <div className='flex justify-end gap-2 pt-1'>
-          <Button variant='secondary' onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={onSubmit} disabled={form.name.trim() === ''}>
-            {mode === 'add' ? 'Add Item' : 'Save Changes'}
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
+import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
+import {
+  ItemRow,
+  ItemFormModal,
+  emptyForm,
+  itemToForm,
+  type ItemFormState,
+} from '@components/shopping';
+import { capitalize } from '@utils/capitalize';
+import { MEAL_CATEGORY_OPTIONS } from '@/lib/meals';
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
@@ -383,7 +63,7 @@ export function ShoppingList() {
 
   const groupedItems = useMemo(() => {
     const groups = new Map<string, ShoppingListItem[]>();
-    for (const cat of CATEGORY_ORDER) {
+    for (const cat of INGREDIENT_TYPES) {
       const inCat = visibleItems.filter((i) => i.category === cat);
       if (inCat.length > 0) {
         groups.set(cat, inCat);
@@ -441,7 +121,7 @@ export function ShoppingList() {
   const handleSubmit = () => {
     if (form.name.trim() === '') return;
 
-    const amountParsed = form.amount !== '' ? parseFloat(form.amount) : null;
+    const amountParsed = form.amount !== '' ? Number(form.amount) : null;
     const unitParsed = form.unit !== '' ? (form.unit as MeasurementUnit) : null;
 
     if (editingItem) {
@@ -576,8 +256,8 @@ export function ShoppingList() {
           {/* Groups */}
           {Array.from(groupedItems.entries()).map(([cat, groupItems]) => {
             const category = cat as IngredientType | 'other';
-            const emoji = CATEGORY_EMOJI_MAP[category];
-            const colorClass = CATEGORY_COLOR_MAP[category];
+            const emoji = INGREDIENT_TYPE_EMOJIS[category];
+            const colorClass = INGREDIENT_TYPE_COLORS[category];
 
             return (
               <div key={cat} className='space-y-2'>
@@ -617,6 +297,7 @@ export function ShoppingList() {
         form={form}
         ingredientOptions={ingredientOptions}
         productOptions={productOptionsForIngredient}
+        categoryOptions={MEAL_CATEGORY_OPTIONS}
         onFormChange={handleFormChange}
         onSubmit={handleSubmit}
         onClose={handleClose}
