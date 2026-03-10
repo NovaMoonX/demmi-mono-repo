@@ -46,6 +46,7 @@ export interface Product {
 
 export interface Ingredient {
   id: string;
+  userId: string;
   name: string;
   type: IngredientType;
   imageUrl: string;

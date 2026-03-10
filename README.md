@@ -246,8 +246,9 @@ The Redux store is organized into five main slices:
 
 1. **Ingredients Slice** (`ingredientsSlice.ts`)
    - Manages ingredient inventory
-   - Actions: `createIngredient`, `updateIngredient`, `deleteIngredient`
-   - State: Array of ingredients with full CRUD support
+   - Sync Actions (demo mode): `createIngredient`, `updateIngredient`, `deleteIngredient`, `setIngredients`, `resetIngredients`
+   - Async Thunks (signed-in mode): `fetchIngredients`, `createIngredient`, `updateIngredient`, `deleteIngredient` (from `ingredientActions.ts`)
+   - State: Array of ingredients with full CRUD support (each ingredient includes a `userId` field and an embedded `products` array for pricing)
 
 2. **Meals Slice** (`mealsSlice.ts`)
    - Manages meal recipes collection

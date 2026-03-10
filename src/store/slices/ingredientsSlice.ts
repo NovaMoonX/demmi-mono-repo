@@ -1,6 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Ingredient } from '@lib/ingredients';
 import { generatedId } from '@utils/generatedId';
+import {
+  fetchIngredients,
+  createIngredient as createIngredientAsync,
+  updateIngredient as updateIngredientAsync,
+  deleteIngredient as deleteIngredientAsync,
+} from '@store/actions/ingredientActions';
 
 interface IngredientsState {
   items: Ingredient[];
@@ -42,6 +48,24 @@ const ingredientsSlice = createSlice({
     resetIngredients: (state) => {
       state.items = [];
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchIngredients.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(createIngredientAsync.fulfilled, (state, action) => {
+        state.items.push(action.payload);
+      })
+      .addCase(updateIngredientAsync.fulfilled, (state, action) => {
+        const index = state.items.findIndex((i) => i.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(deleteIngredientAsync.fulfilled, (state, action) => {
+        state.items = state.items.filter((i) => i.id !== action.payload);
+      });
   },
 });
 

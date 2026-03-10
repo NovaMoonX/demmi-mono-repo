@@ -1,8 +1,9 @@
 import { Ingredient } from './ingredients.types';
 
-export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>[] = [
+export const mockIngredients: Ingredient[] = [
   {
     id: 'ing-001',
+    userId: 'demo',
     name: 'Chicken Breast',
     type: 'meat',
     imageUrl:
@@ -29,9 +30,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-001',
   },
   {
     id: 'ing-002',
+    userId: 'demo',
     name: 'Broccoli',
     type: 'produce',
     imageUrl:
@@ -58,9 +62,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-002',
   },
   {
     id: 'ing-003',
+    userId: 'demo',
     name: 'Whole Milk',
     type: 'dairy',
     imageUrl:
@@ -87,9 +94,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-003',
   },
   {
     id: 'ing-004',
+    userId: 'demo',
     name: 'Brown Rice',
     type: 'grains',
     imageUrl:
@@ -116,9 +126,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: 'https://amazon.com/example',
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-004',
   },
   {
     id: 'ing-005',
+    userId: 'demo',
     name: 'Black Beans',
     type: 'legumes',
     imageUrl:
@@ -145,9 +158,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-005',
   },
   {
     id: 'ing-006',
+    userId: 'demo',
     name: 'Olive Oil',
     type: 'oils',
     imageUrl:
@@ -174,9 +190,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-006',
   },
   {
     id: 'ing-007',
+    userId: 'demo',
     name: 'Garlic Powder',
     type: 'spices',
     imageUrl:
@@ -203,9 +222,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-007',
   },
   {
     id: 'ing-008',
+    userId: 'demo',
     name: 'Almonds',
     type: 'nuts',
     imageUrl:
@@ -232,9 +254,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-008',
   },
   {
     id: 'ing-009',
+    userId: 'demo',
     name: 'Salmon Fillet',
     type: 'seafood',
     imageUrl:
@@ -261,9 +286,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-009',
   },
   {
     id: 'ing-010',
+    userId: 'demo',
     name: 'Tomatoes',
     type: 'produce',
     imageUrl:
@@ -290,9 +318,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-010',
   },
   {
     id: 'ing-011',
+    userId: 'demo',
     name: 'Ground Beef',
     type: 'meat',
     imageUrl:
@@ -319,9 +350,12 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-011',
   },
   {
     id: 'ing-012',
+    userId: 'demo',
     name: 'Cheddar Cheese',
     type: 'dairy',
     imageUrl:
@@ -348,5 +382,7 @@ export const mockIngredients: Omit<Ingredient, 'otherUnit' | 'defaultProductId'>
         url: null,
       },
     ],
+    otherUnit: null,
+    defaultProductId: 'prod-012',
   },
 ];

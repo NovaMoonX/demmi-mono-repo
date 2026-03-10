@@ -8,6 +8,7 @@ import {
   Label,
 } from '@moondreamsdev/dreamer-ui/components';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
+import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import {
   Ingredient,
   IngredientType,
@@ -18,12 +19,18 @@ import {
   MEASUREMENT_UNIT_OPTIONS,
   MEASUREMENT_UNIT_LABELS,
 } from '@lib/ingredients';
+import { DEMO_USER_ID } from '@lib/app';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import {
   createIngredient,
   updateIngredient,
   deleteIngredient,
 } from '@store/slices/ingredientsSlice';
+import {
+  createIngredient as createIngredientAsync,
+  updateIngredient as updateIngredientAsync,
+  deleteIngredient as deleteIngredientAsync,
+} from '@store/actions/ingredientActions';
 import { capitalize, generatedId } from '@/utils';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 
@@ -33,7 +40,9 @@ export function IngredientDetail() {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const ingredients = useAppSelector((state) => state.ingredients.items);
+  const isDemoActive = useAppSelector((state) => state.demo.isActive);
   const { confirm } = useActionModal();
+  const { addToast } = useToast();
 
   const isEditing = id !== 'new';
   const existingIngredient = isEditing
@@ -221,10 +230,10 @@ export function IngredientDetail() {
     setDefaultProductId(newDefaultId);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const ingredientData: Omit<Ingredient, 'id'> = {
+    const ingredientData: Omit<Ingredient, 'id' | 'userId'> = {
       name,
       type: type as IngredientType,
       currentAmount: Number(currentAmount) || 0,
@@ -245,22 +254,42 @@ export function IngredientDetail() {
       },
     };
 
-    if (isEditing && existingIngredient) {
-      dispatch(
-        updateIngredient({
-          id: existingIngredient.id,
-          updates: ingredientData,
-        }),
-      );
-      navigate(fromMealPath ?? '/ingredients');
-    } else {
-      const newIngredientId = generatedId('ingredient');
-      dispatch(createIngredient({ ...ingredientData, id: newIngredientId }));
-      if (fromMealPath) {
-        navigate(fromMealPath, { state: { newIngredientId } });
+    if (isDemoActive) {
+      if (isEditing && existingIngredient) {
+        dispatch(updateIngredient({ id: existingIngredient.id, updates: ingredientData }));
+        navigate(fromMealPath ?? '/ingredients');
       } else {
-        navigate('/ingredients');
+        const newIngredientId = generatedId('ingredient');
+        dispatch(createIngredient({ ...ingredientData, userId: DEMO_USER_ID, id: newIngredientId }));
+        if (fromMealPath) {
+          navigate(fromMealPath, { state: { newIngredientId } });
+        } else {
+          navigate('/ingredients');
+        }
       }
+      return;
+    }
+
+    try {
+      if (isEditing && existingIngredient) {
+        const updatedIngredient: Ingredient = { ...ingredientData, id: existingIngredient.id, userId: existingIngredient.userId };
+        await dispatch(updateIngredientAsync(updatedIngredient)).unwrap();
+        navigate(fromMealPath ?? '/ingredients');
+      } else {
+        const newIngredient = await dispatch(createIngredientAsync(ingredientData)).unwrap();
+        if (fromMealPath) {
+          navigate(fromMealPath, { state: { newIngredientId: newIngredient.id } });
+        } else {
+          navigate('/ingredients');
+        }
+      }
+    } catch (err) {
+      console.error(isEditing ? 'Failed to update ingredient:' : 'Failed to create ingredient:', err);
+      addToast({
+        title: isEditing ? 'Failed to update ingredient' : 'Failed to create ingredient',
+        description: 'An error occurred. Please try again.',
+        type: 'destructive',
+      });
     }
   };
 
@@ -275,9 +304,24 @@ export function IngredientDetail() {
       destructive: true,
     });
 
-    if (confirmed) {
+    if (!confirmed) return;
+
+    if (isDemoActive) {
       dispatch(deleteIngredient(existingIngredient.id));
       navigate('/ingredients');
+      return;
+    }
+
+    try {
+      await dispatch(deleteIngredientAsync(existingIngredient.id)).unwrap();
+      navigate('/ingredients');
+    } catch (err) {
+      console.error('Failed to delete ingredient:', err);
+      addToast({
+        title: 'Failed to delete ingredient',
+        description: 'An error occurred. Please try again.',
+        type: 'destructive',
+      });
     }
   };
 
