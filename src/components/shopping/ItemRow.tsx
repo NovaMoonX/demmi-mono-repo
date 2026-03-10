@@ -7,9 +7,9 @@ import type { Ingredient } from '@lib/ingredients';
 export interface ItemRowProps {
   item: ShoppingListItem;
   ingredients: Ingredient[];
-  onToggle: () => void;
+  onToggle: () => void | Promise<void>;
   onEdit: () => void;
-  onDelete: () => void;
+  onDelete: () => void | Promise<void>;
 }
 
 export function ItemRow({ item, ingredients, onToggle, onEdit, onDelete }: ItemRowProps) {

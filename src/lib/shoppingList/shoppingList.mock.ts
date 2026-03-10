@@ -1,8 +1,10 @@
+import { DEMO_USER_ID } from '@lib/app';
 import type { ShoppingListItem } from './shoppingList.types';
 
 export const mockShoppingList: ShoppingListItem[] = [
   {
     id: 'sl-001',
+    userId: DEMO_USER_ID,
     name: 'Chicken Breast',
     ingredientId: 'ing-001',
     productId: 'prod-001',
@@ -15,6 +17,7 @@ export const mockShoppingList: ShoppingListItem[] = [
   },
   {
     id: 'sl-002',
+    userId: DEMO_USER_ID,
     name: 'Broccoli',
     ingredientId: 'ing-002',
     productId: null,
@@ -27,6 +30,7 @@ export const mockShoppingList: ShoppingListItem[] = [
   },
   {
     id: 'sl-003',
+    userId: DEMO_USER_ID,
     name: 'Whole Milk',
     ingredientId: 'ing-003',
     productId: null,
@@ -39,6 +43,7 @@ export const mockShoppingList: ShoppingListItem[] = [
   },
   {
     id: 'sl-004',
+    userId: DEMO_USER_ID,
     name: 'Brown Rice',
     ingredientId: 'ing-004',
     productId: null,
@@ -51,6 +56,7 @@ export const mockShoppingList: ShoppingListItem[] = [
   },
   {
     id: 'sl-005',
+    userId: DEMO_USER_ID,
     name: 'Black Beans',
     ingredientId: 'ing-005',
     productId: null,
@@ -63,6 +69,7 @@ export const mockShoppingList: ShoppingListItem[] = [
   },
   {
     id: 'sl-006',
+    userId: DEMO_USER_ID,
     name: 'Olive Oil',
     ingredientId: 'ing-006',
     productId: null,
@@ -75,6 +82,7 @@ export const mockShoppingList: ShoppingListItem[] = [
   },
   {
     id: 'sl-007',
+    userId: DEMO_USER_ID,
     name: 'Almonds',
     ingredientId: 'ing-008',
     productId: null,
@@ -87,6 +95,7 @@ export const mockShoppingList: ShoppingListItem[] = [
   },
   {
     id: 'sl-008',
+    userId: DEMO_USER_ID,
     name: 'Salmon Fillet',
     ingredientId: 'ing-009',
     productId: null,
@@ -99,6 +108,7 @@ export const mockShoppingList: ShoppingListItem[] = [
   },
   {
     id: 'sl-009',
+    userId: DEMO_USER_ID,
     name: 'Dish soap',
     ingredientId: null,
     productId: null,

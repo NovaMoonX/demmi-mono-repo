@@ -206,6 +206,8 @@ A cooking app powered with local LLM using Ollama.
 - **Auto-fill from Ingredient**: Selecting a stored ingredient auto-fills the item name, category, and default unit
 - **Mock Data**: 9 sample shopping list items across all categories for demonstration
 - **Redux-Powered**: All state managed in a dedicated `shoppingListSlice` with actions: `addShoppingListItem`, `updateShoppingListItem`, `toggleShoppingListItem`, `deleteShoppingListItem`, `clearCheckedItems`, `setShoppingList`, `resetShoppingList`
+- **Firestore CRUD**: Full Firestore persistence for authenticated users via async thunks in `shoppingListActions.ts` (`fetchShoppingList`, `createShoppingListItem`, `updateShoppingListItem`, `deleteShoppingListItem`, `clearCheckedShoppingListItems`)
+- **Demo-Aware**: All mutations detect demo mode — demo sessions use local Redux actions only, authenticated sessions persist to Firestore with toast error feedback
 
 ## Tech Stack
 

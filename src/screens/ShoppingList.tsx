@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button, Badge } from '@moondreamsdev/dreamer-ui/components';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
+import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import {
   addShoppingListItem,
@@ -9,6 +10,14 @@ import {
   deleteShoppingListItem,
   clearCheckedItems,
 } from '@store/slices/shoppingListSlice';
+import {
+  fetchShoppingList,
+  createShoppingListItem as createShoppingListItemAsync,
+  updateShoppingListItem as updateShoppingListItemAsync,
+  deleteShoppingListItem as deleteShoppingListItemAsync,
+  clearCheckedShoppingListItems as clearCheckedShoppingListItemsAsync,
+} from '@store/actions/shoppingListActions';
+import { DEMO_USER_ID } from '@lib/app';
 import { INGREDIENT_TYPE_COLORS, INGREDIENT_TYPE_EMOJIS, INGREDIENT_TYPES } from '@lib/ingredients';
 import type { ShoppingListItem } from '@lib/shoppingList';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
@@ -27,13 +36,21 @@ import { MEAL_CATEGORY_OPTIONS } from '@/lib/meals';
 export function ShoppingList() {
   const dispatch = useAppDispatch();
   const { confirm } = useActionModal();
+  const { addToast } = useToast();
   const items = useAppSelector((state) => state.shoppingList.items);
   const ingredients = useAppSelector((state) => state.ingredients.items);
+  const isDemoActive = useAppSelector((state) => state.demo.isActive);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
   const [form, setForm] = useState<ItemFormState>(emptyForm());
   const [showChecked, setShowChecked] = useState(true);
+
+  useEffect(() => {
+    if (!isDemoActive) {
+      dispatch(fetchShoppingList());
+    }
+  }, [dispatch, isDemoActive]);
 
   // ── Derived data ─────────────────────────────────────────────────────────
 
@@ -118,43 +135,51 @@ export function ShoppingList() {
     setEditingItem(null);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (form.name.trim() === '') return;
 
     const amountParsed = form.amount !== '' ? Number(form.amount) : null;
     const unitParsed = form.unit !== '' ? (form.unit as MeasurementUnit) : null;
 
-    if (editingItem) {
-      dispatch(
-        updateShoppingListItem({
-          id: editingItem.id,
-          updates: {
-            name: form.name.trim(),
-            ingredientId: form.ingredientId || null,
-            productId: form.productId || null,
-            amount: amountParsed,
-            unit: unitParsed,
-            category: form.category,
-            note: form.note.trim() || null,
-          },
-        }),
-      );
-    } else {
-      dispatch(
-        addShoppingListItem({
-          name: form.name.trim(),
-          ingredientId: form.ingredientId || null,
-          productId: form.productId || null,
-          amount: amountParsed,
-          unit: unitParsed,
-          category: form.category,
-          note: form.note.trim() || null,
-          checked: false,
-        }),
-      );
+    const itemData = {
+      name: form.name.trim(),
+      ingredientId: form.ingredientId || null,
+      productId: form.productId || null,
+      amount: amountParsed,
+      unit: unitParsed,
+      category: form.category,
+      note: form.note.trim() || null,
+    };
+
+    if (isDemoActive) {
+      if (editingItem) {
+        dispatch(updateShoppingListItem({ id: editingItem.id, updates: itemData }));
+      } else {
+        dispatch(addShoppingListItem({ ...itemData, checked: false, userId: DEMO_USER_ID }));
+      }
+      handleClose();
+      return;
     }
 
-    handleClose();
+    try {
+      if (editingItem) {
+        await dispatch(
+          updateShoppingListItemAsync({ ...editingItem, ...itemData }),
+        ).unwrap();
+      } else {
+        await dispatch(
+          createShoppingListItemAsync({ ...itemData, checked: false }),
+        ).unwrap();
+      }
+      handleClose();
+    } catch (err) {
+      console.error(editingItem ? 'Failed to update item:' : 'Failed to add item:', err);
+      addToast({
+        title: editingItem ? 'Failed to update item' : 'Failed to add item',
+        description: 'An error occurred. Please try again.',
+        type: 'destructive',
+      });
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -166,8 +191,22 @@ export function ShoppingList() {
       destructive: true,
     });
 
-    if (confirmed) {
+    if (!confirmed) return;
+
+    if (isDemoActive) {
       dispatch(deleteShoppingListItem(id));
+      return;
+    }
+
+    try {
+      await dispatch(deleteShoppingListItemAsync(id)).unwrap();
+    } catch (err) {
+      console.error('Failed to remove item:', err);
+      addToast({
+        title: 'Failed to remove item',
+        description: 'An error occurred. Please try again.',
+        type: 'destructive',
+      });
     }
   };
 
@@ -180,8 +219,42 @@ export function ShoppingList() {
       destructive: true,
     });
 
-    if (confirmed) {
+    if (!confirmed) return;
+
+    if (isDemoActive) {
       dispatch(clearCheckedItems());
+      return;
+    }
+
+    try {
+      await dispatch(clearCheckedShoppingListItemsAsync()).unwrap();
+    } catch (err) {
+      console.error('Failed to clear checked items:', err);
+      addToast({
+        title: 'Failed to clear checked items',
+        description: 'An error occurred. Please try again.',
+        type: 'destructive',
+      });
+    }
+  };
+
+  const handleToggle = async (item: ShoppingListItem) => {
+    if (isDemoActive) {
+      dispatch(toggleShoppingListItem(item.id));
+      return;
+    }
+
+    try {
+      await dispatch(
+        updateShoppingListItemAsync({ ...item, checked: !item.checked }),
+      ).unwrap();
+    } catch (err) {
+      console.error('Failed to update item:', err);
+      addToast({
+        title: 'Failed to update item',
+        description: 'An error occurred. Please try again.',
+        type: 'destructive',
+      });
     }
   };
 
@@ -278,7 +351,7 @@ export function ShoppingList() {
                       key={item.id}
                       item={item}
                       ingredients={ingredients}
-                      onToggle={() => dispatch(toggleShoppingListItem(item.id))}
+                      onToggle={() => handleToggle(item)}
                       onEdit={() => openEditModal(item)}
                       onDelete={() => handleDelete(item.id)}
                     />

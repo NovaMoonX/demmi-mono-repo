@@ -2,6 +2,7 @@ import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 
 export interface ShoppingListItem {
   id: string;
+  userId: string;
   // For simple text items, name holds the text. For ingredient-linked items it
   // holds the ingredient name (or a custom override).
   name: string;
