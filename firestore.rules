@@ -20,6 +20,15 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.userId);
     }
 
+    match /meals/{mealId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource.data.userId)
+        && request.resource.data.userId == resource.data.userId;
+      allow delete: if isOwner(resource.data.userId);
+    }
+
     match /{document=**} {
       allow read: if false;
       allow write: if false;

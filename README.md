@@ -155,6 +155,12 @@ A cooking app powered with local LLM using Ollama.
   - **Ingredient Modal Entry**: Adding or editing an ingredient opens a modal with ingredient, quantity, and unit fields (unit is fully editable to allow custom units per meal)
   - **Create Ingredients Inline**: Jump directly to `/ingredients/new` from meal editing and return with the new ingredient ready to add
   - Form includes: title, description, category, prep time, cook time, servings, image upload, dynamic ingredient list, and interactive instructions list
+- **Cloud Persistence**: All meal changes are synced to Firestore for signed-in users
+  - **Create**: New meals are stored in Firestore under the authenticated user's account
+  - **Update**: Edits are persisted to Firestore with ownership verification (only the owner can update)
+  - **Delete**: Deletions are persisted to Firestore with ownership verification (only the owner can delete)
+  - **Error Toasts**: Toast notifications alert the user if any Firestore operation fails
+- **Demo Mode Isolation**: When demo mode is active, all meal changes update in-memory state only — nothing is written to Firestore
 - **Responsive Grid**: Adapts from 1 column (mobile) to 3 columns (desktop)
 - **Mock Data**: 8 sample meals across all categories for demonstration
 - **User-Centric Content**: Displays your meal recipes with personalized messaging
@@ -245,8 +251,9 @@ The Redux store is organized into five main slices:
 
 2. **Meals Slice** (`mealsSlice.ts`)
    - Manages meal recipes collection
-   - Actions: `createMeal`, `updateMeal`, `deleteMeal`
-   - State: Array of meals with full CRUD support (each meal includes an `ingredients` array for nutrition/price calculations)
+   - Sync Actions (demo mode): `createMeal`, `updateMeal`, `deleteMeal`, `setMeals`, `resetMeals`
+   - Async Thunks (signed-in mode): `fetchMeals`, `createMeal`, `updateMeal`, `deleteMeal` (from `mealActions.ts`)
+   - State: Array of meals with full CRUD support (each meal includes a `userId` field and an `ingredients` array for nutrition/price calculations)
 
 3. **Chats Slice** (`chatsSlice.ts`)
    - Manages chat conversations and messages
@@ -365,6 +372,7 @@ interface Ingredient {
 ```typescript
 interface Meal {
   id: string;
+  userId: string;      // owner's Firebase Auth uid
   title: string;
   description: string;
   category: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert' | 'drink';
@@ -464,6 +472,9 @@ src/
 ├── store/            # Redux state management
 │   ├── index.ts       # Store configuration
 │   ├── hooks.ts       # Typed Redux hooks (useAppDispatch, useAppSelector)
+│   ├── actions/       # Async Firestore thunks
+│   │   ├── chatActions.ts      # Chat Firestore CRUD thunks
+│   │   └── mealActions.ts      # Meal Firestore CRUD thunks
 │   └── slices/        # Redux slices
 │       ├── chatsSlice.ts       # Chat conversations state
 │       ├── ingredientsSlice.ts # Ingredients inventory state

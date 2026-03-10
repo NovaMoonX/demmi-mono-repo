@@ -11,9 +11,16 @@ import {
 } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
+import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import { Meal, MealCategory, MealIngredient, MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS } from '@lib/meals';
+import { DEMO_USER_ID } from '@lib/app';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import { createMeal, updateMeal, deleteMeal } from '@store/slices/mealsSlice';
+import {
+  createMeal as createMealAsync,
+  updateMeal as updateMealAsync,
+  deleteMeal as deleteMealAsync,
+} from '@store/actions/mealActions';
 import type { DynamicListItem } from '@moondreamsdev/dreamer-ui/components';
 import { MealIngredientSelector } from '@components/meals/MealIngredientSelector';
 
@@ -24,7 +31,9 @@ export function MealDetail() {
   const dispatch = useAppDispatch();
   const meals = useAppSelector((state) => state.meals.items);
   const allIngredients = useAppSelector((state) => state.ingredients.items);
+  const isDemoActive = useAppSelector((state) => state.demo.isActive);
   const { confirm } = useActionModal();
+  const { addToast } = useToast();
 
   const isEditing = id !== 'new';
   const existingMeal = isEditing ? meals.find((m) => m.id === id) : undefined;
@@ -105,7 +114,7 @@ export function MealDetail() {
     }
   };
 
-  const handleSubmit = (e: React.SyntheticEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     const instructionsList = instructions
@@ -119,7 +128,7 @@ export function MealDetail() {
         servings: item.servings > 0 ? item.servings : 1,
       }));
 
-    const mealData: Omit<Meal, 'id'> = {
+    const mealData: Omit<Meal, 'id' | 'userId'> = {
       title,
       description,
       category: category as MealCategory,
@@ -131,13 +140,32 @@ export function MealDetail() {
       ingredients: ingredientsList,
     };
 
-    if (isEditing && existingMeal) {
-      dispatch(updateMeal({ id: existingMeal.id, updates: mealData }));
-    } else {
-      dispatch(createMeal(mealData));
+    if (isDemoActive) {
+      if (isEditing && existingMeal) {
+        dispatch(updateMeal({ id: existingMeal.id, updates: mealData }));
+      } else {
+        dispatch(createMeal({ ...mealData, userId: DEMO_USER_ID }));
+      }
+      navigate('/meals');
+      return;
     }
 
-    navigate('/meals');
+    try {
+      if (isEditing && existingMeal) {
+        const updatedMeal: Meal = { ...existingMeal, ...mealData };
+        await dispatch(updateMealAsync(updatedMeal)).unwrap();
+      } else {
+        await dispatch(createMealAsync(mealData)).unwrap();
+      }
+      navigate('/meals');
+    } catch (err) {
+      console.error(isEditing ? 'Failed to update meal:' : 'Failed to create meal:', err);
+      addToast({
+        title: isEditing ? 'Failed to update meal' : 'Failed to create meal',
+        description: 'An error occurred. Please try again.',
+        type: 'destructive',
+      });
+    }
   };
 
   const handleDelete = async () => {
@@ -151,9 +179,24 @@ export function MealDetail() {
       destructive: true,
     });
 
-    if (confirmed) {
+    if (!confirmed) return;
+
+    if (isDemoActive) {
       dispatch(deleteMeal(existingMeal.id));
       navigate('/meals');
+      return;
+    }
+
+    try {
+      await dispatch(deleteMealAsync(existingMeal.id)).unwrap();
+      navigate('/meals');
+    } catch (err) {
+      console.error('Failed to delete meal:', err);
+      addToast({
+        title: 'Failed to delete meal',
+        description: 'An error occurred. Please try again.',
+        type: 'destructive',
+      });
     }
   };
 

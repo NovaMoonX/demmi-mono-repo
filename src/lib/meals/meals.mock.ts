@@ -3,6 +3,7 @@ import { Meal } from './meals.types';
 export const mockMeals: Meal[] = [
   {
     id: 'meal-001',
+    userId: 'demo',
     title: 'Classic Pancakes',
     // ingredients: whole milk (ing-003) x2 servings
     ingredients: [{ ingredientId: 'ing-003', servings: 2 }],
@@ -24,6 +25,7 @@ export const mockMeals: Meal[] = [
   },
   {
     id: 'meal-002',
+    userId: 'demo',
     title: 'Grilled Chicken Caesar Salad',
     // ingredients: chicken breast (ing-001) x2 servings, olive oil (ing-006) x1 serving, tomatoes (ing-010) x1 serving
     ingredients: [
@@ -49,6 +51,7 @@ export const mockMeals: Meal[] = [
   },
   {
     id: 'meal-003',
+    userId: 'demo',
     title: 'Spaghetti Carbonara',
     // ingredients: olive oil (ing-006) x1 serving, garlic powder (ing-007) x1 serving, cheddar cheese (ing-012) x2 servings
     ingredients: [
@@ -74,6 +77,7 @@ export const mockMeals: Meal[] = [
   },
   {
     id: 'meal-004',
+    userId: 'demo',
     title: 'Trail Mix Energy Balls',
     // ingredients: almonds (ing-008) x1 serving
     ingredients: [{ ingredientId: 'ing-008', servings: 1 }],
@@ -95,6 +99,7 @@ export const mockMeals: Meal[] = [
   },
   {
     id: 'meal-005',
+    userId: 'demo',
     title: 'Chocolate Lava Cake',
     ingredients: [],
     description: 'Decadent individual chocolate cakes with a molten center. A restaurant-quality dessert made at home.',
@@ -117,6 +122,7 @@ export const mockMeals: Meal[] = [
   },
   {
     id: 'meal-006',
+    userId: 'demo',
     title: 'Mango Smoothie',
     // ingredients: whole milk (ing-003) x1 serving
     ingredients: [{ ingredientId: 'ing-003', servings: 1 }],
@@ -138,6 +144,7 @@ export const mockMeals: Meal[] = [
   },
   {
     id: 'meal-007',
+    userId: 'demo',
     title: 'Avocado Toast',
     // ingredients: olive oil (ing-006) x0.5 servings
     ingredients: [{ ingredientId: 'ing-006', servings: 0.5 }],
@@ -160,6 +167,7 @@ export const mockMeals: Meal[] = [
   },
   {
     id: 'meal-008',
+    userId: 'demo',
     title: 'Beef Tacos',
     // ingredients: ground beef (ing-011) x4 servings, cheddar cheese (ing-012) x2 servings, tomatoes (ing-010) x2 servings
     ingredients: [

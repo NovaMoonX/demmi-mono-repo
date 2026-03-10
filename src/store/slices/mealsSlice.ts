@@ -1,6 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Meal } from '@lib/meals';
 import { generatedId } from '@utils/generatedId';
+import {
+  fetchMeals,
+  createMeal as createMealAsync,
+  updateMeal as updateMealAsync,
+  deleteMeal as deleteMealAsync,
+} from '@store/actions/mealActions';
 
 interface MealsState {
   items: Meal[];
@@ -42,6 +48,24 @@ const mealsSlice = createSlice({
     resetMeals: (state) => {
       state.items = [];
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchMeals.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(createMealAsync.fulfilled, (state, action) => {
+        state.items.push(action.payload);
+      })
+      .addCase(updateMealAsync.fulfilled, (state, action) => {
+        const index = state.items.findIndex((m) => m.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(deleteMealAsync.fulfilled, (state, action) => {
+        state.items = state.items.filter((m) => m.id !== action.payload);
+      });
   },
 });
 

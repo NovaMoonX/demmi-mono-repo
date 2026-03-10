@@ -7,6 +7,7 @@ export interface MealIngredient {
 
 export interface Meal {
   id: string;
+  userId: string;
   title: string;
   description: string;
   category: MealCategory;
