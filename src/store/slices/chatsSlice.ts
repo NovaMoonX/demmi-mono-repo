@@ -16,11 +16,13 @@ import {
 interface ChatsState {
   conversations: ChatConversation[];
   currentChatId: string | null;
+  selectedModel: string | null;
 }
 
 const initialState: ChatsState = {
   conversations: [],
   currentChatId: null,
+  selectedModel: null,
 };
 
 const chatsSlice = createSlice({
@@ -49,6 +51,21 @@ const chatsSlice = createSlice({
 
       if (conversation) {
         conversation.messages.push(action.payload.message);
+        conversation.lastUpdated = Date.now();
+      }
+    },
+    removeMessage: (
+      state,
+      action: PayloadAction<{ chatId: string; messageId: string }>
+    ) => {
+      const conversation = state.conversations.find(
+        (c) => c.id === action.payload.chatId
+      );
+
+      if (conversation) {
+        conversation.messages = conversation.messages.filter(
+          (m) => m.id !== action.payload.messageId
+        );
         conversation.lastUpdated = Date.now();
       }
     },
@@ -89,9 +106,32 @@ const chatsSlice = createSlice({
       state.conversations = action.payload;
       state.currentChatId = action.payload[0]?.id ?? null;
     },
+    setSelectedModel: (state, action: PayloadAction<string | null>) => {
+      state.selectedModel = action.payload;
+    },
+    updateMessageContent: (
+      state,
+      action: PayloadAction<{ chatId: string; messageId: string; content: string; model?: string | null }>
+    ) => {
+      const conversation = state.conversations.find(
+        (c) => c.id === action.payload.chatId
+      );
+      if (conversation) {
+        const message = conversation.messages.find(
+          (m) => m.id === action.payload.messageId
+        );
+        if (message) {
+          message.content = action.payload.content;
+          if (action.payload.model !== undefined) {
+            message.model = action.payload.model;
+          }
+        }
+      }
+    },
     resetChats: (state) => {
       state.conversations = [];
       state.currentChatId = null;
+      state.selectedModel = null;
     },
   },
   extraReducers: (builder) => {
@@ -147,10 +187,13 @@ export const {
   setCurrentChat,
   createConversation,
   addMessage,
+  removeMessage,
   updateConversation,
   deleteConversation,
   togglePinConversation,
   setConversations,
+  setSelectedModel,
+  updateMessageContent,
   resetChats,
 } = chatsSlice.actions;
 

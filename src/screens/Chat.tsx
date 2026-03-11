@@ -1,28 +1,31 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Button } from '@moondreamsdev/dreamer-ui/components';
+import { Button, Label, Toggle } from '@moondreamsdev/dreamer-ui/components';
 import { Textarea } from '@moondreamsdev/dreamer-ui/components';
 import { ScrollArea } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { ChatHistoryToggleIcon } from '@components/chat/ChatHistoryToggleIcon';
 import { ChatHistory } from '@components/chat/ChatHistory';
 import { ChatMessage } from '@components/chat/ChatMessage';
+import { OllamaModelSelector } from '@components/chat/OllamaModelSelector';
 import { useIsMobileDevice } from '@hooks/useIsMobileDevice';
+import { useOllamaModels } from '@hooks/useOllamaModels';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import { store } from '@store/index';
 import {
   setCurrentChat,
   createConversation,
   addMessage,
+  removeMessage,
+  updateMessageContent,
   deleteConversation,
   togglePinConversation,
 } from '@store/slices/chatsSlice';
-import {
-  ChatMessage as ChatMessageType,
-  generateMockResponse,
-} from '@lib/chat';
+import { ChatMessage as ChatMessageType } from '@lib/chat';
+import type { AbortableAsyncIterator } from 'ollama';
+import type { ChatResponse } from 'ollama/browser';
+import { startChatStream } from '@lib/ollama';
 import { generatedId } from '@utils/generatedId';
 
-// Delay to allow UI to render before scrolling to bottom
 const SCROLL_DELAY_MS = 100;
 
 export function Chat() {
@@ -34,7 +37,26 @@ export function Chat() {
   const isMobileDevice = useIsMobileDevice();
   const [isHistoryOpen, setIsHistoryOpen] = useState(() => !isMobileDevice);
   const [isSending, setIsSending] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const activeStreamRef = useRef<AbortableAsyncIterator<ChatResponse> | null>(null);
+  const currentGenerationId = useRef<string | null>(null);
+  const cancelledRef = useRef(false);
+  const firstTokenReceivedRef = useRef(false);
+  const activeChatIdRef = useRef<string | null>(null);
+  const activeMessageIdRef = useRef<string | null>(null);
+
+  const {
+    availableModels,
+    selectedModel,
+    isLoading: isLoadingModels,
+    error: modelError,
+    selectModel,
+    isPulling,
+    pullProgress,
+    pullError,
+    pullMistral,
+  } = useOllamaModels();
 
   const currentChat = conversations.find((c) => c.id === currentChatId);
 
@@ -48,67 +70,159 @@ export function Chat() {
     scrollToBottom();
   }, [currentChat?.messages, scrollToBottom]);
 
+  const handleCancelStream = () => {
+    cancelledRef.current = true;
+    currentGenerationId.current = null;
+    
+    if (!firstTokenReceivedRef.current && activeChatIdRef.current && activeMessageIdRef.current) {
+      dispatch(removeMessage({
+        chatId: activeChatIdRef.current,
+        messageId: activeMessageIdRef.current,
+      }));
+    }
+    
+    if (activeStreamRef.current) {
+      activeStreamRef.current.abort();
+      activeStreamRef.current = null;
+    }
+    
+    firstTokenReceivedRef.current = false;
+    activeChatIdRef.current = null;
+    activeMessageIdRef.current = null;
+    setIsSending(false);
+  };
+
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isSending) {
+    if (!inputValue.trim() || isSending || !selectedModel) {
       return;
     }
 
     const messageContent = inputValue.trim();
     setInputValue('');
     setIsSending(true);
+    
+    const generationId = generatedId('msg');
+    currentGenerationId.current = generationId;
+    cancelledRef.current = false;
+    firstTokenReceivedRef.current = false;
 
-    // Create user message
     const userMessage: ChatMessageType = {
       id: generatedId('msg'),
       role: 'user',
       content: messageContent,
       timestamp: Date.now(),
+      model: null,
     };
 
-    // If no current chat, create a new one
+    const assistantMessageId = generatedId('msg');
+    const assistantMessage: ChatMessageType = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      model: null,
+    };
+
+    let targetChatId: string | null;
+
     if (!currentChatId) {
       const newConversation = {
         title: messageContent.slice(0, 50) + (messageContent.length > 50 ? '...' : ''),
-        messages: [userMessage],
+        messages: [userMessage, assistantMessage],
         isPinned: false,
         lastUpdated: Date.now(),
         userId: authUser?.uid ?? 'demo',
       };
 
       dispatch(createConversation(newConversation));
-
-      // Simulate AI response
-      setTimeout(() => {
-        const assistantMessage: ChatMessageType = {
-          id: generatedId('msg'),
-          role: 'assistant',
-          content: generateMockResponse(messageContent),
-          timestamp: Date.now(),
-        };
-
-        // Get the current chat ID from the Redux store after createConversation has set it
-        const currentChatId = store.getState().chats.currentChatId;
-        if (currentChatId) {
-          dispatch(addMessage({ chatId: currentChatId, message: assistantMessage }));
-        }
-        setIsSending(false);
-      }, 1000);
+      targetChatId = store.getState().chats.currentChatId;
     } else {
-      // Add message to existing chat
+      targetChatId = currentChatId;
       dispatch(addMessage({ chatId: currentChatId, message: userMessage }));
+      dispatch(addMessage({ chatId: currentChatId, message: assistantMessage }));
+    }
 
-      // Simulate AI response
-      setTimeout(() => {
-        const assistantMessage: ChatMessageType = {
-          id: generatedId('msg'),
-          role: 'assistant',
-          content: generateMockResponse(messageContent),
-          timestamp: Date.now(),
-        };
+    if (!targetChatId) {
+      setIsSending(false);
+      return;
+    }
 
-        dispatch(addMessage({ chatId: currentChatId, message: assistantMessage }));
+    const chatIdForStream = targetChatId;
+    const modelUsed = selectedModel;
+    
+    activeChatIdRef.current = chatIdForStream;
+    activeMessageIdRef.current = assistantMessageId;
+
+    try {
+      const allMessages = store
+        .getState()
+        .chats.conversations.find((c) => c.id === chatIdForStream)
+        ?.messages.filter((m) => m.id !== assistantMessageId) ?? [];
+
+      const stream = await startChatStream(modelUsed, allMessages);
+      
+      if (currentGenerationId.current !== generationId || cancelledRef.current) {
+        stream.abort();
+        if (!firstTokenReceivedRef.current) {
+          dispatch(removeMessage({
+            chatId: chatIdForStream,
+            messageId: assistantMessageId,
+          }));
+        }
+        return;
+      }
+      
+      activeStreamRef.current = stream;
+
+      let accumulatedContent = '';
+
+      for await (const chunk of stream) {
+        if (currentGenerationId.current !== generationId || cancelledRef.current) {
+          break;
+        }
+        
+        if (!firstTokenReceivedRef.current) {
+          firstTokenReceivedRef.current = true;
+        }
+        
+        accumulatedContent += chunk.message.content;
+        dispatch(
+          updateMessageContent({
+            chatId: chatIdForStream,
+            messageId: assistantMessageId,
+            content: accumulatedContent,
+            model: modelUsed,
+          }),
+        );
+      }
+    } catch (err) {
+      const isAbort =
+        err instanceof Error &&
+        (err.name === 'AbortError' || err.message.toLowerCase().includes('abort'));
+
+      if (!isAbort) {
+        const errorContent =
+          err instanceof Error
+            ? `⚠️ Ollama error: ${err.message}`
+            : '⚠️ Could not reach Ollama. Make sure it is running on localhost:11434.';
+
+        dispatch(
+          updateMessageContent({
+            chatId: chatIdForStream,
+            messageId: assistantMessageId,
+            content: errorContent,
+          }),
+        );
+      }
+    } finally {
+      if (currentGenerationId.current === generationId) {
+        activeStreamRef.current = null;
+        currentGenerationId.current = null;
+        firstTokenReceivedRef.current = false;
+        activeChatIdRef.current = null;
+        activeMessageIdRef.current = null;
         setIsSending(false);
-      }, 1000);
+      }
     }
   };
 
@@ -136,11 +250,10 @@ export function Chat() {
     }
   };
 
-  const isSendDisabled = !inputValue.trim() || isSending;
+  const isSendDisabled = !inputValue.trim() || isSending || !selectedModel;
 
   return (
     <div className="h-full flex overflow-hidden">
-      {/* Chat History Sidebar */}
       <div
         className={join(
           'transition-all duration-300 border-r border-border',
@@ -159,9 +272,7 @@ export function Chat() {
         )}
       </div>
 
-      {/* Main Chat Area */}
       <div className="flex-1 flex flex-col bg-background">
-        {/* Chat Header */}
         <div className="border-b border-border p-4 bg-card">
           <div className="flex items-start justify-between gap-4">
             <div
@@ -178,7 +289,7 @@ export function Chat() {
                 <ChatHistoryToggleIcon />
               </button>
             </div>
-            <div className="flex flex-1 flex-col items-end text-right">
+            <div className="flex flex-1 flex-col items-end gap-1 text-right">
               <h2 className="text-lg font-semibold text-foreground">
                 {currentChat?.title ?? 'New Chat'}
               </h2>
@@ -187,28 +298,50 @@ export function Chat() {
                   {currentChat.messages.length} message{currentChat.messages.length !== 1 ? 's' : ''}
                 </p>
               )}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="toggle-details" className='text-muted-foreground text-sm'>
+                  Show message details
+                </Label>
+                <Toggle
+                  id="toggle-details"
+                  checked={showDetails}
+                  size='sm'
+                  onCheckedChange={() => setShowDetails((v) => !v)}
+                  aria-label="Toggle message details"
+                />
+
+                <OllamaModelSelector
+                  models={availableModels}
+                  selectedModel={selectedModel}
+                  isLoading={isLoadingModels}
+                  error={modelError}
+                  disabled={isSending}
+                  isPulling={isPulling}
+                  pullProgress={pullProgress}
+                  pullError={pullError}
+                  onSelectModel={selectModel}
+                  onPullMistral={pullMistral}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Messages Area */}
         <ScrollArea className="flex-1 p-4 md:p-6">
           {currentChat ? (
             <div className="max-w-4xl mx-auto">
-              {currentChat.messages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
+              {currentChat.messages.map((message, index) => (
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                  isStreaming={
+                    isSending &&
+                    message.role === 'assistant' &&
+                    index === currentChat.messages.length - 1
+                  }
+                  showDetails={showDetails}
+                />
               ))}
-              {isSending && (
-                <div className="flex justify-start mb-4">
-                  <div className="max-w-[80%] md:max-w-[70%] rounded-2xl px-4 py-3 bg-muted text-foreground">
-                    <div className="flex gap-1">
-                      <span className="animate-bounce">●</span>
-                      <span className="animate-bounce [animation-delay:0.2s]">●</span>
-                      <span className="animate-bounce [animation-delay:0.4s]">●</span>
-                    </div>
-                  </div>
-                </div>
-              )}
               <div ref={messagesEndRef} />
             </div>
           ) : (
@@ -226,7 +359,6 @@ export function Chat() {
           )}
         </ScrollArea>
 
-        {/* Input Area */}
         <div className="border-t border-border p-4 bg-card">
           <div className="max-w-4xl mx-auto">
             <div className="relative">
@@ -234,20 +366,33 @@ export function Chat() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
-                className="min-h-11 max-h-50 resize-none pr-12"
-                disabled={isSending}
+                placeholder={selectedModel ? 'Type your message... (Enter to send, Shift+Enter for new line)' : 'Select a model above to start chatting...'}
+                className="min-h-11 max-h-50 resize-none pr-24"
+                disabled={isSending || !selectedModel}
               />
-              <Button
-                onClick={handleSendMessage}
-                disabled={isSendDisabled}
-                variant="primary"
-                className="absolute bottom-2.5 right-1.5  text-muted-foreground hover:text-foreground rounded-full!"
-                aria-label="Send message"
-                size='sm'
-              >
-                ↑
-              </Button>
+              <div className="absolute bottom-2.5 right-1.5 flex gap-1">
+                {isSending && (
+                  <Button
+                    onClick={handleCancelStream}
+                    variant="secondary"
+                    className="rounded-full!"
+                    aria-label="Cancel response"
+                    size="sm"
+                  >
+                    ✕
+                  </Button>
+                )}
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={isSendDisabled}
+                  variant="primary"
+                  className="text-muted-foreground hover:text-foreground rounded-full!"
+                  aria-label="Send message"
+                  size="sm"
+                >
+                  ↑
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -257,3 +402,4 @@ export function Chat() {
 }
 
 export default Chat;
+

@@ -28,19 +28,27 @@ A cooking app powered with local LLM using Ollama.
 - **Seamless UX**: Automatic navigation after successful authentication
 
 ### 💬 Chat
+- **Local LLM via Ollama**: Connects to [Ollama](https://ollama.com) running on your machine (localhost:11434) for fully private, offline AI responses
+- **Model Selection**: Dropdown in the chat header lists all text models available in your local Ollama installation — pick any model on the fly; selector is disabled while a response is streaming
+- **Auto-download Mistral**: If no text models are installed, a "Download Mistral" button appears. Clicking it streams the pull progress (status text + animated progress bar with percentage) directly in the header until the model is ready
+- **Streaming Responses**: Assistant replies stream token-by-token in real time, just like a native chat app — no waiting for the full response
+- **Streaming Cursor**: A blinking cursor shows while the assistant is typing; a bouncing dots indicator appears before the first token arrives
+- **Cancel Response**: A cancel button (✕) appears next to the send button while a response is streaming — clicking it immediately interrupts the generation and keeps the partial response visible
+- **Message Details Toggle**: "Show details / Hide details" button in the header reveals the timestamp and the model name below each message
+- **Per-message Model Tracking**: Each assistant message stores which Ollama model generated it, shown as a monospace badge when details are visible
+- **Meal-Focused System Prompt**: The assistant is instructed to focus on cooking, recipes, meal planning, ingredients, and nutrition
+- **Ollama Status Indicator**: The model selector shows "Connecting to Ollama..." on load, "⚠️ Ollama offline" if the service is unreachable, and falls back gracefully with an error message in chat
+- **Full Conversation Context**: Each request sends the full conversation history so the assistant can reference earlier messages
 - **AI Chat Interface**: Modern ChatGPT-style interface for cooking assistance
-- **Organized AI Workflow**: Use a local LLM to converse, create meals, and edit ingredients with minimal friction
 - **Message Bubbles**: User messages (orange) and assistant responses (gray) with distinct styling
 - **Chat History**: Collapsible sidebar showing all conversations
 - **Header Sidebar Toggle**: History toggle icon in the chat header for quick access
 - **Pinned Chats**: Pin important conversations to keep them at the top
 - **New Chat**: Start fresh conversations with a single click
-- **Mock AI Responses**: Context-aware responses based on keywords (recipe, ingredient, meal prep)
 - **Auto-scroll**: Messages automatically scroll into view
-- **Typing Indicator**: Animated loading state while waiting for responses
 - **Empty State**: Beautiful prompt for new conversations
 - **Keyboard Support**: Enter to send, Shift+Enter for new lines
-- **Embedded Send Button**: Discreet send action inside the message input
+- **Embedded Send Button**: Discreet send action inside the message input — disabled until a model is selected
 - **Message Count**: Shows number of messages in each conversation
 - **Delete Chats**: Remove conversations from history
 - **Responsive Design**: Works seamlessly on mobile and desktop
@@ -225,6 +233,7 @@ A cooking app powered with local LLM using Ollama.
 - [React Redux](https://react-redux.js.org/) - React bindings for Redux
 - [Dreamer UI](https://www.npmjs.com/package/@moondreamsdev/dreamer-ui) - Component library
 - [Firebase](https://firebase.google.com/) - Authentication and backend services
+- [Ollama](https://ollama.com/) - Local LLM runtime for AI chat
 - [Vite](https://vite.dev/) - Build tool
 
 ## Design & Visual Aesthetic
@@ -434,6 +443,27 @@ interface PlannedMeal {
 3. **Enable Email Verification**
    - In Firebase Console, go to Authentication > Templates
    - Customize the email verification template (optional)
+
+### Ollama Setup
+
+Demmi's Chat feature requires [Ollama](https://ollama.com) running locally.
+
+1. **Install Ollama** — Download from [ollama.com](https://ollama.com/download)
+
+2. **Pull at least one model**, for example:
+   ```bash
+   ollama pull llama3.2
+   ```
+
+3. **Start Ollama** (it usually starts automatically):
+   ```bash
+   ollama serve
+   ```
+   Ollama listens on `http://localhost:11434` by default.
+
+4. Open the **Chat** tab in Demmi — available models will appear in the dropdown in the header. Select a model and start chatting.
+
+> **Note:** If Ollama is not running, the model selector shows "⚠️ Ollama offline" and chat is disabled. Responses stream token-by-token directly from your local machine — no data leaves your computer.
 
 ### Development
 

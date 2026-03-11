@@ -5,6 +5,7 @@ export interface ChatMessage {
   role: MessageRole;
   content: string;
   timestamp: number; // milliseconds timestamp
+  model: string | null; // model used to generate this message (null for user messages)
 }
 
 export interface ChatConversation {
