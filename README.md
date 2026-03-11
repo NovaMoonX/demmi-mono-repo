@@ -35,6 +35,7 @@ A cooking app powered with local LLM using Ollama.
 - **Model Selection**: Dropdown in the chat header lists all text models available in your local Ollama installation — pick any model on the fly; selector is disabled while a response is streaming
 - **Auto-download Mistral**: If no text models are installed, a "Download Mistral" button appears. Clicking it streams the pull progress (status text + animated progress bar with percentage) directly in the header until the model is ready
 - **Streaming Responses**: Assistant replies stream token-by-token in real time, just like a native chat app — no waiting for the full response
+- **Markdown Rendering**: Agent responses are rendered as rich Markdown — headings, bold/italic text, inline code, code blocks, lists, and more are all formatted for readability
 - **Streaming Cursor**: A blinking cursor shows while the assistant is typing; a bouncing dots indicator appears before the first token arrives
 - **Cancel Response**: A cancel button (✕) appears next to the send button while a response is streaming — clicking it immediately interrupts the generation and keeps the partial response visible
 - **Message Details Toggle**: "Show details / Hide details" button in the header reveals the timestamp and the model name below each message
@@ -237,6 +238,7 @@ A cooking app powered with local LLM using Ollama.
 - [Dreamer UI](https://www.npmjs.com/package/@moondreamsdev/dreamer-ui) - Component library
 - [Firebase](https://firebase.google.com/) - Authentication and backend services
 - [Ollama](https://ollama.com/) - Local LLM runtime for AI chat
+- [React Markdown](https://github.com/remarkjs/react-markdown) - Markdown rendering for agent responses
 - [Vite](https://vite.dev/) - Build tool
 
 ## Design & Visual Aesthetic

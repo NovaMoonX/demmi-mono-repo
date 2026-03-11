@@ -1,3 +1,4 @@
+import ReactMarkdown from 'react-markdown';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { ChatMessage as ChatMessageType } from '@lib/chat';
 import { CopyButton } from '@moondreamsdev/dreamer-ui/components';
@@ -55,9 +56,13 @@ export function ChatMessage({
               <span className='animate-bounce [animation-delay:0.2s]'>●</span>
               <span className='animate-bounce [animation-delay:0.4s]'>●</span>
             </div>
-          ) : (
+          ) : isUser ? (
             <div className='wrap-break-word whitespace-pre-wrap'>
               {messageContent}
+            </div>
+          ) : (
+            <div className='prose prose-sm dark:prose-invert max-w-none'>
+              <ReactMarkdown>{messageContent}</ReactMarkdown>
               {isStreaming && (
                 <span className='ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-current align-middle' />
               )}
