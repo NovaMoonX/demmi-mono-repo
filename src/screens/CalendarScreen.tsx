@@ -13,7 +13,6 @@ import {
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useActionModal, useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
-import { addPlannedMeal, updatePlannedMeal, removePlannedMeal } from '@store/slices/calendarSlice';
 import {
   createPlannedMeal as createPlannedMealAsync,
   updatePlannedMeal as updatePlannedMealAsync,
@@ -22,7 +21,6 @@ import {
 import { PlannedMeal, CalendarView, NutrientTotals } from '@lib/calendar';
 import { Meal, MEAL_CATEGORY_OPTIONS, MealCategory } from '@lib/meals';
 import { Ingredient } from '@lib/ingredients';
-import { DEMO_USER_ID } from '@lib/app';
 import { TotalsCard, DayCard, DayDetailModal, MonthView } from '@components/calendar';
 import { getPricePerServing } from '@/lib/ingredients/ingredients.utils';
 import { formatDateFull, formatDateInput, formatDateShort, getDaysInRange, getStartOfDay, getWeekStart, parseDateInput } from '@/utils';
@@ -64,7 +62,6 @@ export function CalendarScreen() {
   const plannedMeals = useAppSelector((state) => state.calendar.plannedMeals);
   const meals = useAppSelector((state) => state.meals.items);
   const ingredients = useAppSelector((state) => state.ingredients.items);
-  const isDemoActive = useAppSelector((state) => state.demo.isActive);
   const dispatch = useAppDispatch();
   const { confirm } = useActionModal();
   const { addToast } = useToast();
@@ -167,16 +164,6 @@ export function CalendarScreen() {
       notes: formNotes.trim() || null,
     };
 
-    if (isDemoActive) {
-      if (editingPlannedMeal) {
-        dispatch(updatePlannedMeal({ id: editingPlannedMeal.id, updates: data }));
-      } else {
-        dispatch(addPlannedMeal({ ...data, userId: DEMO_USER_ID }));
-      }
-      handleModalClose();
-      return;
-    }
-
     try {
       if (editingPlannedMeal) {
         const updatedPlannedMeal: PlannedMeal = { ...editingPlannedMeal, ...data };
@@ -208,11 +195,6 @@ export function CalendarScreen() {
 
     if (!confirmed) return;
 
-    if (isDemoActive) {
-      dispatch(removePlannedMeal(pm.id));
-      return;
-    }
-
     try {
       await dispatch(deletePlannedMealAsync(pm.id)).unwrap();
     } catch (err) {
@@ -238,12 +220,6 @@ export function CalendarScreen() {
     });
 
     if (!confirmed) return;
-
-    if (isDemoActive) {
-      dispatch(removePlannedMeal(editingPlannedMeal.id));
-      handleModalClose();
-      return;
-    }
 
     try {
       await dispatch(deletePlannedMealAsync(editingPlannedMeal.id)).unwrap();

@@ -115,7 +115,7 @@ export function Sidebar() {
             Navigation
           </h2>
           {tabs.map((tab) => {
-            const isActive = currentPath === tab.path;
+            const isCurrentTab = currentPath === tab.path;
 
             return (
               <button
@@ -123,7 +123,7 @@ export function Sidebar() {
                 onClick={() => handleTabClick(tab.path)}
                 className={join(
                   'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors',
-                  isActive
+                  isCurrentTab
                     ? 'bg-accent text-accent-foreground font-medium'
                     : 'text-foreground/80 hover:bg-muted hover:text-foreground',
                 )}

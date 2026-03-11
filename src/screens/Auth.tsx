@@ -12,6 +12,8 @@ export function Auth() {
   const isDemoActive = useAppSelector((state) => state.demo.isActive);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // If user is already authenticated or demo is active, redirect to chat
+  // since there's no reason to show the auth screen
   useEffect(() => {
     if (!loading && (user || isDemoActive)) {
       navigate('/chat');

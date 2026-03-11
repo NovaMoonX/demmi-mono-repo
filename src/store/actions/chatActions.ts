@@ -1,4 +1,5 @@
 import { ChatConversation, ChatMessage } from '@lib/chat';
+import { DEMO_USER_ID } from '@lib/app';
 import { db } from '@lib/firebase/firebase.config';
 import { generatedId } from '@utils/generatedId';
 import { createAsyncThunk } from '@reduxjs/toolkit';
@@ -25,20 +26,18 @@ function isDemoActive(getState: () => unknown): boolean {
 
 /**
  * Fetch all chat conversations belonging to the current user from Firestore.
- * No-ops silently when demo mode is active.
+ * In demo mode, returns the current conversations unchanged to preserve demo data.
  */
 export const fetchChats = createAsyncThunk(
   'chats/fetchChats',
   async (_, { getState }) => {
     const state = getState() as RootState;
+
     try {
       const userId = state.user.user?.uid;
       if (!userId) throw new Error('You must be signed in to fetch chats.');
 
-      const q = query(
-        collection(db, 'chats'),
-        where('userId', '==', userId),
-      );
+      const q = query(collection(db, 'chats'), where('userId', '==', userId));
       const snapshot = await getDocs(q);
       const chats: ChatConversation[] = snapshot.docs.map(
         (d: QueryDocumentSnapshot) => d.data() as ChatConversation,
@@ -53,26 +52,30 @@ export const fetchChats = createAsyncThunk(
 );
 
 /**
- * Create a new chat conversation in Firestore for the current user.
- * No-ops silently when demo mode is active.
+ * Create a new chat conversation. In demo mode, persists to local Redux state only.
+ * In normal mode, persists to Firestore.
  */
 export const createChat = createAsyncThunk(
   'chats/createChat',
   async (params: Omit<ChatConversation, 'id' | 'userId'>, { getState }) => {
-    const state = getState() as RootState
+    const state = getState() as RootState;
+    const chatId = generatedId('chat');
+
+    if (isDemoActive(getState)) {
+      const newChat: ChatConversation = {
+        ...params,
+        id: chatId,
+        userId: DEMO_USER_ID,
+      };
+      return newChat;
+    }
+
     try {
       const userId = state.user.user?.uid;
       if (!userId) throw new Error('You must be signed in to create a chat.');
 
-      const chatId = generatedId('chat');
       const chatDocRef = doc(db, 'chats', chatId);
-
-      const newChat: ChatConversation = {
-        ...params,
-        id: chatId,
-        userId,
-      };
-
+      const newChat: ChatConversation = { ...params, id: chatId, userId };
       await setDoc(chatDocRef, newChat);
       return newChat;
     } catch (err) {
@@ -80,17 +83,20 @@ export const createChat = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
  * Update metadata (e.g. title, isPinned, lastUpdated) for a chat conversation.
  * Messages and userId are not written to Firestore via this thunk.
- * No-ops silently when demo mode is active.
+ * In demo mode, updates local Redux state only.
  */
 export const updateChat = createAsyncThunk(
   'chats/updateChat',
   async (chat: ChatConversation, { getState }) => {
+    if (isDemoActive(getState)) {
+      return chat;
+    }
+
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
@@ -106,7 +112,12 @@ export const updateChat = createAsyncThunk(
         if (existing.userId !== userId)
           throw new Error('You can only update your own chats.');
 
-        const { id: _id, userId: _userId, messages: _messages, ...updatableFields } = chat;
+        const {
+          id: _id,
+          userId: _userId,
+          messages: _messages,
+          ...updatableFields
+        } = chat;
         tx.update(chatDocRef, updatableFields);
       });
 
@@ -116,16 +127,19 @@ export const updateChat = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
- * Delete a chat conversation from Firestore. Only the owner may delete.
- * No-ops silently when demo mode is active.
+ * Delete a chat conversation. In demo mode, removes from local Redux state only.
+ * In normal mode, deletes from Firestore.
  */
 export const deleteChat = createAsyncThunk(
   'chats/deleteChat',
   async (chatId: string, { getState }) => {
+    if (isDemoActive(getState)) {
+      return chatId;
+    }
+
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
@@ -150,19 +164,27 @@ export const deleteChat = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
- * Append a message to a chat conversation in Firestore using arrayUnion.
- * No-ops silently when demo mode is active.
+ * Append a message to a chat conversation using arrayUnion.
+ * In demo mode, updates local Redux state only.
+ * In normal mode, updates Firestore.
  */
 export const addChatMessage = createAsyncThunk(
   'chats/addChatMessage',
-  async ({ chatId, message }: { chatId: string; message: ChatMessage }) => {
+  async (
+    { chatId, message }: { chatId: string; message: ChatMessage },
+    { getState },
+  ) => {
+    const lastUpdated = Date.now();
+
+    if (isDemoActive(getState)) {
+      return { chatId, message, lastUpdated };
+    }
+
     try {
       const chatDocRef = doc(db, 'chats', chatId);
-      const lastUpdated = Date.now();
 
       await updateDoc(chatDocRef, {
         messages: arrayUnion(message),
@@ -175,16 +197,24 @@ export const addChatMessage = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
- * Fetch the messages array for a specific chat conversation from Firestore.
- * No-ops silently when demo mode is active.
+ * Fetch the messages array for a specific chat conversation.
+ * In demo mode, returns the current messages unchanged to preserve demo data.
+ * In normal mode, fetches from Firestore.
  */
 export const fetchChatMessages = createAsyncThunk(
   'chats/fetchChatMessages',
-  async (chatId: string) => {
+  async (chatId: string, { getState }) => {
+    if (isDemoActive(getState)) {
+      const state = getState() as RootState;
+      const conversation = state.chats.conversations.find(
+        (c) => c.id === chatId,
+      );
+      return { chatId, messages: conversation?.messages ?? [] };
+    }
+
     try {
       const chatDocRef = doc(db, 'chats', chatId);
       const chatSnap = await getDoc(chatDocRef);
@@ -198,5 +228,4 @@ export const fetchChatMessages = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );

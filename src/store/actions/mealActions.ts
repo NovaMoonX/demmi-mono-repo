@@ -1,4 +1,5 @@
 import { Meal } from '@lib/meals';
+import { DEMO_USER_ID } from '@lib/app';
 import { db } from '@lib/firebase/firebase.config';
 import { generatedId } from '@utils/generatedId';
 import { createAsyncThunk } from '@reduxjs/toolkit';
@@ -50,26 +51,26 @@ export const fetchMeals = createAsyncThunk(
 );
 
 /**
- * Create a new meal in Firestore for the current user.
- * No-ops silently when demo mode is active.
+ * Create a new meal. In demo mode, persists to local Redux state only.
+ * In normal mode, persists to Firestore.
  */
 export const createMeal = createAsyncThunk(
   'meals/createMealAsync',
   async (params: Omit<Meal, 'id' | 'userId'>, { getState }) => {
     const state = getState() as RootState;
+    const mealId = generatedId('meal');
+
+    if (isDemoActive(getState)) {
+      const newMeal: Meal = { ...params, id: mealId, userId: DEMO_USER_ID };
+      return newMeal;
+    }
+
     try {
       const userId = state.user.user?.uid;
       if (!userId) throw new Error('You must be signed in to create a meal.');
 
-      const mealId = generatedId('meal');
       const mealDocRef = doc(db, 'meals', mealId);
-
-      const newMeal: Meal = {
-        ...params,
-        id: mealId,
-        userId,
-      };
-
+      const newMeal: Meal = { ...params, id: mealId, userId };
       await setDoc(mealDocRef, newMeal);
       return newMeal;
     } catch (err) {
@@ -77,16 +78,19 @@ export const createMeal = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
- * Update an existing meal in Firestore. Only the owner may update.
- * No-ops silently when demo mode is active.
+ * Update an existing meal. In demo mode, updates local Redux state only.
+ * In normal mode, updates Firestore.
  */
 export const updateMeal = createAsyncThunk(
   'meals/updateMealAsync',
   async (meal: Meal, { getState }) => {
+    if (isDemoActive(getState)) {
+      return meal;
+    }
+
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
@@ -112,16 +116,19 @@ export const updateMeal = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
- * Delete a meal from Firestore. Only the owner may delete.
- * No-ops silently when demo mode is active.
+ * Delete a meal. In demo mode, removes from local Redux state only.
+ * In normal mode, deletes from Firestore.
  */
 export const deleteMeal = createAsyncThunk(
   'meals/deleteMealAsync',
   async (mealId: string, { getState }) => {
+    if (isDemoActive(getState)) {
+      return mealId;
+    }
+
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
@@ -146,5 +153,4 @@ export const deleteMeal = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );

@@ -1,4 +1,5 @@
 import { Ingredient } from '@lib/ingredients';
+import { DEMO_USER_ID } from '@lib/app';
 import { db } from '@lib/firebase/firebase.config';
 import { generatedId } from '@utils/generatedId';
 import { createAsyncThunk } from '@reduxjs/toolkit';
@@ -50,26 +51,26 @@ export const fetchIngredients = createAsyncThunk(
 );
 
 /**
- * Create a new ingredient in Firestore for the current user.
- * No-ops silently when demo mode is active.
+ * Create a new ingredient. In demo mode, persists to local Redux state only.
+ * In normal mode, persists to Firestore.
  */
 export const createIngredient = createAsyncThunk(
   'ingredients/createIngredientAsync',
   async (params: Omit<Ingredient, 'id' | 'userId'>, { getState }) => {
     const state = getState() as RootState;
+    const ingredientId = generatedId('ingredient');
+
+    if (isDemoActive(getState)) {
+      const newIngredient: Ingredient = { ...params, id: ingredientId, userId: DEMO_USER_ID };
+      return newIngredient;
+    }
+
     try {
       const userId = state.user.user?.uid;
       if (!userId) throw new Error('You must be signed in to create an ingredient.');
 
-      const ingredientId = generatedId('ingredient');
       const ingredientDocRef = doc(db, 'ingredients', ingredientId);
-
-      const newIngredient: Ingredient = {
-        ...params,
-        id: ingredientId,
-        userId,
-      };
-
+      const newIngredient: Ingredient = { ...params, id: ingredientId, userId };
       await setDoc(ingredientDocRef, newIngredient);
       return newIngredient;
     } catch (err) {
@@ -77,16 +78,19 @@ export const createIngredient = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
- * Update an existing ingredient in Firestore. Only the owner may update.
- * No-ops silently when demo mode is active.
+ * Update an existing ingredient. In demo mode, updates local Redux state only.
+ * In normal mode, updates Firestore.
  */
 export const updateIngredient = createAsyncThunk(
   'ingredients/updateIngredientAsync',
   async (ingredient: Ingredient, { getState }) => {
+    if (isDemoActive(getState)) {
+      return ingredient;
+    }
+
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
@@ -112,16 +116,19 @@ export const updateIngredient = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
- * Delete an ingredient from Firestore. Only the owner may delete.
- * No-ops silently when demo mode is active.
+ * Delete an ingredient. In demo mode, removes from local Redux state only.
+ * In normal mode, deletes from Firestore.
  */
 export const deleteIngredient = createAsyncThunk(
   'ingredients/deleteIngredientAsync',
   async (ingredientId: string, { getState }) => {
+    if (isDemoActive(getState)) {
+      return ingredientId;
+    }
+
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
@@ -146,5 +153,4 @@ export const deleteIngredient = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );

@@ -19,13 +19,7 @@ import {
   MEASUREMENT_UNIT_OPTIONS,
   MEASUREMENT_UNIT_LABELS,
 } from '@lib/ingredients';
-import { DEMO_USER_ID } from '@lib/app';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
-import {
-  createIngredient,
-  updateIngredient,
-  deleteIngredient,
-} from '@store/slices/ingredientsSlice';
 import {
   createIngredient as createIngredientAsync,
   updateIngredient as updateIngredientAsync,
@@ -40,7 +34,6 @@ export function IngredientDetail() {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const ingredients = useAppSelector((state) => state.ingredients.items);
-  const isDemoActive = useAppSelector((state) => state.demo.isActive);
   const { confirm } = useActionModal();
   const { addToast } = useToast();
 
@@ -254,22 +247,6 @@ export function IngredientDetail() {
       },
     };
 
-    if (isDemoActive) {
-      if (isEditing && existingIngredient) {
-        dispatch(updateIngredient({ id: existingIngredient.id, updates: ingredientData }));
-        navigate(fromMealPath ?? '/ingredients');
-      } else {
-        const newIngredientId = generatedId('ingredient');
-        dispatch(createIngredient({ ...ingredientData, userId: DEMO_USER_ID, id: newIngredientId }));
-        if (fromMealPath) {
-          navigate(fromMealPath, { state: { newIngredientId } });
-        } else {
-          navigate('/ingredients');
-        }
-      }
-      return;
-    }
-
     try {
       if (isEditing && existingIngredient) {
         const updatedIngredient: Ingredient = { ...ingredientData, id: existingIngredient.id, userId: existingIngredient.userId };
@@ -305,12 +282,6 @@ export function IngredientDetail() {
     });
 
     if (!confirmed) return;
-
-    if (isDemoActive) {
-      dispatch(deleteIngredient(existingIngredient.id));
-      navigate('/ingredients');
-      return;
-    }
 
     try {
       await dispatch(deleteIngredientAsync(existingIngredient.id)).unwrap();

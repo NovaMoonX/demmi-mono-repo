@@ -13,7 +13,7 @@ A cooking app powered with local LLM using Ollama.
 - **Exit Demo**: Both the top banner and the sidebar provide an "Exit Demo" button that clears demo data and returns to the auth page
 - **Session-Scoped Persistence**: Demo mode is persisted in `sessionStorage`, so refreshing keeps demo mode active for the current browser session
 - **No Auth Flicker on Refresh**: Protected routes wait for demo session hydration before redirect checks, preventing auth-page flashes when demo mode is active
-- **Redux-Powered**: Demo state is managed via a dedicated `demoSlice` with async thunks (`initializeDemoSession`, `startDemoSession`, `endDemoSession`, `loadDemoData`, `clearDemoData`) for clean data loading and teardown
+- **Redux-Powered**: Demo state is managed via a dedicated `demoSlice` with async thunks (`initializeDemoSession`, `startDemoSession`, `endDemoSession`, `loadDemoData`, `clearDemoData`) for clean data loading and teardown. All CRUD async thunks (`mealActions`, `ingredientActions`, `calendarActions`, `shoppingListActions`, `chatActions`) handle demo mode internally — no component needs to branch on demo state for CRUD operations.
 
 ### 🔐 Authentication & Security
 - **Email Authentication**: Secure sign up and login using Firebase Authentication
@@ -172,7 +172,7 @@ A cooking app powered with local LLM using Ollama.
   - **Update**: Edits are persisted to Firestore with ownership verification (only the owner can update)
   - **Delete**: Deletions are persisted to Firestore with ownership verification (only the owner can delete)
   - **Error Toasts**: Toast notifications alert the user if any Firestore operation fails
-- **Demo Mode Isolation**: When demo mode is active, all meal changes update in-memory state only — nothing is written to Firestore
+- **Demo Mode Isolation**: When demo mode is active, all meal changes update in-memory state only — nothing is written to Firestore. This is handled transparently inside the async thunks, so components always dispatch a single action regardless of demo state.
 - **Responsive Grid**: Adapts from 1 column (mobile) to 3 columns (desktop)
 - **Mock Data**: 8 sample meals across all categories for demonstration
 - **User-Centric Content**: Displays your meal recipes with personalized messaging
@@ -208,7 +208,7 @@ A cooking app powered with local LLM using Ollama.
   - **Update**: Edits are persisted to Firestore with ownership verification (only the owner can update)
   - **Delete**: Removals are persisted to Firestore with ownership verification (only the owner can delete)
   - **Error Toasts**: Toast notifications alert the user if any Firestore operation fails
-- **Demo Mode Isolation**: When demo mode is active, all planned meal changes update in-memory state only — nothing is written to Firestore
+- **Demo Mode Isolation**: When demo mode is active, all planned meal changes update in-memory state only — nothing is written to Firestore. This is handled transparently inside the async thunks, so components always dispatch a single action regardless of demo state.
 
 ### 🛒 Shopping List
 - **Grouped by Category**: Items are automatically grouped and displayed by category (🥩 Meat, 🐟 Seafood, 🥬 Produce, 🥛 Dairy, 🌾 Grains, 🫘 Legumes, 🥜 Nuts, 🫒 Oils, 🧂 Spices, 📦 Other)
@@ -226,7 +226,7 @@ A cooking app powered with local LLM using Ollama.
 - **Mock Data**: 9 sample shopping list items across all categories for demonstration
 - **Redux-Powered**: All state managed in a dedicated `shoppingListSlice` with actions: `addShoppingListItem`, `updateShoppingListItem`, `toggleShoppingListItem`, `deleteShoppingListItem`, `clearCheckedItems`, `setShoppingList`, `resetShoppingList`
 - **Firestore CRUD**: Full Firestore persistence for authenticated users via async thunks in `shoppingListActions.ts` (`fetchShoppingList`, `createShoppingListItem`, `updateShoppingListItem`, `deleteShoppingListItem`, `clearCheckedShoppingListItems`)
-- **Demo-Aware**: All mutations detect demo mode — demo sessions use local Redux actions only, authenticated sessions persist to Firestore with toast error feedback
+- **Demo-Aware**: All mutations handle demo mode transparently inside the async thunks — demo sessions update local Redux state only, authenticated sessions persist to Firestore with toast error feedback. Components always dispatch the same single action regardless of demo state.
 
 ## Tech Stack
 
@@ -269,14 +269,14 @@ The Redux store is organized into five main slices:
 
 1. **Ingredients Slice** (`ingredientsSlice.ts`)
    - Manages ingredient inventory
-   - Sync Actions (demo mode): `createIngredient`, `updateIngredient`, `deleteIngredient`, `setIngredients`, `resetIngredients`
-   - Async Thunks (signed-in mode): `fetchIngredients`, `createIngredient`, `updateIngredient`, `deleteIngredient` (from `ingredientActions.ts`)
+   - Sync Actions: `setIngredients`, `resetIngredients` (and internal: `createIngredient`, `updateIngredient`, `deleteIngredient` used only by demo data loading)
+   - Async Thunks (demo + signed-in mode): `fetchIngredients`, `createIngredient`, `updateIngredient`, `deleteIngredient` (from `ingredientActions.ts`) — each thunk automatically handles demo mode internally, skipping Firestore and updating local state only when demo is active
    - State: Array of ingredients with full CRUD support (each ingredient includes a `userId` field and an embedded `products` array for pricing)
 
 2. **Meals Slice** (`mealsSlice.ts`)
    - Manages meal recipes collection
-   - Sync Actions (demo mode): `createMeal`, `updateMeal`, `deleteMeal`, `setMeals`, `resetMeals`
-   - Async Thunks (signed-in mode): `fetchMeals`, `createMeal`, `updateMeal`, `deleteMeal` (from `mealActions.ts`)
+   - Sync Actions: `setMeals`, `resetMeals` (and internal: `createMeal`, `updateMeal`, `deleteMeal` used only by demo data loading)
+   - Async Thunks (demo + signed-in mode): `fetchMeals`, `createMeal`, `updateMeal`, `deleteMeal` (from `mealActions.ts`) — each thunk automatically handles demo mode internally, skipping Firestore and updating local state only when demo is active
    - State: Array of meals with full CRUD support (each meal includes a `userId` field and an `ingredients` array for nutrition/price calculations)
 
 3. **Chats Slice** (`chatsSlice.ts`)

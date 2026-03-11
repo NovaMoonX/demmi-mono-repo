@@ -1,4 +1,5 @@
 import { PlannedMeal } from '@lib/calendar';
+import { DEMO_USER_ID } from '@lib/app';
 import { db } from '@lib/firebase/firebase.config';
 import { generatedId } from '@utils/generatedId';
 import { createAsyncThunk } from '@reduxjs/toolkit';
@@ -50,26 +51,26 @@ export const fetchPlannedMeals = createAsyncThunk(
 );
 
 /**
- * Create a new planned meal in Firestore for the current user.
- * No-ops silently when demo mode is active.
+ * Create a new planned meal. In demo mode, persists to local Redux state only.
+ * In normal mode, persists to Firestore.
  */
 export const createPlannedMeal = createAsyncThunk(
   'calendar/createPlannedMealAsync',
   async (params: Omit<PlannedMeal, 'id' | 'userId'>, { getState }) => {
     const state = getState() as RootState;
+    const plannedMealId = generatedId('planned');
+
+    if (isDemoActive(getState)) {
+      const newPlannedMeal: PlannedMeal = { ...params, id: plannedMealId, userId: DEMO_USER_ID };
+      return newPlannedMeal;
+    }
+
     try {
       const userId = state.user.user?.uid;
       if (!userId) throw new Error('You must be signed in to create a planned meal.');
 
-      const plannedMealId = generatedId('planned');
       const docRef = doc(db, 'plannedMeals', plannedMealId);
-
-      const newPlannedMeal: PlannedMeal = {
-        ...params,
-        id: plannedMealId,
-        userId,
-      };
-
+      const newPlannedMeal: PlannedMeal = { ...params, id: plannedMealId, userId };
       await setDoc(docRef, newPlannedMeal);
       return newPlannedMeal;
     } catch (err) {
@@ -77,16 +78,19 @@ export const createPlannedMeal = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
- * Update an existing planned meal in Firestore. Only the owner may update.
- * No-ops silently when demo mode is active.
+ * Update an existing planned meal. In demo mode, updates local Redux state only.
+ * In normal mode, updates Firestore.
  */
 export const updatePlannedMeal = createAsyncThunk(
   'calendar/updatePlannedMealAsync',
   async (plannedMeal: PlannedMeal, { getState }) => {
+    if (isDemoActive(getState)) {
+      return plannedMeal;
+    }
+
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
@@ -112,16 +116,19 @@ export const updatePlannedMeal = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );
 
 /**
- * Delete a planned meal from Firestore. Only the owner may delete.
- * No-ops silently when demo mode is active.
+ * Delete a planned meal. In demo mode, removes from local Redux state only.
+ * In normal mode, deletes from Firestore.
  */
 export const deletePlannedMeal = createAsyncThunk(
   'calendar/deletePlannedMealAsync',
   async (plannedMealId: string, { getState }) => {
+    if (isDemoActive(getState)) {
+      return plannedMealId;
+    }
+
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
@@ -146,5 +153,4 @@ export const deletePlannedMeal = createAsyncThunk(
       throw err;
     }
   },
-  { condition: (_, { getState }) => !isDemoActive(getState) },
 );

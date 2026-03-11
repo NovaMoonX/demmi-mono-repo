@@ -13,9 +13,7 @@ import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import { Meal, MealCategory, MealIngredient, MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS } from '@lib/meals';
-import { DEMO_USER_ID } from '@lib/app';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
-import { createMeal, updateMeal, deleteMeal } from '@store/slices/mealsSlice';
 import {
   createMeal as createMealAsync,
   updateMeal as updateMealAsync,
@@ -31,7 +29,6 @@ export function MealDetail() {
   const dispatch = useAppDispatch();
   const meals = useAppSelector((state) => state.meals.items);
   const allIngredients = useAppSelector((state) => state.ingredients.items);
-  const isDemoActive = useAppSelector((state) => state.demo.isActive);
   const { confirm } = useActionModal();
   const { addToast } = useToast();
 
@@ -140,16 +137,6 @@ export function MealDetail() {
       ingredients: ingredientsList,
     };
 
-    if (isDemoActive) {
-      if (isEditing && existingMeal) {
-        dispatch(updateMeal({ id: existingMeal.id, updates: mealData }));
-      } else {
-        dispatch(createMeal({ ...mealData, userId: DEMO_USER_ID }));
-      }
-      navigate('/meals');
-      return;
-    }
-
     try {
       if (isEditing && existingMeal) {
         const updatedMeal: Meal = { ...existingMeal, ...mealData };
@@ -180,12 +167,6 @@ export function MealDetail() {
     });
 
     if (!confirmed) return;
-
-    if (isDemoActive) {
-      dispatch(deleteMeal(existingMeal.id));
-      navigate('/meals');
-      return;
-    }
 
     try {
       await dispatch(deleteMealAsync(existingMeal.id)).unwrap();

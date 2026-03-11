@@ -24,14 +24,14 @@ export function ChatHistory({
   const unpinnedChats = conversations.filter((c) => !c.isPinned);
 
   const renderChatItem = (chat: ChatConversation) => {
-    const isActive = chat.id === currentChatId;
+    const isCurrentChat = chat.id === currentChatId;
 
     return (
       <div
         key={chat.id}
         className={join(
           'group relative rounded-lg transition-colors',
-          isActive
+          isCurrentChat
             ? 'bg-accent/10 border border-accent'
             : 'hover:bg-muted border border-transparent'
         )}

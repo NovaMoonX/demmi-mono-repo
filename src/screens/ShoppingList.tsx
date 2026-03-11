@@ -4,20 +4,12 @@ import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import {
-  addShoppingListItem,
-  updateShoppingListItem,
-  toggleShoppingListItem,
-  deleteShoppingListItem,
-  clearCheckedItems,
-} from '@store/slices/shoppingListSlice';
-import {
   fetchShoppingList,
   createShoppingListItem as createShoppingListItemAsync,
   updateShoppingListItem as updateShoppingListItemAsync,
   deleteShoppingListItem as deleteShoppingListItemAsync,
   clearCheckedShoppingListItems as clearCheckedShoppingListItemsAsync,
 } from '@store/actions/shoppingListActions';
-import { DEMO_USER_ID } from '@lib/app';
 import { INGREDIENT_TYPE_COLORS, INGREDIENT_TYPE_EMOJIS, INGREDIENT_TYPES } from '@lib/ingredients';
 import type { ShoppingListItem } from '@lib/shoppingList';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
@@ -39,7 +31,6 @@ export function ShoppingList() {
   const { addToast } = useToast();
   const items = useAppSelector((state) => state.shoppingList.items);
   const ingredients = useAppSelector((state) => state.ingredients.items);
-  const isDemoActive = useAppSelector((state) => state.demo.isActive);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
@@ -47,10 +38,8 @@ export function ShoppingList() {
   const [showChecked, setShowChecked] = useState(true);
 
   useEffect(() => {
-    if (!isDemoActive) {
-      dispatch(fetchShoppingList());
-    }
-  }, [dispatch, isDemoActive]);
+    dispatch(fetchShoppingList());
+  }, [dispatch]);
 
   // ── Derived data ─────────────────────────────────────────────────────────
 
@@ -151,16 +140,6 @@ export function ShoppingList() {
       note: form.note.trim() || null,
     };
 
-    if (isDemoActive) {
-      if (editingItem) {
-        dispatch(updateShoppingListItem({ id: editingItem.id, updates: itemData }));
-      } else {
-        dispatch(addShoppingListItem({ ...itemData, checked: false, userId: DEMO_USER_ID }));
-      }
-      handleClose();
-      return;
-    }
-
     try {
       if (editingItem) {
         await dispatch(
@@ -193,11 +172,6 @@ export function ShoppingList() {
 
     if (!confirmed) return;
 
-    if (isDemoActive) {
-      dispatch(deleteShoppingListItem(id));
-      return;
-    }
-
     try {
       await dispatch(deleteShoppingListItemAsync(id)).unwrap();
     } catch (err) {
@@ -221,11 +195,6 @@ export function ShoppingList() {
 
     if (!confirmed) return;
 
-    if (isDemoActive) {
-      dispatch(clearCheckedItems());
-      return;
-    }
-
     try {
       await dispatch(clearCheckedShoppingListItemsAsync()).unwrap();
     } catch (err) {
@@ -239,11 +208,6 @@ export function ShoppingList() {
   };
 
   const handleToggle = async (item: ShoppingListItem) => {
-    if (isDemoActive) {
-      dispatch(toggleShoppingListItem(item.id));
-      return;
-    }
-
     try {
       await dispatch(
         updateShoppingListItemAsync({ ...item, checked: !item.checked }),
