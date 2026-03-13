@@ -7,3 +7,5 @@ export type {
   ActionHandler,
   ActionResult,
 } from './types';
+export { generalAction } from './generalAction';
+export { getActionHandler } from './registry';

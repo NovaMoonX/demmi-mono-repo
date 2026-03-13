@@ -45,7 +45,7 @@ export interface ActionStep<
 }
 
 // `ResultType` represents the shape of the data returned by the action handler upon completion.
-export interface ActionHandlerBase<ResultType extends Record<string, unknown>> {
+interface ActionHandlerBase<ResultType extends Record<string, unknown>> {
   type: ActionType;
   description: string;
 
@@ -57,7 +57,7 @@ export interface ActionHandlerBase<ResultType extends Record<string, unknown>> {
   ) => void;
 }
 
-export interface SingleStepActionHandler<
+interface SingleStepActionHandler<
   ResultType extends Record<string, unknown>,
 > extends ActionHandlerBase<ResultType> {
   isMultiStep: false;
@@ -83,7 +83,7 @@ type RequireStepNames<T extends string> = [T] extends [never]
   ? 'MultiStepActionHandler requires ValidStepNames'
   : T;
 
-export interface MultiStepActionHandler<
+interface MultiStepActionHandler<
   ResultType extends Record<string, unknown>,
   ValidStepNames extends string,
 > extends ActionHandlerBase<ResultType> {
