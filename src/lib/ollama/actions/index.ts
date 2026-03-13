@@ -8,4 +8,6 @@ export type {
   ActionResult,
 } from './types';
 export { generalAction } from './generalAction';
+export { createMealAction } from './createMealAction';
+export type { MealResult, MealStepName } from './createMealAction';
 export { getActionHandler } from './registry';

@@ -1,14 +1,15 @@
 import { generalAction } from './generalAction';
+import { createMealAction } from './createMealAction';
 import type { ActionType } from './types';
 
 type ActionHandlerMap = {
   general: typeof generalAction;
-  createMeal: undefined; // Placeholder until implemented
+  createMeal: typeof createMealAction;
 };
 
 const ACTION_REGISTRY: ActionHandlerMap = {
   general: generalAction,
-  createMeal: undefined, // Placeholder until implemented
+  createMeal: createMealAction,
 };
 
 export function getActionHandler<T extends ActionType>(actionType: T): ActionHandlerMap[T] {

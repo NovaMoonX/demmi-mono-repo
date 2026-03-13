@@ -1,2 +1,9 @@
 export { GENERAL_SCHEMA } from './general.schema';
 export { INTENT_SCHEMA } from './intent.schema';
+export {
+  MEAL_NAME_SCHEMA,
+  MEAL_INFO_SCHEMA,
+  MEAL_DESCRIPTION_SCHEMA,
+  MEAL_INGREDIENTS_SCHEMA,
+  MEAL_INSTRUCTIONS_SCHEMA,
+} from './meal.schemas';

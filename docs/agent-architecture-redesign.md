@@ -37,13 +37,13 @@
 
 2. **Use typed `ActionHandler<ResultType>`** for single-step actions:
    ```typescript
-   export const generalAction: ActionHandler<GeneralResult> = { ... }
+   export const generalAction = { ... } satisfies ActionHandler<GeneralResult>
    ```
 
 3. **Use typed `ActionHandler<ResultType, ValidStepNames>`** for multi-step actions:
    ```typescript
    type MealStepName = 'proposeName' | 'generateBasicInfo' | 'generateDescription';
-   export const createMealAction: ActionHandler<MealResult, MealStepName> = { ... }
+   export const createMealAction = { ... } satisfies ActionHandler<MealResult, MealStepName>
    ```
 
 4. **Implement `getUpdatedMessageContentFromResult`** on all handlers:
@@ -565,7 +565,7 @@ interface GeneralResult extends Record<string, unknown> {
   rawContent: string | null;
 }
 
-export const generalAction: ActionHandler<GeneralResult> = {
+export const generalAction = {
   type: 'general',
   description: 'General conversational response about cooking, nutrition, and meal planning',
   isMultiStep: false,
@@ -623,7 +623,7 @@ export const generalAction: ActionHandler<GeneralResult> = {
       agentAction: null,
     };
   },
-};
+} satisfies ActionHandler<GeneralResult>;
 ```
 
 **Key points:**
@@ -724,7 +724,7 @@ const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> = {
 // ... remaining steps (generateDescription, generateIngredients, generateInstructions) ...
 
 // Export the complete action handler
-export const createMealAction: ActionHandler<MealResult, MealStepName> = {
+export const createMealAction = {
   type: 'createMeal',
   description: 'Create a new meal recipe with ingredients and instructions',
   isMultiStep: true,
@@ -778,7 +778,7 @@ export const createMealAction: ActionHandler<MealResult, MealStepName> = {
       }));
     }
   },
-};
+} satisfies ActionHandler<MealResult, MealStepName>;
 ```
 
 #### Action Registry

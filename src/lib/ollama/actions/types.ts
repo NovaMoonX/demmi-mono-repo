@@ -51,16 +51,10 @@ interface ActionHandlerBase<ResultType extends Record<string, unknown>> {
 
   onStart?: (context: StepContext<ResultType>, runtime: StepRuntime) => void;
 
-  getUpdatedMessageContentFromResult: (result: ResultType) => {
-    content: string;
-    rawContent?: string | null; // Optional rawContent to update the message with, if different from content
-    agentAction?: AgentAction | null;
-  };
-
   onComplete?: (
     context: StepContext<ResultType>,
     runtime: StepRuntime,
-    result: ResultType,
+    result: Partial<ResultType>,
   ) => void;
 }
 
@@ -80,15 +74,30 @@ interface SingleStepActionHandler<
   steps?: never;
 
   onCancel?: (context: StepContext<ResultType>, runtime: StepRuntime) => void;
+
+  getUpdatedMessageContentFromResult: (result: ResultType) => {
+    content: string;
+    rawContent?: string | null;
+    agentAction?: AgentAction | null;
+  };
 }
+
+export const MULTI_STEP_ACTION_HANDLER_ERROR =
+  'MultiStepActionHandler requires ValidStepNames';
 
 // This type ensures that if `isMultiStep` is true and steps are provided
 // then `ValidStepNames` must be provided to the action handler,
 // where `ValidStepNames` is a union of string literals representing
 // the valid step names for that handler.
 type RequireStepNames<T extends string> = [T] extends [never]
-  ? 'MultiStepActionHandler requires ValidStepNames'
+  ? typeof MULTI_STEP_ACTION_HANDLER_ERROR
   : T;
+
+// This utility type is used to extract the `ResultType` and `ValidStepNames` from an `ActionHandler` type.
+export type ExtractActionHandler<T> =
+  T extends ActionHandler<infer ResultType, infer ValidStepNames>
+    ? { result: ResultType; stepNames: ValidStepNames }
+    : never;
 
 interface MultiStepActionHandler<
   ResultType extends Record<string, unknown>,
@@ -105,6 +114,12 @@ interface MultiStepActionHandler<
     runtime: StepRuntime,
     completedSteps: RequireStepNames<ValidStepNames>[],
   ) => void;
+
+  // Optional: produce a text summary of the result (used for summary generation)
+  getUpdatedMessageContentFromResult?: (result: ResultType) => {
+    content: string;
+    rawContent?: string | null;
+  };
 }
 
 export type ActionHandler<

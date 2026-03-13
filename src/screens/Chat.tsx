@@ -36,6 +36,7 @@ import {
   getActionHandler,
 } from '@lib/ollama';
 import { generatedId } from '@utils/generatedId';
+import { ExtractActionHandler } from '@/lib/ollama/actions/types';
 
 const SCROLL_DELAY_MS = 100;
 
@@ -448,10 +449,77 @@ export function Chat() {
         throw new Error(`No handler found for intent: ${intent}`);
       }
 
-      handler?.onStart?.(context, runtime);
-
       if (handler.isMultiStep) {
-        // Multi-step (Phase 3) — placeholder for now
+        handler.onStart(context, runtime);
+
+        type HandlerTypes = ExtractActionHandler<typeof handler>;
+        type ResultType = HandlerTypes['result'];
+        type ValidStepNames = HandlerTypes['stepNames'];
+
+        firstTokenReceivedRef.current = true;
+
+        const completedStepNames: ValidStepNames[] = [];
+        const accumulatedResult: Partial<ResultType> = {};
+
+        for (const step of handler.steps) {
+          if (abortController.signal.aborted) break;
+
+          const stepContext = {
+            ...context,
+            previousResults: accumulatedResult,
+          };
+          const rawStepResult = await step.execute(
+            modelUsed,
+            stepContext,
+            runtime,
+          );
+          const stepResult = rawStepResult as {
+            data: Record<string, unknown>;
+            cancelled?: boolean;
+          };
+
+          if (stepResult.cancelled) {
+            step.onCancel?.(stepContext, runtime);
+            break;
+          }
+
+          Object.assign(accumulatedResult, stepResult.data);
+          completedStepNames.push(step.name);
+        }
+
+        if (
+          abortController.signal.aborted ||
+          completedStepNames.length < handler.steps.length
+        ) {
+          handler.onCancel?.(context, runtime, completedStepNames);
+        } else {
+          handler.onComplete?.(context, runtime, accumulatedResult);
+
+          const messageContentUpdates =
+            handler.getUpdatedMessageContentFromResult?.(
+              accumulatedResult as never,
+            );
+
+          if (messageContentUpdates) {
+            generateSummary(
+              modelUsed,
+              messageContent,
+              messageContentUpdates.content,
+            )
+              .then((summary) => {
+                if (summary) {
+                  dispatch(
+                    updateMessageSummary({
+                      chatId: chatIdForStream,
+                      messageId: assistantMessageId,
+                      summary,
+                    }),
+                  );
+                }
+              })
+              .catch((err) => console.warn('Summary generation failed', err));
+          }
+        }
       } else {
         firstTokenReceivedRef.current = true;
 
@@ -463,7 +531,7 @@ export function Chat() {
 
         if (!abortController.signal.aborted) {
           const messageContentUpdates =
-            handler.getUpdatedMessageContentFromResult(result.data);
+            handler.getUpdatedMessageContentFromResult(result.data as never);
 
           dispatch(
             updateMessageContent({
@@ -474,7 +542,11 @@ export function Chat() {
             }),
           );
 
-          generateSummary(modelUsed, messageContent, messageContentUpdates.content)
+          generateSummary(
+            modelUsed,
+            messageContent,
+            messageContentUpdates.content,
+          )
             .then((summary) => {
               if (summary) {
                 dispatch(

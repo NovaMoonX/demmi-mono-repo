@@ -15,7 +15,7 @@ interface GeneralResult extends Record<string, unknown> {
   rawContent: string | null;
 }
 
-export const generalAction: ActionHandler<GeneralResult> = {
+export const generalAction = {
   type: 'general',
   description: 'General conversational response about cooking, nutrition, and meal planning',
   isMultiStep: false,
@@ -68,4 +68,4 @@ export const generalAction: ActionHandler<GeneralResult> = {
       agentAction: null,
     };
   },
-} ;
+} satisfies ActionHandler<GeneralResult> ;
