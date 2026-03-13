@@ -300,6 +300,7 @@ export function Chat() {
       model: null,
       rawContent: null,
       agentAction: null,
+      summary: null,
     };
 
     const assistantMessageId = generatedId('msg');
@@ -311,6 +312,7 @@ export function Chat() {
       model: null,
       rawContent: null,
       agentAction: null,
+      summary: null,
     };
 
     let targetChatId: string | null;

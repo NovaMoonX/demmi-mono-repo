@@ -341,6 +341,10 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number; // milliseconds timestamp
+  model: string | null; // model used to generate this message (null for user messages)
+  rawContent: string | null; // original JSON from the AI
+  agentAction: AgentAction | null; // structured action proposed by the AI
+  summary: string | null; // 2-3 sentence exchange summary for context-efficient intent detection
 }
 
 interface ChatConversation {

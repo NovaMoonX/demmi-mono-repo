@@ -22,6 +22,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: null,
       },
       {
         id: 'msg-002',
@@ -31,6 +32,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: 'User requested quick breakfast ideas for busy mornings. Assistant provided five practical options including overnight oats, smoothie bowls, avocado toast, yogurt parfaits, and egg muffins, all requiring 5-10 minutes or can be prepared ahead.',
       },
     ],
   },
@@ -49,6 +51,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: null,
       },
       {
         id: 'msg-004',
@@ -58,6 +61,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: 'User asked about meal prep strategies for a busy work week. Assistant provided a comprehensive Sunday prep plan including batch cooking grains, roasting vegetables, preparing proteins, and storage tips using glass containers with proper labeling.',
       },
       {
         id: 'msg-005',
@@ -67,6 +71,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: null,
       },
       {
         id: 'msg-006',
@@ -76,6 +81,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: 'User inquired about meal prep food freshness duration. Assistant provided specific storage timelines for different food types (3-5 days refrigerated depending on item) and suggested freezing portions for up to 3 months for longer storage.',
       },
     ],
   },
@@ -94,6 +100,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: null,
       },
       {
         id: 'msg-008',
@@ -103,6 +110,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: 'User expressed interest in trying more vegetarian dinners. Assistant suggested seven protein-rich vegetarian options including stir-fry, lentil curry, stuffed peppers, risotto, tacos, eggplant parmesan, and buddha bowls.',
       },
     ],
   },
@@ -121,6 +129,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: null,
       },
       {
         id: 'msg-010',
@@ -130,6 +139,7 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: null,
+        summary: 'New baker asked what to start with. Assistant recommended beginner-friendly recipes like chocolate chip cookies, banana bread, brownies, and muffins, along with essential baking tips about measuring, temperature, mixing, and oven preparation.',
       },
     ],
   },

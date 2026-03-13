@@ -187,6 +187,19 @@ const chatsSlice = createSlice({
         }
       }
     },
+    updateMessageSummary: (
+      state,
+      action: PayloadAction<{ chatId: string; messageId: string; summary: string | null }>
+    ) => {
+      const { chatId, messageId, summary } = action.payload;
+      const chat = state.conversations.find((c) => c.id === chatId);
+      if (chat) {
+        const message = chat.messages.find((m) => m.id === messageId);
+        if (message) {
+          message.summary = summary;
+        }
+      }
+    },
     resetChats: (state) => {
       state.conversations = [];
       state.currentChatId = null;
@@ -255,6 +268,7 @@ export const {
   setSelectedModel,
   updateMessageContent,
   updateAgentActionStatus,
+  updateMessageSummary,
   resetChats,
 } = chatsSlice.actions;
 
