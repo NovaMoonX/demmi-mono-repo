@@ -9,14 +9,68 @@
 
 ## Table of Contents
 
-1. [Problem Statement](#problem-statement)
-2. [Current Architecture](#current-architecture)
-3. [Performance Analysis](#performance-analysis)
-4. [Proposed Architecture](#proposed-architecture)
-5. [Key Improvements](#key-improvements)
-6. [Implementation Plan](#implementation-plan)
-7. [Technical Decisions](#technical-decisions)
-8. [Open Questions](#open-questions)
+1. [Type System Requirements](#type-system-requirements) ⚠️ **READ THIS FIRST**
+2. [Problem Statement](#problem-statement)
+3. [Current Architecture](#current-architecture)
+4. [Performance Analysis](#performance-analysis)
+5. [Proposed Architecture](#proposed-architecture)
+6. [Key Improvements](#key-improvements)
+7. [Implementation Plan](#implementation-plan)
+8. [Technical Decisions](#technical-decisions)
+9. [Open Questions](#open-questions)
+
+---
+
+## ⚠️ Type System Requirements
+
+**CRITICAL:** All new action handlers MUST follow the type system defined in [`src/lib/ollama/actions/types.ts`](../src/lib/ollama/actions/types.ts). This is the **authoritative standard** and should NOT be modified or generalized.
+
+### ✅ Required Patterns
+
+1. **Define a specific `ResultType` interface** for each action:
+   ```typescript
+   interface GeneralResult extends Record<string, unknown> {
+     content: string;
+     rawContent: string | null;
+   }
+   ```
+
+2. **Use typed `ActionHandler<ResultType>`** for single-step actions:
+   ```typescript
+   export const generalAction: ActionHandler<GeneralResult> = { ... }
+   ```
+
+3. **Use typed `ActionHandler<ResultType, ValidStepNames>`** for multi-step actions:
+   ```typescript
+   type MealStepName = 'proposeName' | 'generateBasicInfo' | 'generateDescription';
+   export const createMealAction: ActionHandler<MealResult, MealStepName> = { ... }
+   ```
+
+4. **Implement `getUpdatedMessageContentFromResult`** on all handlers:
+   - **Single-step**: REQUIRED to transform result into message content
+   - **Multi-step**: May be unused if steps update Redux directly, but provides a consistent final update pattern
+
+5. **Register in `registry.ts` with concrete types**:
+   ```typescript
+   type ActionHandlerMap = {
+     general: typeof generalAction; // Not just ActionHandler
+   };
+   ```
+
+### ❌ Do NOT
+
+- ❌ Remove or simplify the generic type parameters
+- ❌ Use `Record<string, unknown>` directly as `ResultType`
+- ❌ Skip defining a specific result interface
+- ❌ Bypass `getUpdatedMessageContentFromResult`
+- ❌ Use `ActionHandler` without type parameters
+
+### Why This Matters
+
+- ✅ **Type safety**: TypeScript catches mismatches at compile time
+- ✅ **IntelliSense**: IDE autocomplete for step names and result fields
+- ✅ **Maintainability**: Clear contracts between actions and consumers
+- ✅ **Documentation**: Types serve as living documentation
 
 ---
 
@@ -334,263 +388,330 @@ Classify the current message intent.`;
 
 **Solution:** Plugin-like architecture with registry.
 
-#### Core Interfaces
+#### ⚠️ TYPE SYSTEM RULES (MUST BE FOLLOWED)
+
+The type system defined in [`src/lib/ollama/actions/types.ts`](../src/lib/ollama/actions/types.ts) is the **authoritative standard** for all action handlers. 
+
+**DO NOT:**
+- ❌ Generalize or simplify these types
+- ❌ Remove the generic type parameters
+- ❌ Bypass the discriminated union pattern
+- ❌ Skip `getUpdatedMessageContentFromResult` for single-step actions
+
+**DO:**
+- ✅ Use the exact type signatures from `types.ts`
+- ✅ Define a specific `ResultType` interface for each action
+- ✅ Use `ValidStepNames` string literal union for multi-step actions
+- ✅ Register actions in `registry.ts` with fully typed handlers
+
+#### Core Type System (from `types.ts`)
 
 ```typescript
-// src/lib/ollama/actions/types.ts
-
-export type ActionType = 'general' | 'createMeal' | 'addIngredient' | 'planWeek';
-
-export interface StepContext {
+// Action context (shared across all steps)
+export interface StepContext<ResultType extends Record<string, unknown>> {
   messages: ChatMessage[];
   chatId: string;
   messageId: string;
-  previousResults?: Record<string, unknown>; // Results from previous steps
+  previousResults?: Partial<ResultType>; // Accumulated results from previous steps
 }
 
+// Runtime dependencies (dispatch, abort signal)
 export interface StepRuntime {
-  dispatch: AppDispatch; // Redux dispatcher
-  abortSignal?: AbortSignal; // For cancellation support
+  dispatch: AppDispatch;
+  abortSignal?: AbortSignal;
 }
 
-export interface StepResult {
-  stepName: string;
-  data: unknown;
+// Result from a single step (multi-step only)
+export interface StepResult<
+  ResultType extends Record<string, unknown>,
+  Name extends string,
+> {
+  stepName: Name;
+  data: Partial<ResultType>; // Partial result from this step
   error?: string;
-  cancelled?: boolean; // Indicates if step was cancelled
+  cancelled?: boolean;
 }
 
-export interface ActionStep {
-  name: string; // e.g., "proposeName", "generateIngredients"
+// Individual step definition (multi-step only)
+export interface ActionStep<
+  ResultType extends Record<string, unknown>,
+  Name extends string,
+> {
+  name: Name;
   prompt: string;
   schema: Record<string, unknown>;
   isStreaming?: boolean;
-  
-  // Executes the step AND handles its own Redux dispatch
   execute: (
     model: string,
-    context: StepContext,
+    context: StepContext<ResultType>,
     runtime: StepRuntime,
-  ) => Promise<StepResult | AsyncIterableIterator<StepResult>>;
-  
-  // Optional: Cleanup on cancellation
-  onCancel?: (context: StepContext, runtime: StepRuntime) => void;
+  ) => Promise<
+    | StepResult<ResultType, Name>
+    | AsyncIterableIterator<StepResult<ResultType, Name>>
+  >;
+  onCancel?: (context: StepContext<ResultType>, runtime: StepRuntime) => void;
 }
 
-export interface ActionHandler {
+// Base interface shared by both handler types
+interface ActionHandlerBase<ResultType extends Record<string, unknown>> {
   type: ActionType;
   description: string;
-  isMultiStep: boolean;
-  
-  // For single-step actions (general)
-  execute?: (
-    model: string,
-    context: StepContext,
+
+  onStart?: (context: StepContext<ResultType>, runtime: StepRuntime) => void;
+
+  // ✅ CRITICAL: Required for transforming ResultType into message content
+  // Essential for single-step actions; may be unused for multi-step if steps handle updates directly
+  getUpdatedMessageContentFromResult: (result: ResultType) => {
+    content: string;
+    rawContent?: string | null; // Optional: raw JSON for re-sending
+    agentAction?: AgentAction | null; // Optional: for action cards
+  };
+
+  onComplete?: (
+    context: StepContext<ResultType>,
     runtime: StepRuntime,
-  ) => Promise<ActionResult | AsyncIterableIterator<ActionResult>>;
-  
-  // For multi-step actions (createMeal)
-  steps?: ActionStep[];
-  
-  // Optional: Called before starting multi-step execution
-  onStart?: (context: StepContext, runtime: StepRuntime) => void;
-  
-  // Optional: Called after all steps complete successfully
-  onComplete?: (context: StepContext, runtime: StepRuntime) => void;
-  
-  // Optional: Called if execution is cancelled mid-flow
-  onCancel?: (context: StepContext, runtime: StepRuntime, completedSteps: string[]) => void;
+    result: ResultType,
+  ) => void;
 }
 
-export interface ActionResult {
+// Single-step action handler
+interface SingleStepActionHandler<
+  ResultType extends Record<string, unknown>,
+> extends ActionHandlerBase<ResultType> {
+  isMultiStep: false;
+
+  execute: (
+    model: string,
+    context: StepContext<ResultType>,
+    runtime: StepRuntime,
+  ) => Promise<
+    ActionResult<ResultType> | AsyncIterableIterator<ActionResult<ResultType>>
+  >;
+
+  steps?: never; // Explicitly disallowed
+  onCancel?: (context: StepContext<ResultType>, runtime: StepRuntime) => void;
+}
+
+// Multi-step action handler
+interface MultiStepActionHandler<
+  ResultType extends Record<string, unknown>,
+  ValidStepNames extends string, // ✅ Type-safe step names (string literal union)
+> extends ActionHandlerBase<ResultType> {
+  isMultiStep: true;
+
+  execute?: never; // Explicitly disallowed
+
+  steps: ActionStep<ResultType, ValidStepNames>[];
+
+  onCancel?: (
+    context: StepContext<ResultType>,
+    runtime: StepRuntime,
+    completedSteps: ValidStepNames[], // Type-safe step name array
+  ) => void;
+}
+
+// Union type (discriminated by isMultiStep)
+export type ActionHandler<
+  ResultType extends Record<string, unknown> = never,
+  ValidStepNames extends string = never,
+> =
+  | SingleStepActionHandler<ResultType>
+  | MultiStepActionHandler<ResultType, ValidStepNames>;
+
+// Final result returned by execute()
+export interface ActionResult<ResultType extends Record<string, unknown>> {
   type: ActionType;
-  data: unknown;
+  data: ResultType; // Complete result data
   error?: string;
 }
 ```
 
+#### Key Type System Features
+
+1. **`getUpdatedMessageContentFromResult`**: Required method that transforms the final `ResultType` into message content. 
+   - **Single-step actions**: Essential for updating the message after completion
+   - **Multi-step actions**: May not be used if steps update Redux directly, but provides a consistent pattern for final message updates
+
+2. **Generic `ResultType`**: Each action defines its own result shape as an interface extending `Record<string, unknown>`:
+   ```typescript
+   interface GeneralResult extends Record<string, unknown> {
+     content: string;
+     rawContent: string | null;
+   }
+   ```
+
+3. **Type-safe step names**: Multi-step actions use a string literal union for `ValidStepNames`:
+   ```typescript
+   type MealStepName = 'proposeName' | 'generateBasicInfo' | 'generateDescription';
+   ```
+
+4. **Registry typing**: The `ACTION_REGISTRY` in [`registry.ts`](../src/lib/ollama/actions/registry.ts) uses a mapped type for type-safe lookups:
+   ```typescript
+   type ActionHandlerMap = {
+     general: typeof generalAction; // Concrete type with GeneralResult
+     createMeal: typeof createMealAction; // Concrete type with MealResult
+   };
+   ```
+```
+
 #### Example: General Action (Single-Step)
 
+See [`src/lib/ollama/actions/generalAction.ts`](../src/lib/ollama/actions/generalAction.ts) for the full implementation.
+
 ```typescript
-// src/lib/ollama/actions/generalAction.ts
+// Define the result type for this action
+interface GeneralResult extends Record<string, unknown> {
+  content: string;
+  rawContent: string | null;
+}
 
-import { GENERAL_PROMPT } from '@lib/ollama/prompts/general.prompts';
-import { GENERAL_SCHEMA } from '@lib/ollama/schemas/general.schema';
-import { ollamaClient } from '@lib/ollama/ollama.service';
-import { updateMessageContent } from '@store/slices/chatsSlice';
-import { extractPartialResponse } from '@lib/ollama/ollama.service';
-import type { ActionHandler } from './types';
-
-export const generalAction: ActionHandler = {
+export const generalAction: ActionHandler<GeneralResult> = {
   type: 'general',
-  description: 'Handle general conversation, questions, and tips',
+  description: 'General conversational response about cooking, nutrition, and meal planning',
   isMultiStep: false,
-  
-  async execute(model, context, runtime) {
+
+  async execute(model, context, runtime): Promise<ActionResult<GeneralResult>> {
     const { messages, chatId, messageId } = context;
     const { dispatch, abortSignal } = runtime;
-    
-    // Use chat() for conversational context
+
     const stream = await ollamaClient.chat({
       model,
       messages: [
         { role: 'system', content: GENERAL_PROMPT },
-        ...messages.slice(-5).map(m => ({
+        ...messages.slice(-MAX_CONTEXT_MESSAGES).map((m) => ({
           role: m.role as 'user' | 'assistant',
-          content: m.content,
+          content: m.rawContent ?? m.content,
         })),
       ],
       stream: true,
       format: GENERAL_SCHEMA,
-      signal: abortSignal, // Support cancellation
     });
 
-    // Handle streaming with dispatch inside action
-    let responseContent = '';
+    let rawContent = '';
+
+    // Stream response and update Redux progressively
     for await (const chunk of stream) {
       if (abortSignal?.aborted) {
+        stream.abort();
         break;
       }
-      
-      responseContent += chunk.message.content;
-      const displayContent = extractPartialResponse(responseContent);
-      
-      // Dispatch Redux update from within action
-      dispatch(updateMessageContent({
-        chatId,
-        messageId,
-        content: displayContent,
-      }));
+
+      rawContent += chunk.message.content;
+      const displayContent = extractPartialResponse(rawContent);
+
+      if (displayContent) {
+        dispatch(updateMessageContent({ chatId, messageId, content: displayContent }));
+      }
     }
 
+    const parsed = parseGeneralResponse(rawContent);
+    const content = parsed?.response ?? rawContent;
+    const rawContentUsed = !!parsed?.response;
+
+    // Return typed result
+    return { 
+      type: 'general', 
+      data: { content, rawContent: rawContentUsed ? null : rawContent } 
+    };
+  },
+
+  // ✅ REQUIRED: Transform result into message content
+  getUpdatedMessageContentFromResult(result) {
     return {
-      type: 'general',
-      data: { content: responseContent },
+      content: result.content,
+      rawContent: result.rawContent,
+      agentAction: null,
     };
   },
 };
 ```
 
-#### Example: Create Meal Action (Multi-Step)
+**Key points:**
+- ✅ Defines `GeneralResult` interface extending `Record<string, unknown>`
+- ✅ Uses `ActionHandler<GeneralResult>` with typed result
+- ✅ `execute()` returns `ActionResult<GeneralResult>`
+- ✅ `getUpdatedMessageContentFromResult` transforms `GeneralResult` → message content
+- ✅ Single-step actions handle streaming and Redux updates in `execute()`
+
+#### Example: Create Meal Action (Multi-Step) - Pseudocode
+
+**Note:** This is a conceptual example showing the multi-step pattern. See [Implementation Plan](#implementation-plan) for the actual multi-step meal creation task.
 
 ```typescript
-// src/lib/ollama/actions/createMealAction.ts
+// Define the result type for this action
+interface MealResult extends Record<string, unknown> {
+  name: string;
+  category: string;
+  description: string;
+  servings: number;
+  totalTime: number;
+  ingredients: Array<{ name: string; amount: string; unit: string }>;
+  instructions: string[];
+}
 
-import {
-  MEAL_NAME_PROMPT,
-  MEAL_INFO_PROMPT,
-  MEAL_DESCRIPTION_PROMPT,
-  MEAL_INGREDIENTS_PROMPT,
-  MEAL_INSTRUCTIONS_PROMPT,
-} from '@lib/ollama/prompts/meal.prompts';
-
-import {
-  MEAL_NAME_SCHEMA,
-  MEAL_INFO_SCHEMA,
-  MEAL_DESCRIPTION_SCHEMA,
-  MEAL_INGREDIENTS_SCHEMA,
-  MEAL_INSTRUCTIONS_SCHEMA,
-} from '@lib/ollama/schemas/meal.schemas';
-
-import { ollamaClient } from '@lib/ollama/ollama.service';
-import type { ActionHandler, ActionStep, StepContext, StepResult } from './types';
+// Define the valid step names as a type-safe union
+type MealStepName = 
+  | 'proposeName' 
+  | 'generateBasicInfo' 
+  | 'generateDescription' 
+  | 'generateIngredients' 
+  | 'generateInstructions';
 
 // Step 1: Propose meal name
-const proposeNameStep: ActionStep = {
+const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
   name: 'proposeName',
   prompt: MEAL_NAME_PROMPT,
   schema: MEAL_NAME_SCHEMA,
   
-  async execute(model, context, runtime) {
+  async execute(model, context, runtime): Promise<StepResult<MealResult, 'proposeName'>> {
     const { messages, chatId, messageId } = context;
     const { dispatch, abortSignal } = runtime;
     
-    // Update UI to show we're generating the name
-    dispatch(updateAgentActionStatus({
-      chatId,
-      messageId,
-      status: 'generating_name',
-    }));
-    
-    try {
-      const response = await ollamaClient.chat({
-        model,
-        messages: [
-          { role: 'system', content: this.prompt },
-          ...messages.slice(-3).map(m => ({
-            role: m.role as 'user' | 'assistant',
-            content: m.content,
-          })),
-        ],
-        stream: false,
-        format: this.schema,
-        signal: abortSignal, // Support cancellation
-      });
-
-      if (abortSignal?.aborted) {
-        return {
-          stepName: this.name,
-          data: {},
-          cancelled: true,
-        };
-      }
-
-      const parsed = JSON.parse(response.message.content);
-      
-      // Update Redux with the meal name
-      dispatch(updateRecipeStep({
-        chatId,
-        messageId,
-        stepName: this.name,
-        data: { name: parsed.name },
-      }));
-      
-      return {
-        stepName: this.name,
-        data: { name: parsed.name },
-      };
-    } catch (err) {
-      return {
-        stepName: this.name,
-        data: {},
-        error: err instanceof Error ? err.message : 'Failed to generate name',
-      };
-    }
-  },
-  
-  onCancel(context, runtime) {
-    // Clean up on cancellation
-    runtime.dispatch(updateAgentActionStatus({
-      chatId: context.chatId,
-      messageId: context.messageId,
-      status: 'cancelled',
-    }));
-  },
-};
-
-// Step 2: Generate category + servings + time
-const generateBasicInfoStep: ActionStep = {
-  name: 'generateBasicInfo',
-  prompt: MEAL_INFO_PROMPT,
-  schema: MEAL_INFO_SCHEMA,
-  
-  async execute(model, context) {
-    const mealName = context.previousResults?.name as string;
-    
+    // Call Ollama API (non-streaming for simplicity)
     const response = await ollamaClient.chat({
       model,
       messages: [
-        { role: 'system', content: this.prompt },
-        { role: 'user', content: `Generate basic info for: ${mealName}` },
+        { role: 'system', content: MEAL_NAME_PROMPT },
+        ...messages.slice(-3).map(m => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        })),
       ],
       stream: false,
-      format: this.schema,
+      format: MEAL_NAME_SCHEMA,
     });
 
     const parsed = JSON.parse(response.message.content);
     
+    // Update Redux with partial result
+    dispatch(updateMealProposal({
+      chatId,
+      messageId,
+      data: { name: parsed.name },
+    }));
+    
+    // Return typed result
     return {
-      stepName: this.name,
+      stepName: 'proposeName',
+      data: { name: parsed.name }, // Partial<MealResult>
+    };
+  },
+};
+
+// Step 2: Generate basic info (uses previous results)
+const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> = {
+  name: 'generateBasicInfo',
+  prompt: MEAL_INFO_PROMPT,
+  schema: MEAL_INFO_SCHEMA,
+  
+  async execute(model, context, runtime): Promise<StepResult<MealResult, 'generateBasicInfo'>> {
+    // Access previous results with type safety
+    const mealName = context.previousResults?.name; // string | undefined
+    
+    // ... execute logic ...
+    
+    return {
+      stepName: 'generateBasicInfo',
       data: {
         category: parsed.category,
         servings: parsed.servings,
@@ -600,142 +721,60 @@ const generateBasicInfoStep: ActionStep = {
   },
 };
 
-// Step 3: Generate description
-const generateDescriptionStep: ActionStep = {
-  name: 'generateDescription',
-  prompt: MEAL_DESCRIPTION_PROMPT,
-  schema: MEAL_DESCRIPTION_SCHEMA,
-  
-  async execute(model, context) {
-    const mealName = context.previousResults?.name as string;
-    
-    const response = await ollamaClient.chat({
-      model,
-      messages: [
-        { role: 'system', content: this.prompt },
-        { role: 'user', content: `Write a description for: ${mealName}` },
-      ],
-      stream: false,
-      format: this.schema,
-    });
-
-    const parsed = JSON.parse(response.message.content);
-    
-    return {
-      stepName: this.name,
-      data: { description: parsed.description },
-    };
-  },
-};
-
-// Step 4: Generate ingredients
-const generateIngredientsStep: ActionStep = {
-  name: 'generateIngredients',
-  prompt: MEAL_INGREDIENTS_PROMPT,
-  schema: MEAL_INGREDIENTS_SCHEMA,
-  
-  async execute(model, context) {
-    const mealName = context.previousResults?.name as string;
-    const servings = context.previousResults?.servings as number;
-    
-    const response = await ollamaClient.chat({
-      model,
-      messages: [
-        { role: 'system', content: this.prompt },
-        { role: 'user', content: `List ingredients for ${mealName} (${servings} servings)` },
-      ],
-      stream: false,
-      format: this.schema,
-    });
-
-    const parsed = JSON.parse(response.message.content);
-    
-    return {
-      stepName: this.name,
-      data: { ingredients: parsed.ingredients },
-    };
-  },
-};
-
-// Step 5: Generate instructions
-const generateInstructionsStep: ActionStep = {
-  name: 'generateInstructions',
-  prompt: MEAL_INSTRUCTIONS_PROMPT,
-  schema: MEAL_INSTRUCTIONS_SCHEMA,
-  
-  async execute(model, context) {
-    const mealName = context.previousResults?.name as string;
-    const ingredients = context.previousResults?.ingredients as Array<unknown>;
-    
-    const response = await ollamaClient.chat({
-      model,
-      messages: [
-        { role: 'system', content: this.prompt },
-        {
-          role: 'user',
-          content: `Write instructions for ${mealName} using these ingredients: ${JSON.stringify(ingredients)}`,
-        },
-      ],
-      stream: false,
-      format: this.schema,
-    });
-
-    const parsed = JSON.parse(response.message.content);
-    
-    return {
-      stepName: this.name,
-      data: { instructions: parsed.instructions },
-    };
-  },
-};
+// ... remaining steps (generateDescription, generateIngredients, generateInstructions) ...
 
 // Export the complete action handler
-export const createMealAction: ActionHandler = {
+export const createMealAction: ActionHandler<MealResult, MealStepName> = {
   type: 'createMeal',
   description: 'Create a new meal recipe with ingredients and instructions',
   isMultiStep: true,
   
+  // Type-safe step array
   steps: [
     proposeNameStep,
     generateBasicInfoStep,
-    generateDescriptionStep,
-    generateIngredientsStep,
-    generateInstructionsStep,
+    // ... other steps
   ],
   
+  // Required: Transform final result into message content
+  getUpdatedMessageContentFromResult(result) {
+    // For multi-step, this may create an action card instead of text
+    return {
+      content: `Created meal: ${result.name}`,
+      agentAction: {
+        type: 'createMealProposal',
+        status: 'pending',
+        data: result,
+      },
+    };
+  },
+  
+  // Optional: Called before starting
   onStart(context, runtime) {
-    // Initialize the recipe generation UI
-    runtime.dispatch(updateAgentActionStatus({
-      chatId: context.chatId,
-      messageId: context.messageId,
-      status: 'generating_name',
+    runtime.dispatch(initializeMealProposal({ 
+      chatId: context.chatId, 
+      messageId: context.messageId 
     }));
   },
   
-  onComplete(context, runtime) {
-    // Mark recipe as ready for approval
-    runtime.dispatch(updateAgentActionStatus({
-      chatId: context.chatId,
+  // Optional: Called after all steps complete
+  onComplete(context, runtime, result) {
+    runtime.dispatch(finalizeMealProposal({ 
+      chatId: context.chatId, 
       messageId: context.messageId,
-      status: 'pending_approval',
+      meal: result,
     }));
   },
   
+  // Optional: Called on cancellation (type-safe completedSteps)
   onCancel(context, runtime, completedSteps) {
-    // Handle cancellation - clean up partial recipe
-    console.log(`Recipe generation cancelled after steps: ${completedSteps.join(', ')}`);
+    // completedSteps: MealStepName[] (type-safe!)
+    console.log(`Cancelled after: ${completedSteps.join(', ')}`);
     
-    runtime.dispatch(updateAgentActionStatus({
-      chatId: context.chatId,
-      messageId: context.messageId,
-      status: 'cancelled',
-    }));
-    
-    // Optionally: Remove the partial recipe from Redux
     if (completedSteps.length === 0) {
-      runtime.dispatch(removeMessage({
-        chatId: context.chatId,
-        messageId: context.messageId,
+      runtime.dispatch(removeMessage({ 
+        chatId: context.chatId, 
+        messageId: context.messageId 
       }));
     }
   },
@@ -744,22 +783,22 @@ export const createMealAction: ActionHandler = {
 
 #### Action Registry
 
+See [`src/lib/ollama/actions/registry.ts`](../src/lib/ollama/actions/registry.ts) for the full implementation.
+
 ```typescript
-// src/lib/ollama/actions/registry.ts
-
-import { generalAction } from './generalAction';
-import { createMealAction } from './createMealAction';
-import type { ActionType, ActionHandler } from './types';
-
-export const ACTION_REGISTRY: Record<ActionType, ActionHandler> = {
-  general: generalAction,
-  createMeal: createMealAction,
-  // Future actions:
-  // addIngredient: addIngredientAction,
-  // planWeek: planWeekAction,
+// Type-safe registry mapping action types to their concrete handler types
+type ActionHandlerMap = {
+  general: typeof generalAction; // ActionHandler<GeneralResult>
+  createMeal: typeof createMealAction; // ActionHandler<MealResult, MealStepName> (when implemented)
 };
 
-export function getActionHandler(actionType: ActionType): ActionHandler {
+const ACTION_REGISTRY: ActionHandlerMap = {
+  general: generalAction,
+  createMeal: undefined, // Placeholder until implemented
+};
+
+// Type-safe getter with exact return types
+export function getActionHandler<T extends ActionType>(actionType: T): ActionHandlerMap[T] {
   const handler = ACTION_REGISTRY[actionType];
   if (!handler) {
     throw new Error(`Unknown action type: ${actionType}`);
@@ -767,6 +806,12 @@ export function getActionHandler(actionType: ActionType): ActionHandler {
   return handler;
 }
 ```
+
+**Key points:**
+- ✅ `ActionHandlerMap` provides exact types for each action
+- ✅ `getActionHandler<T>` returns the specific handler type, not a generic `ActionHandler`
+- ✅ TypeScript knows `getActionHandler('general')` returns `ActionHandler<GeneralResult>`
+- ✅ No need to cast or assert types in consuming code
 
 #### Usage in Chat.tsx
 

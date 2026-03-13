@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@lib/chat';
+import type { AgentAction, ChatMessage } from '@lib/chat';
 import type { AppDispatch } from '@store/index';
 
 export type ActionType = 'general' | 'createMeal';
@@ -50,6 +50,13 @@ interface ActionHandlerBase<ResultType extends Record<string, unknown>> {
   description: string;
 
   onStart?: (context: StepContext<ResultType>, runtime: StepRuntime) => void;
+
+  getUpdatedMessageContentFromResult: (result: ResultType) => {
+    content: string;
+    rawContent?: string | null; // Optional rawContent to update the message with, if different from content
+    agentAction?: AgentAction | null;
+  };
+
   onComplete?: (
     context: StepContext<ResultType>,
     runtime: StepRuntime,

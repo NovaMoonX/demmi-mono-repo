@@ -1,9 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import {
-  ChatConversation,
-  ChatMessage,
-} from '@lib/chat';
-import type { AgentAction, AgentActionStatus, AgentCreateMealAction, AgentMealProposal } from '@lib/chat/agent-actions.types';
+import { ChatConversation, ChatMessage } from '@lib/chat';
+import type {
+  AgentAction,
+  AgentActionStatus,
+  AgentCreateMealAction,
+  AgentMealProposal,
+} from '@lib/chat/agent-actions.types';
 import { generatedId } from '@utils/generatedId';
 import {
   fetchChats,
@@ -33,7 +35,10 @@ const chatsSlice = createSlice({
     setCurrentChat: (state, action: PayloadAction<string | null>) => {
       state.currentChatId = action.payload;
     },
-    createConversation: (state, action: PayloadAction<Omit<ChatConversation, 'id'>>) => {
+    createConversation: (
+      state,
+      action: PayloadAction<Omit<ChatConversation, 'id'>>,
+    ) => {
       const newConversation: ChatConversation = {
         ...action.payload,
         id: generatedId('chat'),
@@ -44,10 +49,10 @@ const chatsSlice = createSlice({
     },
     addMessage: (
       state,
-      action: PayloadAction<{ chatId: string; message: ChatMessage }>
+      action: PayloadAction<{ chatId: string; message: ChatMessage }>,
     ) => {
       const conversation = state.conversations.find(
-        (c) => c.id === action.payload.chatId
+        (c) => c.id === action.payload.chatId,
       );
 
       if (conversation) {
@@ -57,25 +62,28 @@ const chatsSlice = createSlice({
     },
     removeMessage: (
       state,
-      action: PayloadAction<{ chatId: string; messageId: string }>
+      action: PayloadAction<{ chatId: string; messageId: string }>,
     ) => {
       const conversation = state.conversations.find(
-        (c) => c.id === action.payload.chatId
+        (c) => c.id === action.payload.chatId,
       );
 
       if (conversation) {
         conversation.messages = conversation.messages.filter(
-          (m) => m.id !== action.payload.messageId
+          (m) => m.id !== action.payload.messageId,
         );
         conversation.lastUpdated = Date.now();
       }
     },
     updateConversation: (
       state,
-      action: PayloadAction<{ id: string; updates: Partial<Omit<ChatConversation, 'id'>> }>
+      action: PayloadAction<{
+        id: string;
+        updates: Partial<Omit<ChatConversation, 'id'>>;
+      }>,
     ) => {
       const index = state.conversations.findIndex(
-        (c) => c.id === action.payload.id
+        (c) => c.id === action.payload.id,
       );
 
       if (index !== -1) {
@@ -87,7 +95,7 @@ const chatsSlice = createSlice({
     },
     deleteConversation: (state, action: PayloadAction<string>) => {
       state.conversations = state.conversations.filter(
-        (c) => c.id !== action.payload
+        (c) => c.id !== action.payload,
       );
 
       if (state.currentChatId === action.payload) {
@@ -96,7 +104,7 @@ const chatsSlice = createSlice({
     },
     togglePinConversation: (state, action: PayloadAction<string>) => {
       const conversation = state.conversations.find(
-        (c) => c.id === action.payload
+        (c) => c.id === action.payload,
       );
 
       if (conversation) {
@@ -112,14 +120,14 @@ const chatsSlice = createSlice({
     },
     trimMessagesFrom: (
       state,
-      action: PayloadAction<{ chatId: string; messageId: string }>
+      action: PayloadAction<{ chatId: string; messageId: string }>,
     ) => {
       const conversation = state.conversations.find(
-        (c) => c.id === action.payload.chatId
+        (c) => c.id === action.payload.chatId,
       );
       if (conversation) {
         const index = conversation.messages.findIndex(
-          (m) => m.id === action.payload.messageId
+          (m) => m.id === action.payload.messageId,
         );
         if (index !== -1) {
           conversation.messages = conversation.messages.slice(0, index);
@@ -132,18 +140,18 @@ const chatsSlice = createSlice({
       action: PayloadAction<{
         chatId: string;
         messageId: string;
-        content: string;
         model?: string | null;
+        content: string;
         rawContent?: string | null;
         agentAction?: AgentAction | null;
-      }>
+      }>,
     ) => {
       const conversation = state.conversations.find(
-        (c) => c.id === action.payload.chatId
+        (c) => c.id === action.payload.chatId,
       );
       if (conversation) {
         const message = conversation.messages.find(
-          (m) => m.id === action.payload.messageId
+          (m) => m.id === action.payload.messageId,
         );
         if (message) {
           message.content = action.payload.content;
@@ -166,14 +174,14 @@ const chatsSlice = createSlice({
         messageId: string;
         status: AgentActionStatus;
         meals?: AgentMealProposal[];
-      }>
+      }>,
     ) => {
       const conversation = state.conversations.find(
-        (c) => c.id === action.payload.chatId
+        (c) => c.id === action.payload.chatId,
       );
       if (conversation) {
         const message = conversation.messages.find(
-          (m) => m.id === action.payload.messageId
+          (m) => m.id === action.payload.messageId,
         );
         if (message?.agentAction) {
           message.agentAction.status = action.payload.status;
@@ -189,7 +197,11 @@ const chatsSlice = createSlice({
     },
     updateMessageSummary: (
       state,
-      action: PayloadAction<{ chatId: string; messageId: string; summary: string | null }>
+      action: PayloadAction<{
+        chatId: string;
+        messageId: string;
+        summary: string | null;
+      }>,
     ) => {
       const { chatId, messageId, summary } = action.payload;
       const chat = state.conversations.find((c) => c.id === chatId);

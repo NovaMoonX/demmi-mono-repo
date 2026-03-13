@@ -12,9 +12,10 @@ const MAX_CONTEXT_MESSAGES = 5;
 
 interface GeneralResult extends Record<string, unknown> {
   content: string;
+  rawContent: string | null;
 }
 
-export const generalAction = {
+export const generalAction: ActionHandler<GeneralResult> = {
   type: 'general',
   description: 'General conversational response about cooking, nutrition, and meal planning',
   isMultiStep: false,
@@ -55,7 +56,16 @@ export const generalAction = {
 
     const parsed = parseGeneralResponse(rawContent);
     const content = parsed?.response ?? rawContent;
+    const rawContentUsed = !!parsed?.response;
 
-    return { type: 'general', data: { content } };
+    return { type: 'general', data: { content, rawContent: rawContentUsed ? null : rawContent } };
   },
-} satisfies ActionHandler<GeneralResult>;
+
+  getUpdatedMessageContentFromResult(result) {
+    return {
+      content: result.content,
+      rawContent: result.rawContent,
+      agentAction: null,
+    };
+  },
+} ;

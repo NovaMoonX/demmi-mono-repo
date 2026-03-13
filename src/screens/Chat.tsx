@@ -27,11 +27,14 @@ import {
 } from '@store/slices/chatsSlice';
 import { createIngredient } from '@store/actions/ingredientActions';
 import { createMeal } from '@store/actions/mealActions';
-import { AgentCreateMealAction, ChatMessage as ChatMessageType } from '@lib/chat';
+import { ChatMessage as ChatMessageType } from '@lib/chat';
 import type { MealIngredient } from '@lib/meals';
-import type { AbortableAsyncIterator } from 'ollama';
-import type { ChatResponse } from 'ollama/browser';
-import { detectIntent, generateSummary, getGeneralResponse, getMealNameProposal, generateRecipe, extractPartialResponse, parseGeneralResponse } from '@lib/ollama';
+import {
+  detectIntent,
+  generateSummary,
+  generateRecipe,
+  getActionHandler,
+} from '@lib/ollama';
 import { generatedId } from '@utils/generatedId';
 
 const SCROLL_DELAY_MS = 100;
@@ -48,9 +51,7 @@ export function Chat() {
   const [isSending, setIsSending] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const activeStreamRef = useRef<AbortableAsyncIterator<ChatResponse> | null>(null);
-  const currentGenerationId = useRef<string | null>(null);
-  const cancelledRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const firstTokenReceivedRef = useRef(false);
   const activeChatIdRef = useRef<string | null>(null);
   const activeMessageIdRef = useRef<string | null>(null);
@@ -93,7 +94,8 @@ export function Chat() {
     if (inputValue.trim()) {
       const confirmed = await confirm({
         title: 'Replace unsent message',
-        message: "You have unsent text in the input. Do you want to replace it with the message you're editing?",
+        message:
+          "You have unsent text in the input. Do you want to replace it with the message you're editing?",
         confirmText: 'Replace',
         cancelText: 'Cancel',
       });
@@ -109,22 +111,21 @@ export function Chat() {
     setInputValue('');
   };
 
-  const handleCancelStream = () => {
-    cancelledRef.current = true;
-    currentGenerationId.current = null;
-    
-    if (!firstTokenReceivedRef.current && activeChatIdRef.current && activeMessageIdRef.current) {
-      dispatch(removeMessage({
-        chatId: activeChatIdRef.current,
-        messageId: activeMessageIdRef.current,
-      }));
+  const handleCancelGeneration = () => {
+    if (
+      !firstTokenReceivedRef.current &&
+      activeChatIdRef.current &&
+      activeMessageIdRef.current
+    ) {
+      dispatch(
+        removeMessage({
+          chatId: activeChatIdRef.current,
+          messageId: activeMessageIdRef.current,
+        }),
+      );
     }
-    
-    if (activeStreamRef.current) {
-      activeStreamRef.current.abort();
-      activeStreamRef.current = null;
-    }
-    
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     firstTokenReceivedRef.current = false;
     activeChatIdRef.current = null;
     activeMessageIdRef.current = null;
@@ -141,7 +142,12 @@ export function Chat() {
       ?.messages.find((m) => m.id === messageId);
 
     const action = message?.agentAction;
-    if (!action || action.type !== 'create_meal' || action.status !== 'pending_confirmation') return;
+    if (
+      !action ||
+      action.type !== 'create_meal' ||
+      action.status !== 'pending_confirmation'
+    )
+      return;
 
     if (!action.proposedName) {
       addToast({
@@ -152,7 +158,9 @@ export function Chat() {
       return;
     }
 
-    dispatch(updateAgentActionStatus({ chatId, messageId, status: 'generating' }));
+    dispatch(
+      updateAgentActionStatus({ chatId, messageId, status: 'generating' }),
+    );
 
     try {
       const parsed = await generateRecipe(selectedModel, action.proposedName);
@@ -163,25 +171,51 @@ export function Chat() {
           description: 'Could not generate the recipe. Please try again.',
           type: 'error',
         });
-        dispatch(updateAgentActionStatus({ chatId, messageId, status: 'pending_confirmation' }));
+        dispatch(
+          updateAgentActionStatus({
+            chatId,
+            messageId,
+            status: 'pending_confirmation',
+          }),
+        );
         return;
       }
 
-      dispatch(updateAgentActionStatus({ chatId, messageId, status: 'pending_approval', meals: parsed.meals }));
+      dispatch(
+        updateAgentActionStatus({
+          chatId,
+          messageId,
+          status: 'pending_approval',
+          meals: parsed.meals,
+        }),
+      );
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      const errMsg =
+        err instanceof Error ? err.message : 'An unexpected error occurred.';
       addToast({
         title: 'Generation failed',
         description: errMsg,
         type: 'error',
       });
-      dispatch(updateAgentActionStatus({ chatId, messageId, status: 'pending_confirmation' }));
+      dispatch(
+        updateAgentActionStatus({
+          chatId,
+          messageId,
+          status: 'pending_confirmation',
+        }),
+      );
     }
   };
 
   const handleRejectIntent = (messageId: string) => {
     if (!currentChatId) return;
-    dispatch(updateAgentActionStatus({ chatId: currentChatId, messageId, status: 'rejected' }));
+    dispatch(
+      updateAgentActionStatus({
+        chatId: currentChatId,
+        messageId,
+        status: 'rejected',
+      }),
+    );
   };
 
   const handleApproveAction = async (messageId: string) => {
@@ -194,9 +228,16 @@ export function Chat() {
       ?.messages.find((m) => m.id === messageId);
 
     const action = message?.agentAction;
-    if (!action || action.type !== 'create_meal' || action.status !== 'pending_approval') return;
+    if (
+      !action ||
+      action.type !== 'create_meal' ||
+      action.status !== 'pending_approval'
+    )
+      return;
 
-    dispatch(updateAgentActionStatus({ chatId, messageId, status: 'approved' }));
+    dispatch(
+      updateAgentActionStatus({ chatId, messageId, status: 'approved' }),
+    );
 
     let mealsCreated = 0;
 
@@ -228,7 +269,10 @@ export function Chat() {
             }),
           ).unwrap();
 
-          mealIngredients.push({ ingredientId: created.id, servings: ingredientProposal.servings });
+          mealIngredients.push({
+            ingredientId: created.id,
+            servings: ingredientProposal.servings,
+          });
         }
 
         await dispatch(
@@ -248,13 +292,20 @@ export function Chat() {
         mealsCreated++;
       }
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      const errMsg =
+        err instanceof Error ? err.message : 'An unexpected error occurred.';
       addToast({
         title: 'Failed to save',
         description: errMsg,
         type: 'error',
       });
-      dispatch(updateAgentActionStatus({ chatId, messageId, status: 'pending_approval' }));
+      dispatch(
+        updateAgentActionStatus({
+          chatId,
+          messageId,
+          status: 'pending_approval',
+        }),
+      );
       return;
     }
 
@@ -269,7 +320,13 @@ export function Chat() {
 
   const handleRejectAction = (messageId: string) => {
     if (!currentChatId) return;
-    dispatch(updateAgentActionStatus({ chatId: currentChatId, messageId, status: 'rejected' }));
+    dispatch(
+      updateAgentActionStatus({
+        chatId: currentChatId,
+        messageId,
+        status: 'rejected',
+      }),
+    );
   };
 
   const handleSendMessage = async () => {
@@ -285,13 +342,15 @@ export function Chat() {
     setEditingMessageId(null);
 
     if (editMessageId && currentChatId) {
-      dispatch(trimMessagesFrom({ chatId: currentChatId, messageId: editMessageId }));
+      dispatch(
+        trimMessagesFrom({ chatId: currentChatId, messageId: editMessageId }),
+      );
     }
-    
-    const generationId = generatedId('msg');
-    currentGenerationId.current = generationId;
-    cancelledRef.current = false;
+
     firstTokenReceivedRef.current = false;
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     const userMessage: ChatMessageType = {
       id: generatedId('msg'),
@@ -320,7 +379,9 @@ export function Chat() {
 
     if (!currentChatId) {
       const newConversation = {
-        title: messageContent.slice(0, 50) + (messageContent.length > 50 ? '...' : ''),
+        title:
+          messageContent.slice(0, 50) +
+          (messageContent.length > 50 ? '...' : ''),
         messages: [userMessage, assistantMessage],
         isPinned: false,
         lastUpdated: Date.now(),
@@ -332,7 +393,9 @@ export function Chat() {
     } else {
       targetChatId = currentChatId;
       dispatch(addMessage({ chatId: currentChatId, message: userMessage }));
-      dispatch(addMessage({ chatId: currentChatId, message: assistantMessage }));
+      dispatch(
+        addMessage({ chatId: currentChatId, message: assistantMessage }),
+      );
     }
 
     if (!targetChatId) {
@@ -342,139 +405,92 @@ export function Chat() {
 
     const chatIdForStream = targetChatId;
     const modelUsed = selectedModel;
-    
+
     activeChatIdRef.current = chatIdForStream;
     activeMessageIdRef.current = assistantMessageId;
 
     try {
-      const allMessages = store
-        .getState()
-        .chats.conversations.find((c) => c.id === chatIdForStream)
-        ?.messages.filter((m) => m.id !== assistantMessageId) ?? [];
+      const allMessages =
+        store
+          .getState()
+          .chats.conversations.find((c) => c.id === chatIdForStream)
+          ?.messages.filter((m) => m.id !== assistantMessageId) ?? [];
 
-      const action = await detectIntent(modelUsed, allMessages);
-      
-      if (currentGenerationId.current !== generationId || cancelledRef.current) {
+      const intent = await detectIntent(modelUsed, allMessages);
+
+      if (abortController.signal.aborted) {
         if (!firstTokenReceivedRef.current) {
-          dispatch(removeMessage({
-            chatId: chatIdForStream,
-            messageId: assistantMessageId,
-          }));
+          dispatch(
+            removeMessage({
+              chatId: chatIdForStream,
+              messageId: assistantMessageId,
+            }),
+          );
         }
         return;
       }
 
-      if (action === 'general') {
-        const stream = await getGeneralResponse(modelUsed, allMessages);
-        
-        if (currentGenerationId.current !== generationId || cancelledRef.current) {
-          stream.abort();
-          if (!firstTokenReceivedRef.current) {
-            dispatch(removeMessage({
-              chatId: chatIdForStream,
-              messageId: assistantMessageId,
-            }));
-          }
-          return;
-        }
-        
-        activeStreamRef.current = stream;
-        let rawJsonContent = '';
+      const handler = getActionHandler(intent);
 
-        for await (const chunk of stream) {
-          if (currentGenerationId.current !== generationId || cancelledRef.current) {
-            break;
-          }
-          
-          if (!firstTokenReceivedRef.current) {
-            firstTokenReceivedRef.current = true;
-          }
-          
-          rawJsonContent += chunk.message.content;
+      const context = {
+        messages: allMessages,
+        chatId: chatIdForStream,
+        messageId: assistantMessageId,
+        previousResults: {},
+      };
 
-          const partialDisplay = extractPartialResponse(rawJsonContent);
+      const runtime = {
+        dispatch,
+        abortSignal: abortController.signal,
+      };
 
-          if (partialDisplay) {
-            dispatch(
-              updateMessageContent({
-                chatId: chatIdForStream,
-                messageId: assistantMessageId,
-                content: partialDisplay,
-                model: modelUsed,
-              }),
-            );
-          }
+      if (!handler) {
+        throw new Error(`No handler found for intent: ${intent}`);
+      }
+
+      handler?.onStart?.(context, runtime);
+
+      if (handler.isMultiStep) {
+        // Multi-step (Phase 3) — placeholder for now
+      } else {
+        firstTokenReceivedRef.current = true;
+
+        const result = await handler.execute(modelUsed, context, runtime);
+
+        if (!result || !('data' in result)) {
+          throw new Error('Invalid response received from agent');
         }
 
-        if (!cancelledRef.current && currentGenerationId.current === generationId && rawJsonContent) {
-          const parsed = parseGeneralResponse(rawJsonContent);
-          const displayContent = parsed?.response ?? rawJsonContent;
+        if (!abortController.signal.aborted) {
+          const messageContentUpdates =
+            handler.getUpdatedMessageContentFromResult(result.data);
 
           dispatch(
             updateMessageContent({
               chatId: chatIdForStream,
               messageId: assistantMessageId,
-              content: displayContent,
               model: modelUsed,
-              rawContent: rawJsonContent,
-              agentAction: null,
+              ...messageContentUpdates,
             }),
           );
 
-          const summaryPromise = generateSummary(modelUsed, messageContent, displayContent)
+          generateSummary(modelUsed, messageContent, messageContentUpdates.content)
             .then((summary) => {
               if (summary) {
-                dispatch(updateMessageSummary({ chatId: chatIdForStream, messageId: assistantMessageId, summary }));
+                dispatch(
+                  updateMessageSummary({
+                    chatId: chatIdForStream,
+                    messageId: assistantMessageId,
+                    summary,
+                  }),
+                );
               }
             })
             .catch((err) => console.warn('Summary generation failed', err));
-
-          void summaryPromise;
         }
-      } else if (action === 'createMeal') {
-        firstTokenReceivedRef.current = true;
-        
-        const proposedMealName = await getMealNameProposal(modelUsed, allMessages);
-        
-        if (currentGenerationId.current !== generationId || cancelledRef.current) {
-          return;
-        }
-
-        if (!proposedMealName) {
-          dispatch(
-            updateMessageContent({
-              chatId: chatIdForStream,
-              messageId: assistantMessageId,
-              content: '⚠️ Could not determine meal name. Please try again.',
-            }),
-          );
-          return;
-        }
-
-        const agentAction: AgentCreateMealAction = {
-          type: 'create_meal',
-          status: 'pending_confirmation',
-          proposedName: proposedMealName,
-          meals: [],
-        };
-
-        dispatch(
-          updateMessageContent({
-            chatId: chatIdForStream,
-            messageId: assistantMessageId,
-            content: '',
-            model: modelUsed,
-            rawContent: null,
-            agentAction,
-          }),
-        );
       }
     } catch (err) {
-      const isAbort =
-        err instanceof Error &&
-        (err.name === 'AbortError' || err.message.toLowerCase().includes('abort'));
-
-      if (!isAbort) {
+      if (!abortController.signal.aborted) {
         const errorContent =
           err instanceof Error
             ? `⚠️ Ollama error: ${err.message}`
@@ -489,9 +505,8 @@ export function Chat() {
         );
       }
     } finally {
-      if (currentGenerationId.current === generationId) {
-        activeStreamRef.current = null;
-        currentGenerationId.current = null;
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
         firstTokenReceivedRef.current = false;
         activeChatIdRef.current = null;
         activeMessageIdRef.current = null;
@@ -528,11 +543,11 @@ export function Chat() {
   const isSendDisabled = !inputValue.trim() || isSending || !selectedModel;
 
   return (
-    <div className="h-full flex overflow-hidden">
+    <div className='flex h-full overflow-hidden'>
       <div
         className={join(
-          'transition-all duration-300 border-r border-border',
-          isHistoryOpen ? 'w-64' : 'w-0'
+          'border-border border-r transition-all duration-300',
+          isHistoryOpen ? 'w-64' : 'w-0',
         )}
       >
         {isHistoryOpen && (
@@ -547,42 +562,46 @@ export function Chat() {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col bg-background">
-        <div className="border-b border-border p-4 bg-card">
-          <div className="flex items-start justify-between gap-4">
+      <div className='bg-background flex flex-1 flex-col'>
+        <div className='border-border bg-card border-b p-4'>
+          <div className='flex items-start justify-between gap-4'>
             <div
               className={join(
-                'transition-[margin] duration-300 delay-50',
-                isHistoryOpen ? 'ml-0' : 'ml-10 md:ml-0'
+                'transition-[margin] delay-50 duration-300',
+                isHistoryOpen ? 'ml-0' : 'ml-10 md:ml-0',
               )}
             >
               <button
                 onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-                className="inline-flex items-center justify-center rounded-md border border-border bg-background p-2 text-foreground transition-colors hover:bg-muted"
+                className='border-border bg-background text-foreground hover:bg-muted inline-flex items-center justify-center rounded-md border p-2 transition-colors'
                 aria-label={isHistoryOpen ? 'Hide history' : 'Show history'}
               >
                 <ChatHistoryToggleIcon />
               </button>
             </div>
-            <div className="flex flex-1 flex-col items-end gap-1 text-right">
-              <h2 className="text-lg font-semibold text-foreground">
+            <div className='flex flex-1 flex-col items-end gap-1 text-right'>
+              <h2 className='text-foreground text-lg font-semibold'>
                 {currentChat?.title ?? 'New Chat'}
               </h2>
               {currentChat && (
-                <p className="text-sm text-muted-foreground">
-                  {currentChat.messages.length} message{currentChat.messages.length !== 1 ? 's' : ''}
+                <p className='text-muted-foreground text-sm'>
+                  {currentChat.messages.length} message
+                  {currentChat.messages.length !== 1 ? 's' : ''}
                 </p>
               )}
-              <div className="flex items-center gap-2">
-                <Label htmlFor="toggle-details" className='text-muted-foreground text-sm'>
+              <div className='flex items-center gap-2'>
+                <Label
+                  htmlFor='toggle-details'
+                  className='text-muted-foreground text-sm'
+                >
                   Show message details
                 </Label>
                 <Toggle
-                  id="toggle-details"
+                  id='toggle-details'
                   checked={showDetails}
                   size='sm'
                   onCheckedChange={() => setShowDetails((v) => !v)}
-                  aria-label="Toggle message details"
+                  aria-label='Toggle message details'
                 />
 
                 <OllamaModelSelector
@@ -602,9 +621,9 @@ export function Chat() {
           </div>
         </div>
 
-        <ScrollArea className="flex-1 p-4 md:p-6">
+        <ScrollArea className='flex-1 p-4 md:p-6'>
           {currentChat ? (
-            <div className="max-w-4xl mx-auto">
+            <div className='mx-auto max-w-4xl'>
               {currentChat.messages.map((message, index) => (
                 <ChatMessage
                   key={message.id}
@@ -625,51 +644,64 @@ export function Chat() {
               <div ref={messagesEndRef} />
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center space-y-4 max-w-md">
-                <div className="text-6xl">💬</div>
-                <h2 className="text-2xl font-bold text-foreground">
+            <div className='flex h-full items-center justify-center'>
+              <div className='max-w-md space-y-4 text-center'>
+                <div className='text-6xl'>💬</div>
+                <h2 className='text-foreground text-2xl font-bold'>
                   Start a New Conversation
                 </h2>
-                <p className="text-muted-foreground">
-                  Ask me anything about cooking, recipes, meal planning, or ingredients!
+                <p className='text-muted-foreground'>
+                  Ask me anything about cooking, recipes, meal planning, or
+                  ingredients!
                 </p>
               </div>
             </div>
           )}
         </ScrollArea>
 
-        <div className="border-t border-border p-4 bg-card">
-          <div className="max-w-4xl mx-auto">
+        <div className='border-border bg-card border-t p-4'>
+          <div className='mx-auto max-w-4xl'>
             {editingMessageId && (
-              <div className={join('flex items-center justify-between mb-2 px-1 py-1.5 rounded-lg', 'bg-muted/60 border border-border text-xs text-muted-foreground')}>
-                <span>✏️ Editing message — the original and all following messages will be replaced</span>
+              <div
+                className={join(
+                  'mb-2 flex items-center justify-between rounded-lg px-1 py-1.5',
+                  'bg-muted/60 border-border text-muted-foreground border text-xs',
+                )}
+              >
+                <span>
+                  ✏️ Editing message — the original and all following messages
+                  will be replaced
+                </span>
                 <button
                   onClick={handleCancelEdit}
-                  className="ml-2 hover:text-foreground transition-colors"
-                  aria-label="Cancel edit"
+                  className='hover:text-foreground ml-2 transition-colors'
+                  aria-label='Cancel edit'
                 >
                   ✕
                 </button>
               </div>
             )}
-            <div className="relative">
+            <div className='relative'>
               <Textarea
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={selectedModel ? 'Type your message... (Enter to send, Shift+Enter for new line)' : 'Select a model above to start chatting...'}
-                className="min-h-11 max-h-50 resize-none pr-24"
+                placeholder={
+                  selectedModel
+                    ? 'Type your message... (Enter to send, Shift+Enter for new line)'
+                    : 'Select a model above to start chatting...'
+                }
+                className='max-h-50 min-h-11 resize-none pr-24'
                 disabled={isSending || !selectedModel}
               />
-              <div className="absolute bottom-2.5 right-1.5 flex gap-1">
+              <div className='absolute right-1.5 bottom-2.5 flex gap-1'>
                 {isSending && (
                   <Button
-                    onClick={handleCancelStream}
-                    variant="secondary"
-                    className="rounded-full!"
-                    aria-label="Cancel response"
-                    size="sm"
+                    onClick={handleCancelGeneration}
+                    variant='secondary'
+                    className='rounded-full!'
+                    aria-label='Cancel response'
+                    size='sm'
                   >
                     ✕
                   </Button>
@@ -677,10 +709,10 @@ export function Chat() {
                 <Button
                   onClick={handleSendMessage}
                   disabled={isSendDisabled}
-                  variant="primary"
-                  className="text-muted-foreground hover:text-foreground rounded-full!"
-                  aria-label="Send message"
-                  size="sm"
+                  variant='primary'
+                  className='text-muted-foreground hover:text-foreground rounded-full!'
+                  aria-label='Send message'
+                  size='sm'
                 >
                   ↑
                 </Button>
@@ -694,4 +726,3 @@ export function Chat() {
 }
 
 export default Chat;
-
