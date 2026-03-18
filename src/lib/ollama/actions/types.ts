@@ -114,6 +114,14 @@ interface MultiStepActionHandler<
     runtime: MultiStepActionRuntime,
   ) => Promise<MultiStepActionResult<ResultType, ValidStepNames>>;
 
+  // Execute a specific step independently (outside the full pipeline).
+  executeStep: (
+    model: string,
+    stepName: RequireStepNames<ValidStepNames>,
+    context: ActionContext<ResultType>,
+    runtime: ActionRuntime,
+  ) => Promise<StepResult<ResultType, RequireStepNames<ValidStepNames>>>;
+
   getUpdatedMessageContentFromResult?: (result: Partial<ResultType>) => {
     content: string;
     rawContent?: string | null;

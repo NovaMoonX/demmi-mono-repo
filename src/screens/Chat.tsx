@@ -34,7 +34,6 @@ import type { MealIngredient } from '@lib/meals';
 import {
   detectIntent,
   generateSummary,
-  getMealNameProposal,
   getActionHandler,
 } from '@lib/ollama';
 import type { RecipeStep } from '@lib/ollama/action-types/createMealAction.types';
@@ -338,33 +337,40 @@ export function Chat() {
         const mealIngredients: MealIngredient[] = [];
 
         for (const ingredientProposal of mealProposal.ingredients) {
-          const created = await dispatch(
-            createIngredient({
-              name: ingredientProposal.name,
-              type: ingredientProposal.type,
-              unit: ingredientProposal.unit,
-              imageUrl: '',
-              nutrients: {
-                protein: 0,
-                carbs: 0,
-                fat: 0,
-                fiber: 0,
-                sugar: 0,
-                sodium: 0,
-                calories: 0,
-              },
-              currentAmount: 0,
-              servingSize: 1,
-              otherUnit: null,
-              products: [],
-              defaultProductId: null,
-            }),
-          ).unwrap();
+          if (!ingredientProposal.isNew && ingredientProposal.existingIngredientId) {
+            mealIngredients.push({
+              ingredientId: ingredientProposal.existingIngredientId,
+              servings: ingredientProposal.servings,
+            });
+          } else {
+            const created = await dispatch(
+              createIngredient({
+                name: ingredientProposal.name,
+                type: ingredientProposal.type,
+                unit: ingredientProposal.unit,
+                imageUrl: '',
+                nutrients: {
+                  protein: 0,
+                  carbs: 0,
+                  fat: 0,
+                  fiber: 0,
+                  sugar: 0,
+                  sodium: 0,
+                  calories: 0,
+                },
+                currentAmount: 0,
+                servingSize: 1,
+                otherUnit: null,
+                products: [],
+                defaultProductId: null,
+              }),
+            ).unwrap();
 
-          mealIngredients.push({
-            ingredientId: created.id,
-            servings: ingredientProposal.servings,
-          });
+            mealIngredients.push({
+              ingredientId: created.id,
+              servings: ingredientProposal.servings,
+            });
+          }
         }
 
         await dispatch(
@@ -546,7 +552,23 @@ export function Chat() {
       if (handler.isMultiStep) {
         firstTokenReceivedRef.current = true;
 
-        const proposedName = await getMealNameProposal(modelUsed, allMessages);
+        const stepResult = await handler.executeStep(
+          modelUsed,
+          'proposeName',
+          { messages: allMessages },
+          {
+            abortSignal: abortController.signal,
+          },
+        );
+
+        if (stepResult.cancelled) return;
+
+        const proposedNameFromStep = stepResult.data.name;
+        const proposedName =
+          typeof proposedNameFromStep === 'string' &&
+          proposedNameFromStep.trim().length > 0
+            ? proposedNameFromStep
+            : null;
 
         if (abortController.signal.aborted) return;
 

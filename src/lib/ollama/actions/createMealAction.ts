@@ -1,5 +1,6 @@
 import type { MealCategory } from '@lib/meals';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
+import { store } from '@store/index';
 import { ollamaClient } from '../ollama.service';
 import {
   MEAL_NAME_PROMPT,
@@ -276,6 +277,28 @@ export const createMealAction = {
 
   steps,
 
+  async executeStep(
+    model: string,
+    stepName: MealStepName,
+    context: ActionContext<MealResult>,
+    runtime: ActionRuntime,
+  ): Promise<StepResult<MealResult, MealStepName>> {
+    const step = steps.find((candidateStep) => candidateStep.name === stepName);
+
+    if (!step) {
+      throw new Error(`Unknown meal action step: ${stepName}`);
+    }
+
+    const stepResult = await step.execute(model, context, runtime);
+    const result: StepResult<MealResult, MealStepName> = {
+      stepName: stepResult.stepName,
+      data: stepResult.data,
+      cancelled: stepResult.cancelled,
+    };
+
+    return result;
+  },
+
   async execute(
     model: string,
     context: ActionContext<MealResult>,
@@ -323,6 +346,8 @@ export const createMealAction = {
       const prepTime = Math.floor((accumulatedResult.totalTime ?? 30) * 0.4);
       const cookTime = Math.ceil((accumulatedResult.totalTime ?? 30) * 0.6);
 
+      const existingIngredients = store.getState().ingredients.items;
+
       const proposal: AgentMealProposal = {
         title: accumulatedResult.name ?? '',
         description: accumulatedResult.description ?? '',
@@ -331,12 +356,19 @@ export const createMealAction = {
         cookTime,
         servingSize: accumulatedResult.servings ?? 4,
         imageUrl: '',
-        ingredients: (accumulatedResult.ingredients ?? []).map((ing) => ({
-          name: ing.name,
-          type: ing.type,
-          unit: ing.unit,
-          servings: ing.servings,
-        })),
+        ingredients: (accumulatedResult.ingredients ?? []).map((ing) => {
+          const match = existingIngredients.find(
+            (e) => e.name.toLowerCase() === ing.name.toLowerCase(),
+          );
+          return {
+            name: ing.name,
+            type: ing.type,
+            unit: ing.unit,
+            servings: ing.servings,
+            isNew: match === undefined,
+            existingIngredientId: match?.id ?? null,
+          };
+        }),
         instructions: accumulatedResult.instructions ?? [],
       };
 

@@ -91,13 +91,23 @@ function IngredientList({
         {ingredients.map((ing, i) => (
           <div
             key={i}
-            className='bg-muted text-muted-foreground flex items-center gap-1 rounded-md px-2 py-1 text-xs'
+            className={join(
+              'flex items-center gap-1 rounded-md px-2 py-1 text-xs',
+              ing.isNew
+                ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
+                : 'bg-muted text-muted-foreground',
+            )}
           >
             <span>{INGREDIENT_TYPE_EMOJIS[ing.type]}</span>
             <span className='font-medium'>{ing.name}</span>
             <span className='opacity-70'>
               {ing.servings} {ing.unit}
             </span>
+            {ing.isNew && (
+              <span className='bg-primary/20 text-primary rounded px-1 py-0.5 text-xs font-semibold leading-none'>
+                new
+              </span>
+            )}
           </div>
         ))}
       </div>

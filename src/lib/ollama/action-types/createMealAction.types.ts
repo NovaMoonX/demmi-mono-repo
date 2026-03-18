@@ -37,6 +37,8 @@ export interface AgentIngredientProposal {
   type: IngredientType;
   unit: MeasurementUnit;
   servings: number;
+  isNew: boolean;
+  existingIngredientId: string | null;
 }
 
 export interface AgentMealProposal {
