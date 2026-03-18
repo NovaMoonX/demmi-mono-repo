@@ -1,4 +1,3 @@
-import { updateMessageContent, updateAgentActionStatus, updateRecipeStep, cancelRecipeGeneration } from '@store/slices/chatsSlice';
 import type { MealCategory } from '@lib/meals';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 import { ollamaClient } from '../ollama.service';
@@ -16,8 +15,16 @@ import {
   MEAL_INGREDIENTS_SCHEMA,
   MEAL_INSTRUCTIONS_SCHEMA,
 } from '../schemas/meal.schemas';
-import type { ActionHandler, ActionStep, StepContext, StepResult, StepRuntime } from './types';
-import { AgentMealProposal } from '../action-types/createMealAction.types';
+import type {
+  ActionHandler,
+  ActionStep,
+  ActionContext,
+  ActionRuntime,
+  MultiStepActionResult,
+  MultiStepActionRuntime,
+  StepResult,
+} from './types';
+import type { AgentMealProposal, RecipeStep } from '../action-types/createMealAction.types';
 
 const MAX_CONTEXT_MESSAGES = 3;
 
@@ -29,6 +36,8 @@ export interface MealResult extends Record<string, unknown> {
   description: string;
   ingredients: Array<{ name: string; type: IngredientType; unit: MeasurementUnit; servings: number }>;
   instructions: string[];
+  // Built after all steps complete — the final proposal ready for the consumer to save.
+  proposal: AgentMealProposal;
 }
 
 export type MealStepName =
@@ -38,18 +47,35 @@ export type MealStepName =
   | 'generateIngredients'
   | 'generateInstructions';
 
-const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
+// Maps each MealStepName to the RecipeStep key used by the consumer for state updates.
+// Typed as `Record<MealStepName, RecipeStep>` so the values are validated at compile time.
+const STEP_RECIPE_KEY: Record<MealStepName, RecipeStep> = {
+  proposeName: 'name',
+  generateBasicInfo: 'info',
+  generateDescription: 'description',
+  generateIngredients: 'ingredients',
+  generateInstructions: 'instructions',
+};
+
+// Each step is exported so it can also be invoked independently outside the pipeline.
+
+export const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
   name: 'proposeName',
-  prompt: MEAL_NAME_PROMPT,
-  schema: MEAL_NAME_SCHEMA,
 
   async execute(
     model: string,
-    context: StepContext<MealResult>,
-    runtime: StepRuntime,
+    context: ActionContext<MealResult>,
+    runtime: ActionRuntime,
   ): Promise<StepResult<MealResult, 'proposeName'>> {
     const { messages } = context;
     const { abortSignal } = runtime;
+
+    // If a name was already agreed upon (e.g. from the confirmation step), reuse it directly
+    // so we don't regenerate a different — potentially longer — name during the pipeline.
+    const existingName = context.previousResults?.name;
+    if (existingName) {
+      return { stepName: 'proposeName', data: { name: existingName } };
+    }
 
     if (abortSignal?.aborted) {
       return { stepName: 'proposeName', data: {}, cancelled: true };
@@ -75,28 +101,17 @@ const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
     const parsed = JSON.parse(response.message.content);
     const name: string = parsed.name ?? '';
 
-    runtime.dispatch(
-      updateRecipeStep({
-        chatId: context.chatId,
-        messageId: context.messageId,
-        step: 'name',
-        data: { name },
-      }),
-    );
-
     return { stepName: 'proposeName', data: { name } };
   },
 };
 
-const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> = {
+export const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> = {
   name: 'generateBasicInfo',
-  prompt: MEAL_INFO_PROMPT,
-  schema: MEAL_INFO_SCHEMA,
 
   async execute(
     model: string,
-    context: StepContext<MealResult>,
-    runtime: StepRuntime,
+    context: ActionContext<MealResult>,
+    runtime: ActionRuntime,
   ): Promise<StepResult<MealResult, 'generateBasicInfo'>> {
     const { abortSignal } = runtime;
     const name = context.previousResults?.name ?? '';
@@ -126,32 +141,17 @@ const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> = {
       totalTime: Number(parsed.totalTime) || 30,
     };
 
-    runtime.dispatch(
-      updateRecipeStep({
-        chatId: context.chatId,
-        messageId: context.messageId,
-        step: 'info',
-        data: {
-          category: result.category,
-          servings: result.servings,
-          totalTime: result.totalTime,
-        },
-      }),
-    );
-
     return { stepName: 'generateBasicInfo', data: result };
   },
 };
 
-const generateDescriptionStep: ActionStep<MealResult, 'generateDescription'> = {
+export const generateDescriptionStep: ActionStep<MealResult, 'generateDescription'> = {
   name: 'generateDescription',
-  prompt: MEAL_DESCRIPTION_PROMPT,
-  schema: MEAL_DESCRIPTION_SCHEMA,
 
   async execute(
     model: string,
-    context: StepContext<MealResult>,
-    runtime: StepRuntime,
+    context: ActionContext<MealResult>,
+    runtime: ActionRuntime,
   ): Promise<StepResult<MealResult, 'generateDescription'>> {
     const { abortSignal } = runtime;
     const name = context.previousResults?.name ?? '';
@@ -177,28 +177,17 @@ const generateDescriptionStep: ActionStep<MealResult, 'generateDescription'> = {
     const parsed = JSON.parse(response.message.content);
     const description: string = parsed.description ?? '';
 
-    runtime.dispatch(
-      updateRecipeStep({
-        chatId: context.chatId,
-        messageId: context.messageId,
-        step: 'description',
-        data: { description },
-      }),
-    );
-
     return { stepName: 'generateDescription', data: { description } };
   },
 };
 
-const generateIngredientsStep: ActionStep<MealResult, 'generateIngredients'> = {
+export const generateIngredientsStep: ActionStep<MealResult, 'generateIngredients'> = {
   name: 'generateIngredients',
-  prompt: MEAL_INGREDIENTS_PROMPT,
-  schema: MEAL_INGREDIENTS_SCHEMA,
 
   async execute(
     model: string,
-    context: StepContext<MealResult>,
-    runtime: StepRuntime,
+    context: ActionContext<MealResult>,
+    runtime: ActionRuntime,
   ): Promise<StepResult<MealResult, 'generateIngredients'>> {
     const { abortSignal } = runtime;
     const name = context.previousResults?.name ?? '';
@@ -225,33 +214,17 @@ const generateIngredientsStep: ActionStep<MealResult, 'generateIngredients'> = {
     const parsed = JSON.parse(response.message.content);
     const ingredients = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
 
-    runtime.dispatch(
-      updateRecipeStep({
-        chatId: context.chatId,
-        messageId: context.messageId,
-        step: 'ingredients',
-        data: {
-          ingredients: ingredients.map((i: { name: string; servings: number; unit: string }) => ({
-            name: i.name,
-            amount: `${i.servings} ${i.unit}`,
-          })),
-        },
-      }),
-    );
-
     return { stepName: 'generateIngredients', data: { ingredients } };
   },
 };
 
-const generateInstructionsStep: ActionStep<MealResult, 'generateInstructions'> = {
+export const generateInstructionsStep: ActionStep<MealResult, 'generateInstructions'> = {
   name: 'generateInstructions',
-  prompt: MEAL_INSTRUCTIONS_PROMPT,
-  schema: MEAL_INSTRUCTIONS_SCHEMA,
 
   async execute(
     model: string,
-    context: StepContext<MealResult>,
-    runtime: StepRuntime,
+    context: ActionContext<MealResult>,
+    runtime: ActionRuntime,
   ): Promise<StepResult<MealResult, 'generateInstructions'>> {
     const { abortSignal } = runtime;
     const name = context.previousResults?.name ?? '';
@@ -284,91 +257,96 @@ const generateInstructionsStep: ActionStep<MealResult, 'generateInstructions'> =
     const parsed = JSON.parse(response.message.content);
     const instructions: string[] = Array.isArray(parsed.steps) ? parsed.steps : [];
 
-    runtime.dispatch(
-      updateRecipeStep({
-        chatId: context.chatId,
-        messageId: context.messageId,
-        step: 'instructions',
-        data: { instructions },
-      }),
-    );
-
     return { stepName: 'generateInstructions', data: { instructions } };
   },
 };
+
+const steps = [
+  proposeNameStep,
+  generateBasicInfoStep,
+  generateDescriptionStep,
+  generateIngredientsStep,
+  generateInstructionsStep,
+];
 
 export const createMealAction = {
   type: 'createMeal',
   description: 'Create a new meal recipe with ingredients and instructions',
   isMultiStep: true,
 
-  steps: [
-    proposeNameStep,
-    generateBasicInfoStep,
-    generateDescriptionStep,
-    generateIngredientsStep,
-    generateInstructionsStep,
-  ],
+  steps,
 
-  onStart(context, runtime) {
-    const { chatId, messageId } = context;
-    runtime.dispatch(
-      updateMessageContent({
-        chatId,
-        messageId,
-        content: '🍳 Generating recipe...',
-        agentAction: {
-          type: 'create_meal',
-          status: 'generating_name',
-          proposedName: '',
-          meals: [],
-          recipe: null,
-          completedSteps: null,
-        },
-      }),
-    );
+  async execute(
+    model: string,
+    context: ActionContext<MealResult>,
+    runtime: MultiStepActionRuntime,
+  ): Promise<MultiStepActionResult<MealResult, MealStepName>> {
+    const completedSteps: MealStepName[] = [];
+    const accumulatedResult: Partial<MealResult> = {};
+
+    for (const step of steps) {
+      if (runtime.abortSignal?.aborted) break;
+
+      const stepContext: ActionContext<MealResult> = {
+        ...context,
+        previousResults: accumulatedResult,
+      };
+
+      const stepResult = await step.execute(model, stepContext, runtime);
+
+      if (stepResult.cancelled) break;
+
+      Object.assign(accumulatedResult, stepResult.data);
+      completedSteps.push(step.name as MealStepName);
+
+      // Notify the consumer with the recipe step key and display-ready data.
+      // The consumer is responsible for updating state (e.g. dispatching updateRecipeStep).
+      const recipeKey = STEP_RECIPE_KEY[step.name as MealStepName];
+      if (recipeKey && runtime.onStepComplete) {
+        if (step.name === 'generateIngredients' && Array.isArray(stepResult.data.ingredients)) {
+          // Transform raw LLM ingredient format into the display format.
+          const rawIngredients = stepResult.data.ingredients as Array<Record<string, unknown>>;
+          const displayIngredients = rawIngredients.map((i) => ({
+            name: String(i.name ?? ''),
+            amount: `${i.servings ?? ''} ${i.unit ?? ''}`.trim(),
+          }));
+          runtime.onStepComplete(recipeKey, { ingredients: displayIngredients });
+        } else {
+          runtime.onStepComplete(recipeKey, stepResult.data as Record<string, unknown>);
+        }
+      }
+    }
+
+    const cancelled = (runtime.abortSignal?.aborted ?? false) || completedSteps.length < steps.length;
+
+    if (!cancelled) {
+      const prepTime = Math.floor((accumulatedResult.totalTime ?? 30) * 0.4);
+      const cookTime = Math.ceil((accumulatedResult.totalTime ?? 30) * 0.6);
+
+      const proposal: AgentMealProposal = {
+        title: accumulatedResult.name ?? '',
+        description: accumulatedResult.description ?? '',
+        category: accumulatedResult.category ?? 'dinner',
+        prepTime,
+        cookTime,
+        servingSize: accumulatedResult.servings ?? 4,
+        imageUrl: '',
+        ingredients: (accumulatedResult.ingredients ?? []).map((ing) => ({
+          name: ing.name,
+          type: ing.type,
+          unit: ing.unit,
+          servings: ing.servings,
+        })),
+        instructions: accumulatedResult.instructions ?? [],
+      };
+
+      accumulatedResult.proposal = proposal;
+    }
+
+    return { data: accumulatedResult, completedSteps, cancelled };
   },
 
-  onComplete(context, runtime, result) {
-    const { chatId, messageId } = context;
-
-    const prepTime = Math.floor((result.totalTime ?? 30) * 0.4);
-    const cookTime = Math.ceil((result.totalTime ?? 30) * 0.6);
-
-    const meal: AgentMealProposal = {
-      title: result.name ?? '',
-      description: result.description ?? '',
-      category: result.category ?? 'dinner',
-      prepTime,
-      cookTime,
-      servingSize: result.servings ?? 4,
-      imageUrl: '',
-      ingredients: (result.ingredients ?? []).map((ing) => ({
-        name: ing.name,
-        type: ing.type,
-        unit: ing.unit,
-        servings: ing.servings,
-      })),
-      instructions: result.instructions ?? [],
-    };
-
-    runtime.dispatch(
-      updateAgentActionStatus({
-        chatId,
-        messageId,
-        status: 'pending_approval',
-        meals: [meal],
-      }),
-    );
-  },
-
-  onCancel(context, runtime, completedSteps) {
-    const { chatId, messageId } = context;
-    console.log(`Recipe generation cancelled after: ${completedSteps.join(', ')}`);
-    runtime.dispatch(cancelRecipeGeneration({ chatId, messageId }));
-  },
-
-  getUpdatedMessageContentFromResult(result) {
+  getUpdatedMessageContentFromResult(result: Partial<MealResult>) {
     const name = result.name ?? 'your recipe';
     const content = `I've generated a recipe for **${name}**. Review it below and save it to your collection!`;
     return { content };

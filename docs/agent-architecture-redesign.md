@@ -438,8 +438,6 @@ export interface ActionStep<
   Name extends string,
 > {
   name: Name;
-  prompt: string;
-  schema: Record<string, unknown>;
   isStreaming?: boolean;
   execute: (
     model: string,
@@ -660,8 +658,6 @@ type MealStepName =
 // Step 1: Propose meal name
 const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
   name: 'proposeName',
-  prompt: MEAL_NAME_PROMPT,
-  schema: MEAL_NAME_SCHEMA,
   
   async execute(model, context, runtime): Promise<StepResult<MealResult, 'proposeName'>> {
     const { messages, chatId, messageId } = context;
@@ -701,8 +697,6 @@ const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
 // Step 2: Generate basic info (uses previous results)
 const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> = {
   name: 'generateBasicInfo',
-  prompt: MEAL_INFO_PROMPT,
-  schema: MEAL_INFO_SCHEMA,
   
   async execute(model, context, runtime): Promise<StepResult<MealResult, 'generateBasicInfo'>> {
     // Access previous results with type safety
@@ -1358,8 +1352,6 @@ import {
 // Use in steps
 const proposeNameStep: ActionStep = {
   name: 'proposeName',
-  prompt: MEAL_NAME_PROMPT,    // ← Imported
-  schema: MEAL_NAME_SCHEMA,    // ← Imported
   async execute(model, context) {
     // ...
   }

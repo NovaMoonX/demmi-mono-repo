@@ -22,6 +22,8 @@ import {
   updateMessageContent,
   updateAgentActionStatus,
   updateMessageSummary,
+  updateRecipeStep,
+  cancelRecipeGeneration,
   deleteConversation,
   togglePinConversation,
 } from '@store/slices/chatsSlice';
@@ -32,11 +34,11 @@ import type { MealIngredient } from '@lib/meals';
 import {
   detectIntent,
   generateSummary,
-  generateRecipe,
+  getMealNameProposal,
   getActionHandler,
 } from '@lib/ollama';
+import type { RecipeStep } from '@lib/ollama/action-types/createMealAction.types';
 import { generatedId } from '@utils/generatedId';
-import { ExtractActionHandler } from '@/lib/ollama/actions/types';
 
 const SCROLL_DELAY_MS = 100;
 
@@ -150,26 +152,125 @@ export function Chat() {
     )
       return;
 
-    if (!action.proposedName) {
-      addToast({
-        title: 'Unable to generate',
-        description: 'No meal name detected. Please try again.',
-        type: 'error',
-      });
-      return;
-    }
+    setIsSending(true);
+    firstTokenReceivedRef.current = true;
 
-    dispatch(
-      updateAgentActionStatus({ chatId, messageId, status: 'generating_name' }),
-    );
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    activeChatIdRef.current = chatId;
+    activeMessageIdRef.current = messageId;
+
+    const allMessages =
+      store
+        .getState()
+        .chats.conversations.find((c) => c.id === chatId)
+        ?.messages ?? [];
+
+    const handler = getActionHandler('createMeal');
 
     try {
-      const parsed = await generateRecipe(selectedModel, action.proposedName);
+      // Set the initial generating state before the pipeline starts.
+      dispatch(
+        updateMessageContent({
+          chatId,
+          messageId,
+          content: '🍳 Generating recipe...',
+          agentAction: {
+            type: 'create_meal',
+            status: 'generating_name',
+            proposedName: action.proposedName,
+            meals: [],
+            recipe: null,
+            completedSteps: null,
+          },
+        }),
+      );
 
-      if (!parsed || parsed.meals.length === 0) {
+      const result = await handler.execute(
+        selectedModel,
+        // Pass the previously agreed name as initial context so proposeNameStep
+        // reuses it directly instead of generating a new (potentially different) name.
+        { messages: allMessages, previousResults: { name: action.proposedName } },
+        {
+          abortSignal: abortController.signal,
+          // Each completed step notifies the consumer to update the partial recipe UI.
+          // The key is always a valid RecipeStep — guaranteed by STEP_RECIPE_KEY's type in createMealAction.
+          onStepComplete: (key, data) => {
+            dispatch(
+              updateRecipeStep({
+                chatId,
+                messageId,
+                step: key as RecipeStep,
+                data,
+              }),
+            );
+          },
+        },
+      );
+
+      if (result.cancelled) {
+        dispatch(cancelRecipeGeneration({ chatId, messageId }));
+      } else {
+        // Build the meal proposal and transition to pending_approval.
+        const proposal = result.data.proposal;
+        if (proposal) {
+          dispatch(
+            updateAgentActionStatus({
+              chatId,
+              messageId,
+              status: 'pending_approval',
+              meals: [proposal],
+            }),
+          );
+        }
+
+        const messageContentUpdates =
+          handler.getUpdatedMessageContentFromResult?.(result.data);
+
+        if (messageContentUpdates) {
+          dispatch(
+            updateMessageContent({
+              chatId,
+              messageId,
+              ...messageContentUpdates,
+            }),
+          );
+
+          const allCurrentMessages =
+            store
+              .getState()
+              .chats.conversations.find((c) => c.id === chatId)
+              ?.messages ?? [];
+          const msgIndex = allCurrentMessages.findIndex(
+            (m) => m.id === messageId,
+          );
+          const userMessage =
+            msgIndex > 0 ? allCurrentMessages[msgIndex - 1] : null;
+
+          if (userMessage?.role === 'user') {
+            generateSummary(
+              selectedModel,
+              userMessage.rawContent ?? userMessage.content,
+              messageContentUpdates.content,
+            )
+              .then((summary) => {
+                if (summary) {
+                  dispatch(
+                    updateMessageSummary({ chatId, messageId, summary }),
+                  );
+                }
+              })
+              .catch((err) => console.warn('Summary generation failed', err));
+          }
+        }
+      }
+    } catch (err) {
+      if (!abortController.signal.aborted) {
+        const errMsg =
+          err instanceof Error ? err.message : 'An unexpected error occurred.';
         addToast({
           title: 'Generation failed',
-          description: 'Could not generate the recipe. Please try again.',
+          description: errMsg,
           type: 'error',
         });
         dispatch(
@@ -179,32 +280,15 @@ export function Chat() {
             status: 'pending_confirmation',
           }),
         );
-        return;
       }
-
-      dispatch(
-        updateAgentActionStatus({
-          chatId,
-          messageId,
-          status: 'pending_approval',
-          meals: parsed.meals,
-        }),
-      );
-    } catch (err) {
-      const errMsg =
-        err instanceof Error ? err.message : 'An unexpected error occurred.';
-      addToast({
-        title: 'Generation failed',
-        description: errMsg,
-        type: 'error',
-      });
-      dispatch(
-        updateAgentActionStatus({
-          chatId,
-          messageId,
-          status: 'pending_confirmation',
-        }),
-      );
+    } finally {
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+        firstTokenReceivedRef.current = false;
+        activeChatIdRef.current = null;
+        activeMessageIdRef.current = null;
+        setIsSending(false);
+      }
     }
   };
 
@@ -215,6 +299,13 @@ export function Chat() {
         chatId: currentChatId,
         messageId,
         status: 'rejected',
+      }),
+    );
+    dispatch(
+      updateMessageContent({
+        chatId: currentChatId,
+        messageId,
+        content: "Got it! I won't create that recipe. Let me know if you'd like help with something else.",
       }),
     );
   };
@@ -316,6 +407,18 @@ export function Chat() {
         description: `${mealsCreated} ${mealsCreated === 1 ? 'meal' : 'meals'} added to your collection.`,
         type: 'success',
       });
+
+      const savedMealsText =
+        mealsCreated === 1
+          ? `**${action.meals[0].title}**`
+          : `**${mealsCreated} recipes**`;
+      dispatch(
+        updateMessageContent({
+          chatId,
+          messageId,
+          content: `I've saved ${savedMealsText} to your meals collection! 🎉`,
+        }),
+      );
     }
   };
 
@@ -326,6 +429,13 @@ export function Chat() {
         chatId: currentChatId,
         messageId,
         status: 'rejected',
+      }),
+    );
+    dispatch(
+      updateMessageContent({
+        chatId: currentChatId,
+        messageId,
+        content: "No problem! The recipe has been discarded. Let me know if you'd like to create a different one.",
       }),
     );
   };
@@ -433,105 +543,54 @@ export function Chat() {
 
       const handler = getActionHandler(intent);
 
-      const context = {
-        messages: allMessages,
-        chatId: chatIdForStream,
-        messageId: assistantMessageId,
-        previousResults: {},
-      };
-
-      const runtime = {
-        dispatch,
-        abortSignal: abortController.signal,
-      };
-
-      if (!handler) {
-        throw new Error(`No handler found for intent: ${intent}`);
-      }
-
       if (handler.isMultiStep) {
-        handler.onStart(context, runtime);
-
-        type HandlerTypes = ExtractActionHandler<typeof handler>;
-        type ResultType = HandlerTypes['result'];
-        type ValidStepNames = HandlerTypes['stepNames'];
-
         firstTokenReceivedRef.current = true;
 
-        const completedStepNames: ValidStepNames[] = [];
-        const accumulatedResult: Partial<ResultType> = {};
+        const proposedName = await getMealNameProposal(modelUsed, allMessages);
 
-        for (const step of handler.steps) {
-          if (abortController.signal.aborted) break;
+        if (abortController.signal.aborted) return;
 
-          const stepContext = {
-            ...context,
-            previousResults: accumulatedResult,
-          };
-          const rawStepResult = await step.execute(
-            modelUsed,
-            stepContext,
-            runtime,
-          );
-          const stepResult = rawStepResult as {
-            data: Record<string, unknown>;
-            cancelled?: boolean;
-          };
-
-          if (stepResult.cancelled) {
-            step.onCancel?.(stepContext, runtime);
-            break;
-          }
-
-          Object.assign(accumulatedResult, stepResult.data);
-          completedStepNames.push(step.name);
-        }
-
-        if (
-          abortController.signal.aborted ||
-          completedStepNames.length < handler.steps.length
-        ) {
-          handler.onCancel?.(context, runtime, completedStepNames);
-        } else {
-          handler.onComplete?.(context, runtime, accumulatedResult);
-
-          const messageContentUpdates =
-            handler.getUpdatedMessageContentFromResult?.(
-              accumulatedResult as never,
-            );
-
-          if (messageContentUpdates) {
-            generateSummary(
-              modelUsed,
-              messageContent,
-              messageContentUpdates.content,
-            )
-              .then((summary) => {
-                if (summary) {
-                  dispatch(
-                    updateMessageSummary({
-                      chatId: chatIdForStream,
-                      messageId: assistantMessageId,
-                      summary,
-                    }),
-                  );
-                }
-              })
-              .catch((err) => console.warn('Summary generation failed', err));
-          }
-        }
+        dispatch(
+          updateMessageContent({
+            chatId: chatIdForStream,
+            messageId: assistantMessageId,
+            content: proposedName
+              ? `I can help you create a recipe for **${proposedName}**! Shall I go ahead?`
+              : "I'd like to help you create a recipe! I wasn't able to detect the dish name — could you confirm what you'd like me to make?",
+            agentAction: {
+              type: 'create_meal',
+              status: 'pending_confirmation',
+              proposedName: proposedName ?? '',
+              meals: [],
+              recipe: null,
+              completedSteps: null,
+            },
+          }),
+        );
       } else {
         firstTokenReceivedRef.current = true;
 
-        const result = await handler.execute(modelUsed, context, runtime);
+        const result = await handler.execute(
+          modelUsed,
+          { messages: allMessages },
+          {
+            abortSignal: abortController.signal,
+            // The handler streams partial content via this callback; the consumer owns the dispatch.
+            onProgress: (content) => {
+              dispatch(
+                updateMessageContent({
+                  chatId: chatIdForStream,
+                  messageId: assistantMessageId,
+                  content,
+                }),
+              );
+            },
+          },
+        );
 
-        if (!result || !('data' in result)) {
-          throw new Error('Invalid response received from agent');
-        }
-
-        if (!abortController.signal.aborted) {
+        if (!abortController.signal.aborted && !result.cancelled) {
           const messageContentUpdates =
-            handler.getUpdatedMessageContentFromResult(result.data as never);
+            handler.getUpdatedMessageContentFromResult(result.data);
 
           dispatch(
             updateMessageContent({

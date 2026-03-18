@@ -86,14 +86,21 @@ const GENERAL_RESPONSE_SCHEMA: Record<string, unknown> = {
 const MEAL_NAME_PROPOSAL_PROMPT = `
 You are Demmi's AI assistant.
 
-**CONTEXT**: The user's intent has been classified as 'wants to create a meal' for THIS message — they have explicitly requested recipe/meal creation right now.
+**CONTEXT**: The user wants to create a meal. Extract the exact name of that meal from their message.
 
-Your task: Extract or infer the specific name of the recipe/meal/dish the user wants to create in their current request.
-- Provide a clear, concise name (3 words or less preferred)
-- Be specific (e.g., "Chocolate Chip Cookies" not "Cookies")
-- Use the exact name they mentioned if provided, otherwise infer from context
-- Focus on what they're trying to CREATE in this specific message
-- Do not use generic names like "meal" or "dish" or "plan" — be as specific as possible based on their request
+STRICT RULES (follow every one, no exceptions):
+- Maximum 3 words. Never exceed this.
+- Use ONLY the words the user actually said. Do NOT add ingredients, adjectives, or descriptors they didn't mention.
+- No parentheses, no dashes, no subtitles.
+- Proper capitalization (e.g. "Turkey Burger", not "turkey burger").
+- If the user said "turkey burger", output "Turkey Burger" — nothing else.
+- Never embellish: forbidden patterns include "with X and Y", "Healthy ...", "Classic ...", "Easy ...", parenthetical notes, etc.
+
+EXAMPLES:
+  User: "I want to make a turkey burger" → "Turkey Burger"
+  User: "can you create a spaghetti carbonara recipe" → "Spaghetti Carbonara"
+  User: "make me a grilled cheese" → "Grilled Cheese"
+  User: "create a chicken tikka masala" → "Chicken Tikka Masala"
 `;
 
 const MEAL_NAME_PROPOSAL_SCHEMA: Record<string, unknown> = {
@@ -103,7 +110,7 @@ const MEAL_NAME_PROPOSAL_SCHEMA: Record<string, unknown> = {
     proposedMealName: {
       type: 'string',
       description:
-        "The name of the recipe or meal to create (be as specific as possible based on the user's request)",
+        "The meal name using only words the user mentioned — maximum 3 words, no embellishments",
     },
   },
 };

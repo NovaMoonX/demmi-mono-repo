@@ -3,13 +3,15 @@ import { MEAL_CATEGORIES } from '@/lib/meals';
 
 export const MEAL_NAME_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 
-Extract or infer the meal name from the user's request.
+Extract the exact meal name from the conversation.
 
-Rules:
-- Be specific (e.g. "Spaghetti Carbonara" not "pasta")
-- 1-4 words maximum
-- Use proper capitalization
-- If the name is not explicitly provided, infer it from context
+STRICT RULES (follow every one, no exceptions):
+- Maximum 3 words. Never exceed this.
+- Use ONLY the words the user actually said. Do NOT add ingredients, adjectives, or descriptors they didn't mention.
+- No parentheses, no dashes, no subtitles.
+- Proper capitalization (e.g. "Turkey Burger").
+- If the user said "turkey burger", output "Turkey Burger" — nothing else.
+- Never embellish: forbidden patterns include "with X and Y", "Healthy ...", "Classic ...", "Easy ...", parenthetical notes, etc.
 
 Respond with JSON: { "name": "Meal Name" }`;
 

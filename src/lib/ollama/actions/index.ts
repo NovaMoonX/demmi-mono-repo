@@ -1,11 +1,13 @@
 export type {
   ActionType,
-  StepContext,
-  StepRuntime,
+  ActionContext,
+  ActionRuntime,
+  MultiStepActionRuntime,
   StepResult,
   ActionStep,
   ActionHandler,
   ActionResult,
+  MultiStepActionResult,
 } from './types';
 export { generalAction } from './generalAction';
 export { createMealAction } from './createMealAction';

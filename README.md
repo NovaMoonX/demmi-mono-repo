@@ -62,11 +62,14 @@ A cooking app powered with local LLM using Ollama.
 
 #### 🍽️ AI Agent Meal & Ingredient Creation
 - **Create Meals via Chat**: Ask the AI to create a meal (e.g. *"Create a pasta carbonara recipe for me"*) and it responds with a structured preview card embedded in the chat
+- **Intent Confirmation**: Before generating a full recipe, the AI proposes the detected meal name and asks for confirmation — ensuring it understood the request correctly before spending resources on generation
+- **Multi-Step Generation**: Once confirmed, the AI generates the recipe in 5 sequential steps (name → basic info → description → ingredients → instructions) with live progress indicators showing partial data as each step completes
 - **User Approval Required**: The AI never modifies your collection without explicit approval — every creation proposal must be confirmed by clicking **Save to My Meals**
 - **Preview Card**: Proposed meals appear in a card below the AI's text response showing: title, description, category badge, prep/cook times, servings, instruction count, and a full ingredient list
 - **New vs. Existing Indicators**: Each ingredient in the proposal is marked as `+new` (highlighted, will be created) or shown normally if it already exists in your inventory — giving you full visibility before committing
 - **Duplicate Detection**: If a proposed meal title already exists in your collection a yellow "Already exists" badge appears and the **Save** button is disabled, preventing accidental duplicates
 - **Automatic Ingredient Creation**: Approving a proposal auto-creates any ingredients that don't yet exist in your inventory, with sensible defaults (nutrients at 0, amount at 0 — editable later)
+- **Dynamic Message Content**: Message content updates based on user decisions — declining the intent shows a friendly cancellation message, declining a generated recipe shows a dismissal message, and saving shows a confirmation with the meal name
 - **Decline**: Clicking **Decline** marks the proposal as dismissed — the card shows a "Declined" badge and the buttons are removed
 - **Iterate**: The proposal is a conversation — reply in the chat to refine it (e.g. *"Make it vegetarian"* or *"Change servings to 6"*) and the AI generates a fresh proposal
 - **Extensible Design**: The agent action system (`AgentAction` type + `CreateMealAgentActionCard` component) is architected to support additional action types beyond meal creation in the future

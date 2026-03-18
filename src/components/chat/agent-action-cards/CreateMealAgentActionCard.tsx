@@ -206,7 +206,6 @@ export function CreateMealAgentActionCard({
   onApprove,
   onReject,
 }: AgentActionCardProps) {
-  console.log('action.status', action.status); // REMOVE
   if (action.status === 'pending_confirmation') {
     const name =
       action.proposedName || (action.meals[0]?.title ?? 'this recipe');

@@ -1,19 +1,26 @@
 import type { ChatMessage } from '@lib/chat';
-import type { AppDispatch } from '@store/index';
 import { AgentAction } from '../action-types';
 
 export type ActionType = 'general' | 'createMeal';
 
-export interface StepContext<ResultType extends Record<string, unknown>> {
+// Pure data context for LLM calls — no store references, no chatId/messageId.
+export interface ActionContext<ResultType extends Record<string, unknown>> {
   messages: ChatMessage[];
-  chatId: string;
-  messageId: string;
   previousResults?: Partial<ResultType>;
 }
 
-export interface StepRuntime {
-  dispatch: AppDispatch;
+// Base runtime — operational concerns only, no dispatch.
+export interface ActionRuntime {
   abortSignal?: AbortSignal;
+  // For streaming single-step handlers: called with partial display content as it arrives.
+  onProgress?: (content: string) => void;
+}
+
+// Extended runtime for multi-step handlers — adds a per-step completion callback.
+export interface MultiStepActionRuntime extends ActionRuntime {
+  // Called after each step completes. `key` identifies the step (defined by the handler),
+  // `data` is the partial result data for that step. The consumer uses this to update state.
+  onStepComplete?: (key: string, data: Record<string, unknown>) => void;
 }
 
 export interface StepResult<
@@ -22,59 +29,64 @@ export interface StepResult<
 > {
   stepName: Name;
   data: Partial<ResultType>;
-  error?: string;
   cancelled?: boolean;
 }
 
+// An individual step in a multi-step pipeline — pure LLM interaction, no state updates.
+// Steps can also be called independently outside the pipeline.
 export interface ActionStep<
   ResultType extends Record<string, unknown>,
   Name extends string,
 > {
   name: Name;
-  prompt: string;
-  schema: Record<string, unknown>;
-  isStreaming?: boolean;
   execute: (
     model: string,
-    context: StepContext<ResultType>,
-    runtime: StepRuntime,
-  ) => Promise<
-    | StepResult<ResultType, Name>
-    | AsyncIterableIterator<StepResult<ResultType, Name>>
-  >;
-  onCancel?: (context: StepContext<ResultType>, runtime: StepRuntime) => void;
+    context: ActionContext<ResultType>,
+    runtime: ActionRuntime,
+  ) => Promise<StepResult<ResultType, Name>>;
 }
 
-// `ResultType` represents the shape of the data returned by the action handler upon completion.
-interface ActionHandlerBase<ResultType extends Record<string, unknown>> {
+export const MULTI_STEP_ACTION_HANDLER_ERROR =
+  'MultiStepActionHandler requires ValidStepNames';
+
+type RequireStepNames<T extends string> = [T] extends [never]
+  ? typeof MULTI_STEP_ACTION_HANDLER_ERROR
+  : T;
+
+// Utility type to extract the ResultType and ValidStepNames from an ActionHandler.
+export type ExtractActionHandler<T> =
+  T extends ActionHandler<infer ResultType, infer ValidStepNames>
+    ? { result: ResultType; stepNames: ValidStepNames }
+    : never;
+
+// Result from a single-step handler. `cancelled` is optional — most single-step actions
+// complete fully; only streaming actions that are aborted mid-flight set this to true.
+export interface ActionResult<ResultType extends Record<string, unknown>> {
+  data: ResultType;
+  cancelled?: boolean;
+}
+
+// Result from a multi-step handler. `cancelled` is always present (required) because the
+// consumer must always check it to decide whether to transition state or roll back.
+export interface MultiStepActionResult<
+  ResultType extends Record<string, unknown>,
+  ValidStepNames extends string,
+> {
+  data: Partial<ResultType>;
+  completedSteps: ValidStepNames[];
+  cancelled: boolean;
+}
+
+interface SingleStepActionHandler<ResultType extends Record<string, unknown>> {
   type: ActionType;
   description: string;
-
-  onStart?: (context: StepContext<ResultType>, runtime: StepRuntime) => void;
-
-  onComplete?: (
-    context: StepContext<ResultType>,
-    runtime: StepRuntime,
-    result: Partial<ResultType>,
-  ) => void;
-}
-
-interface SingleStepActionHandler<
-  ResultType extends Record<string, unknown>,
-> extends ActionHandlerBase<ResultType> {
   isMultiStep: false;
 
   execute: (
     model: string,
-    context: StepContext<ResultType>,
-    runtime: StepRuntime,
-  ) => Promise<
-    ActionResult<ResultType> | AsyncIterableIterator<ActionResult<ResultType>>
-  >;
-
-  steps?: never;
-
-  onCancel?: (context: StepContext<ResultType>, runtime: StepRuntime) => void;
+    context: ActionContext<ResultType>,
+    runtime: ActionRuntime,
+  ) => Promise<ActionResult<ResultType>>;
 
   getUpdatedMessageContentFromResult: (result: ResultType) => {
     content: string;
@@ -83,41 +95,26 @@ interface SingleStepActionHandler<
   };
 }
 
-export const MULTI_STEP_ACTION_HANDLER_ERROR =
-  'MultiStepActionHandler requires ValidStepNames';
-
-// This type ensures that if `isMultiStep` is true and steps are provided
-// then `ValidStepNames` must be provided to the action handler,
-// where `ValidStepNames` is a union of string literals representing
-// the valid step names for that handler.
-type RequireStepNames<T extends string> = [T] extends [never]
-  ? typeof MULTI_STEP_ACTION_HANDLER_ERROR
-  : T;
-
-// This utility type is used to extract the `ResultType` and `ValidStepNames` from an `ActionHandler` type.
-export type ExtractActionHandler<T> =
-  T extends ActionHandler<infer ResultType, infer ValidStepNames>
-    ? { result: ResultType; stepNames: ValidStepNames }
-    : never;
-
 interface MultiStepActionHandler<
   ResultType extends Record<string, unknown>,
   ValidStepNames extends string,
-> extends ActionHandlerBase<ResultType> {
+> {
+  type: ActionType;
+  description: string;
   isMultiStep: true;
 
-  execute?: never;
-
+  // Individual steps — exposed so they can also be called independently outside the pipeline.
   steps: ActionStep<ResultType, RequireStepNames<ValidStepNames>>[];
 
-  onCancel?: (
-    context: StepContext<ResultType>,
-    runtime: StepRuntime,
-    completedSteps: RequireStepNames<ValidStepNames>[],
-  ) => void;
+  // Single entry-point: runs all steps internally. The consumer receives progress via callbacks
+  // on the runtime and handles all state updates; the handler performs no dispatch itself.
+  execute: (
+    model: string,
+    context: ActionContext<ResultType>,
+    runtime: MultiStepActionRuntime,
+  ) => Promise<MultiStepActionResult<ResultType, ValidStepNames>>;
 
-  // Optional: produce a text summary of the result (used for summary generation)
-  getUpdatedMessageContentFromResult?: (result: ResultType) => {
+  getUpdatedMessageContentFromResult?: (result: Partial<ResultType>) => {
     content: string;
     rawContent?: string | null;
   };
@@ -128,11 +125,4 @@ export type ActionHandler<
   ValidStepNames extends string = never,
 > =
   | SingleStepActionHandler<ResultType>
-  // `ValidStepNames` should always be provided for multi-step handlers
   | MultiStepActionHandler<ResultType, ValidStepNames>;
-
-export interface ActionResult<ResultType extends Record<string, unknown>> {
-  type: ActionType;
-  data: ResultType;
-  error?: string;
-}
