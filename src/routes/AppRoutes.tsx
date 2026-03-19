@@ -72,6 +72,14 @@ export const router = createBrowserRouter([
                 },
               },
               {
+                path: 'ingredients/new/barcode',
+                HydrateFallback: Loading,
+                lazy: async () => {
+                  const { default: IngredientBarcodeScanner } = await import('@screens/IngredientBarcodeScanner');
+                  return { Component: IngredientBarcodeScanner };
+                },
+              },
+              {
                 path: 'meals',
                 HydrateFallback: Loading,
                 lazy: async () => {

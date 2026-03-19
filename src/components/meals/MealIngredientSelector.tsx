@@ -9,6 +9,7 @@ import {
 } from '@lib/ingredients';
 import { MealIngredient } from '@lib/meals';
 import { capitalize } from '@utils/capitalize';
+import { CreateIngredientModal } from '@components/ingredients';
 
 const MIN_SERVINGS = 0.1;
 
@@ -27,6 +28,7 @@ export function MealIngredientSelector({
 }: MealIngredientSelectorProps) {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateIngredientModalOpen, setIsCreateIngredientModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
@@ -274,9 +276,7 @@ export function MealIngredientSelector({
               size="sm"
               onClick={() => {
                 closeModal();
-                navigate('/ingredients/new', {
-                  state: { fromMealPath },
-                });
+                setIsCreateIngredientModalOpen(true);
               }}
             >
               + Create New Ingredient
@@ -284,6 +284,19 @@ export function MealIngredientSelector({
           </div>
         </div>
       </Modal>
+
+      <CreateIngredientModal
+        isOpen={isCreateIngredientModalOpen}
+        onClose={() => setIsCreateIngredientModalOpen(false)}
+        onSelectManual={() => {
+          setIsCreateIngredientModalOpen(false);
+          navigate('/ingredients/new', { state: { fromMealPath } });
+        }}
+        onSelectBarcode={() => {
+          setIsCreateIngredientModalOpen(false);
+          navigate('/ingredients/new/barcode', { state: { fromMealPath } });
+        }}
+      />
     </div>
   );
 }
