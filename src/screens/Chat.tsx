@@ -8,7 +8,7 @@ import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import { ChatHistoryToggleIcon } from '@components/chat/ChatHistoryToggleIcon';
 import { ChatHistory } from '@components/chat/ChatHistory';
 import { ChatMessage } from '@components/chat/ChatMessage';
-import { OllamaModelSelector } from '@components/chat/OllamaModelSelector';
+import { OllamaModelControl } from '@components/chat/OllamaModelControl';
 import { useIsMobileDevice } from '@hooks/useIsMobileDevice';
 import { useOllamaModels } from '@hooks/useOllamaModels';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
@@ -60,17 +60,7 @@ export function Chat() {
   const { confirm } = useActionModal();
   const { addToast } = useToast();
 
-  const {
-    availableModels,
-    selectedModel,
-    isLoading: isLoadingModels,
-    error: modelError,
-    selectModel,
-    isPulling,
-    pullProgress,
-    pullError,
-    pullMistral,
-  } = useOllamaModels();
+  const { selectedModel } = useOllamaModels();
 
   const currentChat = conversations.find((c) => c.id === currentChatId);
 
@@ -757,18 +747,7 @@ export function Chat() {
                   aria-label='Toggle message details'
                 />
 
-                <OllamaModelSelector
-                  models={availableModels}
-                  selectedModel={selectedModel}
-                  isLoading={isLoadingModels}
-                  error={modelError}
-                  disabled={isSending}
-                  isPulling={isPulling}
-                  pullProgress={pullProgress}
-                  pullError={pullError}
-                  onSelectModel={selectModel}
-                  onPullMistral={pullMistral}
-                />
+                <OllamaModelControl disabled={isSending} />
               </div>
             </div>
           </div>

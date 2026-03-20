@@ -1,14 +1,468 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Textarea, Button, Label } from '@moondreamsdev/dreamer-ui/components';
+import { Textarea, Button, Label, Badge, Card } from '@moondreamsdev/dreamer-ui/components';
+import { join } from '@moondreamsdev/dreamer-ui/utils';
+import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
+import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
+import { OllamaModelControl } from '@components/chat/OllamaModelControl';
+import { useAppSelector, useAppDispatch } from '@store/hooks';
+import { createIngredient } from '@store/actions/ingredientActions';
+import { createMeal } from '@store/actions/mealActions';
+import { createMealAction } from '@lib/ollama/actions';
+import type { MealCategory } from '@lib/meals';
+import { MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS } from '@lib/meals';
+import { INGREDIENT_TYPE_EMOJIS } from '@lib/ingredients';
+import type {
+  AgentMealProposal,
+  AgentPartialRecipe,
+  AgentIngredientProposal,
+  CreateMealAgentActionStatus,
+} from '@lib/ollama/action-types/createMealAction.types';
+import type { RecipeStep } from '@lib/ollama/action-types/createMealAction.types';
+import type { MealIngredient } from '@lib/meals';
+import { generatedId } from '@utils/generatedId';
+
+const NAVIGATE_DELAY_MS = 400;
+
+type ScreenPhase = 'paste' | 'generating' | 'result';
+
+const STEP_LABELS: Partial<Record<CreateMealAgentActionStatus, string>> = {
+  generating_name: 'Generating name…',
+  generating_info: 'Generating basic info…',
+  generating_description: 'Generating description…',
+  generating_ingredients: 'Generating ingredients…',
+  generating_instructions: 'Generating instructions…',
+};
+
+const STEP_STATUS_MAP: Partial<Record<RecipeStep, CreateMealAgentActionStatus>> = {
+  name: 'generating_info',
+  info: 'generating_description',
+  description: 'generating_ingredients',
+  ingredients: 'generating_instructions',
+};
+
+const EMPTY_PARTIAL_RECIPE: AgentPartialRecipe = {
+  name: null,
+  category: null,
+  servings: null,
+  totalTime: null,
+  description: null,
+  ingredients: null,
+  instructions: null,
+};
+
+function PartialRecipePreview({ recipe }: { recipe: AgentPartialRecipe }) {
+  const showCategory = recipe.category != null;
+  const showDescription = recipe.description != null && recipe.description !== '';
+  const showIngredients = recipe.ingredients != null && recipe.ingredients.length > 0;
+  const showInstructions = recipe.instructions != null && recipe.instructions.length > 0;
+
+  return (
+    <div className='flex flex-col gap-2'>
+      <div className='flex items-start justify-between gap-2'>
+        <div className='min-w-0 flex-1'>
+          {recipe.name && (
+            <h4 className='text-foreground text-base font-semibold'>{recipe.name}</h4>
+          )}
+          {showDescription && (
+            <p className='text-muted-foreground mt-0.5 line-clamp-3 text-sm'>
+              {recipe.description}
+            </p>
+          )}
+        </div>
+        {showCategory && (
+          <span className='shrink-0 text-2xl'>
+            {MEAL_CATEGORY_EMOJIS[recipe.category as MealCategory]}
+          </span>
+        )}
+      </div>
+      {showCategory && (
+        <div className='flex flex-wrap items-center gap-2'>
+          <Badge
+            variant='base'
+            className={join('capitalize', MEAL_CATEGORY_COLORS[recipe.category as MealCategory])}
+          >
+            {recipe.category}
+          </Badge>
+          {recipe.totalTime != null && (
+            <span className='text-muted-foreground text-xs'>{recipe.totalTime}m total</span>
+          )}
+          {recipe.servings != null && (
+            <span className='text-muted-foreground text-xs'>
+              {recipe.servings} {recipe.servings === 1 ? 'serving' : 'servings'}
+            </span>
+          )}
+        </div>
+      )}
+      {showIngredients && (
+        <div className='flex flex-col gap-1.5'>
+          <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+            Ingredients
+          </p>
+          <div className='flex flex-wrap gap-1.5'>
+            {recipe.ingredients!.map((ing, i) => (
+              <div
+                key={i}
+                className='bg-muted text-muted-foreground flex items-center gap-1 rounded-md px-2 py-1 text-xs'
+              >
+                <span className='font-medium'>{ing.name}</span>
+                <span className='opacity-70'>{ing.amount}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {showInstructions && (
+        <div className='text-muted-foreground text-xs'>
+          {recipe.instructions!.length} instruction{' '}
+          {recipe.instructions!.length === 1 ? 'step' : 'steps'}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MealProposalCard({ meal }: { meal: AgentMealProposal }) {
+  const totalTime = meal.prepTime + meal.cookTime;
+
+  return (
+    <Card className='overflow-hidden'>
+      <div className='flex flex-col gap-3 p-4'>
+        <div className='flex items-start justify-between gap-2'>
+          <div className='min-w-0 flex-1'>
+            <h4 className='text-foreground text-base font-semibold'>{meal.title}</h4>
+            <p className='text-muted-foreground mt-0.5 line-clamp-3 text-sm'>{meal.description}</p>
+          </div>
+          <span className='shrink-0 text-2xl'>{MEAL_CATEGORY_EMOJIS[meal.category]}</span>
+        </div>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Badge
+            variant='base'
+            className={join('capitalize', MEAL_CATEGORY_COLORS[meal.category])}
+          >
+            {meal.category}
+          </Badge>
+          <span className='text-muted-foreground text-xs'>
+            Prep {meal.prepTime}m · Cook {meal.cookTime}m · {totalTime}m total
+          </span>
+          <span className='text-muted-foreground text-xs'>
+            {meal.servingSize} {meal.servingSize === 1 ? 'serving' : 'servings'}
+          </span>
+        </div>
+        {meal.ingredients.length > 0 && (
+          <IngredientProposalList ingredients={meal.ingredients} />
+        )}
+        {meal.instructions.length > 0 && (
+          <div className='flex flex-col gap-1.5'>
+            <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+              Instructions
+            </p>
+            <ol className='flex flex-col gap-1'>
+              {meal.instructions.map((step, i) => (
+                <li key={i} className='text-foreground flex gap-2 text-sm'>
+                  <span className='text-muted-foreground shrink-0 font-medium'>{i + 1}.</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function IngredientProposalList({ ingredients }: { ingredients: AgentIngredientProposal[] }) {
+  return (
+    <div className='flex flex-col gap-1.5'>
+      <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+        Ingredients
+      </p>
+      <div className='flex flex-wrap gap-1.5'>
+        {ingredients.map((ing, i) => (
+          <div
+            key={i}
+            className={join(
+              'flex items-center gap-1 rounded-md px-2 py-1 text-xs',
+              ing.isNew
+                ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
+                : 'bg-muted text-muted-foreground',
+            )}
+          >
+            <span>{INGREDIENT_TYPE_EMOJIS[ing.type]}</span>
+            <span className='font-medium'>{ing.name}</span>
+            <span className='opacity-70'>
+              {ing.servings} {ing.unit}
+            </span>
+            {ing.isNew && (
+              <span className='bg-primary/20 text-primary rounded px-1 py-0.5 text-xs font-semibold leading-none'>
+                new
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function MealFromText() {
   const navigate = useNavigate();
-  const [recipeText, setRecipeText] = useState('');
+  const dispatch = useAppDispatch();
+  const { addToast } = useToast();
+  const { confirm } = useActionModal();
+  const selectedModel = useAppSelector((state) => state.chats.selectedModel);
 
-  const handleContinue = () => {
-    navigate('/meals/new', { state: { recipeText } });
+  const [recipeText, setRecipeText] = useState('');
+  const [phase, setPhase] = useState<ScreenPhase>('paste');
+  const [generatingStatus, setGeneratingStatus] =
+    useState<CreateMealAgentActionStatus>('generating_name');
+  const [partialRecipe, setPartialRecipe] = useState<AgentPartialRecipe | null>(null);
+  const [proposal, setProposal] = useState<AgentMealProposal | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const handleGenerate = async () => {
+    if (!recipeText.trim() || !selectedModel) return;
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    setPhase('generating');
+    setGeneratingStatus('generating_name');
+    setPartialRecipe({ ...EMPTY_PARTIAL_RECIPE });
+
+    const fakeMessageId = generatedId('msg');
+    const messages = [
+      {
+        id: fakeMessageId,
+        role: 'user' as const,
+        content: recipeText,
+        timestamp: Date.now(),
+        model: null,
+        rawContent: recipeText,
+        agentAction: null,
+        summary: null,
+      },
+    ];
+
+    try {
+      const result = await createMealAction.execute(
+        selectedModel,
+        { messages },
+        {
+          abortSignal: abortController.signal,
+          onStepComplete: (key, data) => {
+            const recipeKey = key as RecipeStep;
+            setPartialRecipe((prev) => ({
+              ...(prev ?? { ...EMPTY_PARTIAL_RECIPE }),
+              ...(data as Partial<AgentPartialRecipe>),
+            }));
+            const nextStatus = STEP_STATUS_MAP[recipeKey];
+            if (nextStatus) {
+              setGeneratingStatus(nextStatus);
+            }
+          },
+        },
+      );
+
+      if (result.cancelled) {
+        setPhase('paste');
+        setPartialRecipe(null);
+      } else if (result.data.proposal) {
+        setProposal(result.data.proposal);
+        setPhase('result');
+      }
+    } catch (err) {
+      if (!abortController.signal.aborted) {
+        const errMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+        addToast({ title: 'Generation failed', description: errMsg, type: 'error' });
+        setPhase('paste');
+        setPartialRecipe(null);
+      }
+    } finally {
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
+    }
   };
+
+  const handleStop = () => {
+    abortControllerRef.current?.abort();
+  };
+
+  const handleRepaste = async () => {
+    const confirmed = await confirm({
+      title: 'Discard this recipe?',
+      message:
+        "You'll return to the text input and need to generate again. This recipe will be lost.",
+      confirmText: 'Yes, repaste',
+      cancelText: 'Keep recipe',
+    });
+    if (!confirmed) return;
+
+    setPhase('paste');
+    setPartialRecipe(null);
+    setProposal(null);
+  };
+
+  const handleCreateMeal = async () => {
+    if (!proposal) return;
+
+    setIsSaving(true);
+    const mealIngredients: MealIngredient[] = [];
+    let savedMealId: string | null = null;
+
+    try {
+      for (const ingredientProposal of proposal.ingredients) {
+        if (!ingredientProposal.isNew && ingredientProposal.existingIngredientId) {
+          mealIngredients.push({
+            ingredientId: ingredientProposal.existingIngredientId,
+            servings: ingredientProposal.servings,
+          });
+        } else {
+          const created = await dispatch(
+            createIngredient({
+              name: ingredientProposal.name,
+              type: ingredientProposal.type,
+              unit: ingredientProposal.unit,
+              imageUrl: '',
+              nutrients: {
+                protein: 0,
+                carbs: 0,
+                fat: 0,
+                fiber: 0,
+                sugar: 0,
+                sodium: 0,
+                calories: 0,
+              },
+              currentAmount: 0,
+              servingSize: 1,
+              otherUnit: null,
+              products: [],
+              defaultProductId: null,
+            }),
+          ).unwrap();
+
+          mealIngredients.push({
+            ingredientId: created.id,
+            servings: ingredientProposal.servings,
+          });
+        }
+      }
+
+      const savedMeal = await dispatch(
+        createMeal({
+          title: proposal.title,
+          description: proposal.description,
+          category: proposal.category,
+          prepTime: proposal.prepTime,
+          cookTime: proposal.cookTime,
+          servingSize: proposal.servingSize,
+          instructions: proposal.instructions,
+          imageUrl: proposal.imageUrl,
+          ingredients: mealIngredients,
+        }),
+      ).unwrap();
+
+      savedMealId = savedMeal.id;
+
+      addToast({
+        title: 'Meal saved!',
+        description: `"${proposal.title}" has been added to your collection.`,
+        type: 'success',
+      });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      addToast({ title: 'Failed to save', description: errMsg, type: 'error' });
+    } finally {
+      if (savedMealId) {
+        setTimeout(() => navigate(`/meals/${savedMealId}`), NAVIGATE_DELAY_MS);
+      } else {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  if (phase === 'generating') {
+    const stepLabel = STEP_LABELS[generatingStatus] ?? 'Generating recipe…';
+    const hasPartialData = partialRecipe?.name != null && partialRecipe.name !== '';
+
+    return (
+      <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
+        <div className='mb-8'>
+          <Link
+            to='/meals'
+            className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
+          >
+            ← Back to Meals
+          </Link>
+          <h1 className='text-foreground mb-2 text-4xl font-bold'>Generating Recipe…</h1>
+          <p className='text-muted-foreground'>
+            Please wait while we process your recipe text.
+          </p>
+        </div>
+
+        <div className='border-border bg-card/50 flex flex-col gap-3 rounded-xl border p-4'>
+          {hasPartialData && partialRecipe && (
+            <PartialRecipePreview recipe={partialRecipe} />
+          )}
+          <div className='flex items-center gap-3'>
+            <div className='text-muted-foreground flex gap-1'>
+              <span className='animate-bounce text-sm'>●</span>
+              <span className='animate-bounce text-sm [animation-delay:0.15s]'>●</span>
+              <span className='animate-bounce text-sm [animation-delay:0.3s]'>●</span>
+            </div>
+            <p className='text-muted-foreground text-xs'>{stepLabel}</p>
+          </div>
+        </div>
+
+        <div className='mt-6'>
+          <Button variant='secondary' onClick={handleStop}>
+            Stop
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'result' && proposal) {
+    return (
+      <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
+        <div className='mb-8'>
+          <Link
+            to='/meals'
+            className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
+          >
+            ← Back to Meals
+          </Link>
+          <h1 className='text-foreground mb-2 text-4xl font-bold'>Recipe Ready!</h1>
+          <p className='text-muted-foreground'>
+            Review your recipe below, then save it to your collection.
+          </p>
+        </div>
+
+        <div className='flex flex-col gap-6'>
+          <MealProposalCard meal={proposal} />
+
+          <div className='flex gap-3'>
+            <Button
+              variant='primary'
+              className='flex-1'
+              onClick={handleCreateMeal}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving…' : '✓ Create Meal'}
+            </Button>
+            <Button variant='secondary' className='flex-1' onClick={handleRepaste}>
+              Repaste
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
@@ -26,8 +480,20 @@ export function MealFromText() {
       </div>
 
       <div className='flex flex-col gap-6'>
-        <div>
-          <Label htmlFor='recipe-text'>Recipe Text</Label>
+        <div className='flex flex-col gap-1.5'>
+          <div className='flex items-center justify-between'>
+            <Label htmlFor='recipe-text'>Recipe Text</Label>
+            {recipeText && (
+              <Button
+                variant='tertiary'
+                size='sm'
+                onClick={() => setRecipeText('')}
+                aria-label='Clear recipe text'
+              >
+                Clear
+              </Button>
+            )}
+          </div>
           <Textarea
             id='recipe-text'
             value={recipeText}
@@ -37,14 +503,18 @@ export function MealFromText() {
           />
         </div>
 
+        <div className='flex justify-end'>
+          <OllamaModelControl />
+        </div>
+
         <div className='flex gap-3'>
           <Button
             variant='primary'
             className='flex-1'
-            onClick={handleContinue}
-            disabled={recipeText.trim() === ''}
+            onClick={handleGenerate}
+            disabled={recipeText.trim() === '' || !selectedModel}
           >
-            Continue
+            Generate
           </Button>
           <Button
             variant='secondary'
