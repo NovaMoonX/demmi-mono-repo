@@ -34,3 +34,20 @@ tsconfig.app.tsbuildinfo
 .scaffold-config
 *.env
 dist-preview/
+
+# Electron
+packages/electron/dist/
+packages/electron/web-dist/
+packages/electron/release/
+
+# Expo / React Native
+packages/mobile/.expo/
+packages/mobile/android/
+packages/mobile/ios/
+packages/mobile/web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*

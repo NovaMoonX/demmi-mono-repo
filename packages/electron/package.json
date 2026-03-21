@@ -1,0 +1,46 @@
+{
+  "name": "@demmi/electron",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "npm run build:web && concurrently \"npm run watch\" \"npm run electron:dev\"",
+    "build:web": "npm run build --workspace=@demmi/web",
+    "watch": "tsc --watch --project tsconfig.json",
+    "electron:dev": "electron dist/main.js",
+    "build": "npm run build:web && tsc --project tsconfig.json",
+    "start": "npm run build && electron dist/main.js",
+    "package": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "electron-is-dev": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "concurrently": "^9.1.2",
+    "electron": "^36.3.1",
+    "electron-builder": "^26.0.12",
+    "typescript": "~5.9.3"
+  },
+  "build": {
+    "appId": "com.demmi.app",
+    "productName": "Demmi",
+    "files": [
+      "dist/**/*",
+      "web-dist/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
