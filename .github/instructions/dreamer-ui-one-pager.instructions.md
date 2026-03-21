@@ -1,5 +1,5 @@
 ---
-applyTo: 'src/**/*'
+applyTo: 'packages/web/src/**/*'
 ---
 
 # Dreamer UI Components

@@ -7,7 +7,7 @@
     "dev": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "build:web": "npm run build --workspace=@demmi/web",
+    "build:web": "cd ../web && npm run build",
     "prebuild": "expo prebuild"
   },
   "dependencies": {
@@ -21,7 +21,6 @@
     "react-native": "0.79.2",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
-    "react-native-web": "~0.19.13",
     "react-native-webview": "13.13.5"
   },
   "devDependencies": {

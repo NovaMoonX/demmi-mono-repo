@@ -12,6 +12,7 @@
     "build:web": "npm run build --workspace=@demmi/web",
     "build:electron": "npm run build --workspace=@demmi/electron",
     "lint:web": "npm run lint --workspace=@demmi/web",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "install:all": "npm install"
   }
 }

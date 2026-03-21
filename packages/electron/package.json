@@ -5,11 +5,12 @@
   "type": "module",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "npm run build:web && concurrently \"npm run watch\" \"npm run electron:dev\"",
-    "build:web": "npm run build --workspace=@demmi/web",
+    "dev": "npm run build:web && npm run copy:web && concurrently \"npm run watch\" \"npm run electron:dev\"",
+    "build:web": "cd ../web && npm run build",
+    "copy:web": "node -e \"const fs=require('fs');fs.cpSync('../web/dist','./web-dist',{recursive:true})\"",
     "watch": "tsc --watch --project tsconfig.json",
     "electron:dev": "electron dist/main.js",
-    "build": "npm run build:web && tsc --project tsconfig.json",
+    "build": "npm run build:web && npm run copy:web && tsc --project tsconfig.json",
     "start": "npm run build && electron dist/main.js",
     "package": "npm run build && electron-builder"
   },
