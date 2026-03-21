@@ -296,6 +296,10 @@ export function MealIngredientSelector({
           setIsCreateIngredientModalOpen(false);
           navigate('/ingredients/new/barcode', { state: { fromMealPath } });
         }}
+        onSelectBarcodeEntry={() => {
+          setIsCreateIngredientModalOpen(false);
+          navigate('/ingredients/new/barcode-entry', { state: { fromMealPath } });
+        }}
       />
     </div>
   );

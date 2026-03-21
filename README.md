@@ -147,11 +147,28 @@ A cooking app powered with local LLM using Ollama.
 - **Sort Options**: Sort ingredients by name or servings in both ascending and descending order
 - **Detailed Ingredient View**: Full-screen dedicated view for creating and editing ingredients
   - **Create Ingredients**: Navigate to `/ingredients/new` to add new ingredients
+  - **Create Mode Simplicity**: Product Pricing is hidden while creating a new ingredient and is shown only when editing an existing ingredient
   - **Edit Ingredients**: Click on any ingredient card to edit it with pre-populated form data
   - **Back to Ingredients**: Quick link to return to the ingredients list from the detail view
   - **Delete Ingredients**: Delete button on detailed view with confirmation dialog
   - **File Upload**: Upload ingredient images with live preview
-  - Form includes: name, type, current amount, serving size, unit (with custom unit support), price per unit, image upload, and comprehensive nutrient profile
+  - Form includes: name, type, current amount, serving size, unit (with custom unit support), price per unit, image upload, barcode, and comprehensive nutrient profile
+- **Barcode Support**: Each ingredient can optionally store a barcode number (e.g. EAN-13 / UPC)
+  - **Enter Barcode Flow**: "Enter Barcode" option in the create modal takes users to a dedicated barcode entry screen
+    - Visual sample barcode (SVG) shows the expected format with digits on the left, right, and below the bars
+    - Instructional text prompts users to include all digits outside the bars
+    - Automatic lookup against the **Open Food Facts** public API (via TanStack React Query with caching) to pre-fill ingredient name, image, serving size/unit, and nutrition
+    - Barcode-derived serving units now prioritize `serving_size_imported` and only use values supported by `MEASUREMENT_UNITS` (fallback order: `serving_size_imported` → `serving_size` → supported `serving_quantity_unit`)
+    - Serving text parsing builds its unit matcher dynamically from `MEASUREMENT_UNITS` to stay aligned with supported units
+    - Serving size and unit are resolved together in a single parser flow to keep prefill values aligned
+    - Barcode prefill parsing/normalization utilities are centralized in `src/utils/barcodePrefill.ts`, with `getBarcodePrefillFromProduct` as the public helper consumed by screens
+    - When barcode data contains conflicting serving definitions, users are shown multiple serving-based prefill options (Option A, Option B, etc.) with a quick nutrient preview (serving size, calories, protein, carbs, fat) and can choose the best match before continuing
+    - Nutrient prefill now prioritizes per-serving values from Open Food Facts (`*_serving`) and falls back to computed values from `*_100g` using serving size when needed
+    - All barcode-prefilled numeric values are normalized to one decimal place before navigating to the ingredient form
+    - During lookup, the UI shows an in-page loading status tied to query `isFetching` and hides stale result cards until the current request completes
+    - Users can continue to the ingredient form with pre-filled data, or proceed to manual entry if the barcode is not found
+    - The create ingredient form includes a "Back to Barcode Entry" action when opened from this flow so users can quickly revise barcode-based prefill choices
+  - **Search Live Price**: When a barcode is saved on an ingredient, a "🔍 Search Live Price" button appears on the ingredient detail page — it opens a Google search for the barcode number in a new tab
 - **Inventory Details**:
   - Ingredient name and type
   - Servings available based on serving size

@@ -48,7 +48,40 @@ export function IngredientDetail() {
   const fromMealPath =
     (location.state as { fromMealPath?: string } | null)?.fromMealPath ?? null;
 
-  const [name, setName] = useState(existingIngredient?.name || '');
+  const fromBarcodeEntry =
+    (location.state as { fromBarcodeEntry?: boolean } | null)?.fromBarcodeEntry ?? false;
+
+  const backLinkTo =
+    fromMealPath ?? (fromBarcodeEntry ? '/ingredients/new/barcode-entry' : '/ingredients');
+  const backLinkState =
+    fromBarcodeEntry && fromMealPath ? { fromMealPath } : undefined;
+  const backLinkText =
+    fromMealPath
+      ? '← Back to Meal'
+      : fromBarcodeEntry
+        ? '← Back to Barcode Entry'
+        : '← Back to Ingredients';
+
+  // Pre-fill data passed from IngredientBarcodeEntry
+  const barcodePrefill = (location.state as {
+    barcodePrefill?: {
+      barcode?: string | null;
+      name?: string;
+      imageUrl?: string;
+      servingSize?: number;
+      unit?: MeasurementUnit;
+      otherUnit?: string | null;
+      protein?: number;
+      carbs?: number;
+      fat?: number;
+      fiber?: number;
+      sugar?: number;
+      sodium?: number;
+      calories?: number;
+    };
+  } | null)?.barcodePrefill ?? null;
+
+  const [name, setName] = useState(existingIngredient?.name ?? barcodePrefill?.name ?? '');
   const [type, setType] = useState<IngredientType>(
     existingIngredient?.type ?? 'other',
   );
@@ -56,39 +89,42 @@ export function IngredientDetail() {
     existingIngredient?.currentAmount.toString() ?? '0',
   );
   const [servingSize, setServingSize] = useState(
-    existingIngredient?.servingSize.toString() ?? '0',
+    existingIngredient?.servingSize.toString() ?? barcodePrefill?.servingSize?.toString() ?? '0',
   );
   const [unit, setUnit] = useState<MeasurementUnit>(
-    existingIngredient?.unit ?? 'g',
+    existingIngredient?.unit ?? barcodePrefill?.unit ?? 'g',
   );
   const [otherUnit, setOtherUnit] = useState<string>(
-    existingIngredient?.otherUnit || '',
+    existingIngredient?.otherUnit ?? barcodePrefill?.otherUnit ?? '',
   );
   const [imageUrl, setImageUrl] = useState<string>(
-    existingIngredient?.imageUrl || '',
+    existingIngredient?.imageUrl ?? barcodePrefill?.imageUrl ?? '',
+  );
+  const [barcode, setBarcode] = useState<string>(
+    existingIngredient?.barcode ?? barcodePrefill?.barcode ?? '',
   );
 
   // Nutrient profile state
   const [protein, setProtein] = useState(
-    existingIngredient?.nutrients.protein.toString() ?? '0',
+    existingIngredient?.nutrients.protein.toString() ?? barcodePrefill?.protein?.toString() ?? '0',
   );
   const [carbs, setCarbs] = useState(
-    existingIngredient?.nutrients.carbs.toString() ?? '0',
+    existingIngredient?.nutrients.carbs.toString() ?? barcodePrefill?.carbs?.toString() ?? '0',
   );
   const [fat, setFat] = useState(
-    existingIngredient?.nutrients.fat.toString() ?? '0',
+    existingIngredient?.nutrients.fat.toString() ?? barcodePrefill?.fat?.toString() ?? '0',
   );
   const [fiber, setFiber] = useState(
-    existingIngredient?.nutrients.fiber.toString() ?? '0',
+    existingIngredient?.nutrients.fiber.toString() ?? barcodePrefill?.fiber?.toString() ?? '0',
   );
   const [sugar, setSugar] = useState(
-    existingIngredient?.nutrients.sugar.toString() ?? '0',
+    existingIngredient?.nutrients.sugar.toString() ?? barcodePrefill?.sugar?.toString() ?? '0',
   );
   const [sodium, setSodium] = useState(
-    existingIngredient?.nutrients.sodium.toString() ?? '0',
+    existingIngredient?.nutrients.sodium.toString() ?? barcodePrefill?.sodium?.toString() ?? '0',
   );
   const [calories, setCalories] = useState(
-    existingIngredient?.nutrients.calories.toString() ?? '0',
+    existingIngredient?.nutrients.calories.toString() ?? barcodePrefill?.calories?.toString() ?? '0',
   );
 
   // Products state
@@ -236,6 +272,7 @@ export function IngredientDetail() {
       products: products,
       defaultProductId: defaultProductId,
       imageUrl: imageUrl,
+      barcode: barcode.trim() || null,
       nutrients: {
         protein: Number(protein) || 0,
         carbs: Number(carbs) || 0,
@@ -314,10 +351,11 @@ export function IngredientDetail() {
       <div className='mx-auto mt-10 max-w-4xl p-6 md:mt-0'>
         <div className='mb-8'>
           <Link
-            to={fromMealPath ?? '/ingredients'}
+            to={backLinkTo}
+            state={backLinkState}
             className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
           >
-            {fromMealPath ? '← Back to Meal' : '← Back to Ingredients'}
+            {backLinkText}
           </Link>
           <div className='flex items-start justify-between gap-4'>
             <div>
@@ -463,6 +501,30 @@ export function IngredientDetail() {
               </ul>
             </div>
           )}
+
+          {existingIngredient.barcode && (
+            <div className='border-border rounded-lg border p-4'>
+              <div className='flex items-center justify-between gap-3'>
+                <div>
+                  <p className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    Barcode
+                  </p>
+                  <p className='text-foreground font-mono font-medium'>
+                    {existingIngredient.barcode}
+                  </p>
+                </div>
+                <a
+                  href={`https://www.google.com/search?tbm=shop&q=${encodeURIComponent(existingIngredient.barcode)}`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  <Button type='button' variant='secondary'>
+                    🔍 Search Live Price
+                  </Button>
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -472,10 +534,11 @@ export function IngredientDetail() {
     <div className='mx-auto mt-10 max-w-4xl p-6 md:mt-0'>
       <div className='mb-8'>
         <Link
-          to={fromMealPath ?? '/ingredients'}
+          to={backLinkTo}
+          state={backLinkState}
           className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
         >
-          {fromMealPath ? '← Back to Meal' : '← Back to Ingredients'}
+          {backLinkText}
         </Link>
         <h1 className='text-foreground mb-2 text-4xl font-bold'>
           {isEditing ? 'Edit Ingredient' : 'Create New Ingredient'}
@@ -607,6 +670,19 @@ export function IngredientDetail() {
           )}
         </div>
 
+        <div>
+          <Label htmlFor='barcode'>
+            Barcode
+          </Label>
+          <Input
+            id='barcode'
+            type='text'
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+            placeholder='e.g. 4 012345 678905'
+          />
+        </div>
+
         <div className='border-border border-t pt-6'>
           <h2 className='text-foreground mb-4 text-xl font-semibold'>
             Nutrient Profile (per serving)
@@ -695,7 +771,7 @@ export function IngredientDetail() {
               <Input
                 id='sodium'
                 type='number'
-                step='1'
+                step='0.1'
                 min='0'
                 value={sodium}
                 onChange={(e) => setSodium(e.target.value)}
@@ -710,7 +786,7 @@ export function IngredientDetail() {
               <Input
                 id='calories'
                 type='number'
-                step='1'
+                step='0.1'
                 min='0'
                 value={calories}
                 onChange={(e) => setCalories(e.target.value)}
@@ -720,7 +796,8 @@ export function IngredientDetail() {
           </div>
         </div>
 
-        <div className='border-border border-t pt-6'>
+        {isEditing && (
+          <div className='border-border border-t pt-6'>
           <div className='mb-4 flex items-center justify-between'>
             <h2 className='text-foreground text-xl font-semibold'>
               Product Pricing
@@ -941,7 +1018,8 @@ export function IngredientDetail() {
               </div>
             )}
           </div>
-        </div>
+          </div>
+        )}
 
         <div className='border-border flex gap-3 border-t pt-4'>
           <Button type='submit' variant='primary' className='flex-1'>

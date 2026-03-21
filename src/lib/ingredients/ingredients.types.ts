@@ -57,4 +57,5 @@ export interface Ingredient {
   otherUnit: string | null; // For custom units if 'other' is selected
   products: Product[]; // associated products/retailers for this ingredient
   defaultProductId: string | null; // ID of the default product
+  barcode: string | null; // product barcode (e.g. EAN-13 / UPC)
 }

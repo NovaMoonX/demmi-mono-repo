@@ -346,6 +346,7 @@ export function MealFromText() {
               otherUnit: null,
               products: [],
               defaultProductId: null,
+              barcode: null,
             }),
           ).unwrap();
 

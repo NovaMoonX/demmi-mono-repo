@@ -95,6 +95,7 @@ export function Ingredients() {
         onClose={() => setIsCreateModalOpen(false)}
         onSelectManual={() => navigate('/ingredients/new')}
         onSelectBarcode={() => navigate('/ingredients/new/barcode')}
+        onSelectBarcodeEntry={() => navigate('/ingredients/new/barcode-entry')}
       />
       <div className='mb-8'>
         <div className="flex items-start justify-between mb-4">

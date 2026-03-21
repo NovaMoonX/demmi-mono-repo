@@ -32,6 +32,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-001',
+    barcode: null,
   },
   {
     id: 'ing-002',
@@ -64,6 +65,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-002',
+    barcode: null,
   },
   {
     id: 'ing-003',
@@ -96,6 +98,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-003',
+    barcode: null,
   },
   {
     id: 'ing-004',
@@ -128,6 +131,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-004',
+    barcode: null,
   },
   {
     id: 'ing-005',
@@ -160,6 +164,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-005',
+    barcode: null,
   },
   {
     id: 'ing-006',
@@ -192,6 +197,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-006',
+    barcode: null,
   },
   {
     id: 'ing-007',
@@ -224,6 +230,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-007',
+    barcode: null,
   },
   {
     id: 'ing-008',
@@ -256,6 +263,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-008',
+    barcode: null,
   },
   {
     id: 'ing-009',
@@ -288,6 +296,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-009',
+    barcode: null,
   },
   {
     id: 'ing-010',
@@ -320,6 +329,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-010',
+    barcode: null,
   },
   {
     id: 'ing-011',
@@ -352,6 +362,7 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-011',
+    barcode: null,
   },
   {
     id: 'ing-012',
@@ -384,5 +395,6 @@ export const mockIngredients: Ingredient[] = [
     ],
     otherUnit: null,
     defaultProductId: 'prod-012',
+    barcode: null,
   },
 ];
