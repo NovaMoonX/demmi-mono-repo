@@ -1,12 +1,19 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, protocol, net } from 'electron';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { installExtension, REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const WEB_DIST_PATH = path.join(__dirname, '..', 'web-dist');
+
+protocol.registerSchemesAsPrivileged([
+	{
+		scheme: 'app',
+		privileges: { standard: true, secure: true, supportFetchAPI: true },
+	},
+]);
 
 function createWindow(): void {
 	const mainWindow = new BrowserWindow({
@@ -21,11 +28,27 @@ function createWindow(): void {
 		},
 	});
 
-	const indexPath = path.join(WEB_DIST_PATH, 'index.html');
-	mainWindow.loadFile(indexPath);
+	mainWindow.loadURL('app://localhost/');
 }
 
 app.whenReady().then(() => {
+	protocol.handle('app', (request) => {
+		const url = new URL(request.url);
+		let filePath = url.pathname;
+
+		if (filePath === '/' || !path.extname(filePath)) {
+			filePath = '/index.html';
+		}
+
+		const fullPath = path.normalize(path.join(WEB_DIST_PATH, filePath));
+
+		if (!fullPath.startsWith(WEB_DIST_PATH)) {
+			return new Response('Forbidden', { status: 403 });
+		}
+
+		return net.fetch(pathToFileURL(fullPath).toString());
+	});
+
 	const isPackaged = app.isPackaged;
 	console.log(`App is running in ${isPackaged ? 'production' : 'development'} mode.`);
 
