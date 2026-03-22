@@ -15,7 +15,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "build:web": "cd ../web && npm run build",
-    "prebuild": "expo prebuild"
+    "prebuild": "expo prebuild",
+    "test": "node ../../node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "expo": "^55.0.8",

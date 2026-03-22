@@ -12,13 +12,15 @@
     "electron:dev": "electron dist/main.js",
     "build": "npm run build:web && npm run copy:web && tsc --project tsconfig.json",
     "start": "npm run build && electron dist/main.js",
-    "package": "npm run build && electron-builder"
+    "package": "npm run build && electron-builder",
+    "test": "node ../../node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "electron-devtools-installer": "^4.0.0",
     "electron-is-dev": "^3.0.1"
   },
   "devDependencies": {
+    "@swc/jest": "^0.2.39",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
     "concurrently": "^9.1.2",
