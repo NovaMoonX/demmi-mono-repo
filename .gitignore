@@ -51,3 +51,6 @@ packages/mobile/web-build/
 *.key
 *.mobileprovision
 *.orig.*
+
+# Test coverage
+coverage/
