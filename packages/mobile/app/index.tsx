@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView, StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import Constants from 'expo-constants';
 import { useRef } from 'react';
@@ -11,7 +12,7 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
+      {/* <StatusBar style="auto" /> */}
       <WebView
         ref={webViewRef}
         source={{ uri: WEB_APP_URL }}
