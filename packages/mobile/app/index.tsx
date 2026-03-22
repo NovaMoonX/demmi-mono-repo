@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import Constants from 'expo-constants';
@@ -9,10 +9,15 @@ const WEB_APP_URL = 'https://demmi.moondreams.dev/';
 
 export default function Index() {
   const webViewRef = useRef<WebView>(null);
+  const colorScheme = useColorScheme();
+  
+  const isDark = colorScheme === 'dark';
+  const backgroundColor = isDark ? '#020617' : '#f8fafc';
+  const statusBarStyle = isDark ? 'light' : 'dark';
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
+    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+      <StatusBar style={statusBarStyle} />
       <WebView
         ref={webViewRef}
         source={{ uri: WEB_APP_URL }}
@@ -30,7 +35,6 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: '#000000',
   },
   webView: {
     flex: 1,
