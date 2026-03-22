@@ -329,7 +329,7 @@ return <form>...</form>;
 - **Use `.types.ts` and `.constants.ts` in `@lib/<feature>/` for domain logic**
 - **Use `??` instead of `||` unless explicitly handling falsy values (empty string, NaN, 0)**
 - **Every logic file (hooks, components, utils, slices) MUST have a co-located test file**
-- **Run `npm test` before submitting changes to ensure all tests pass**
+- **Run `npm run test:web`, `npm run test:mobile`, and `npm run build:web` before submitting changes to ensure all tests and builds pass**
 
 ## Firestore Security Rules
 
@@ -393,20 +393,69 @@ npm run test:electron
 npm run test:mobile
 ```
 
+**⚠️ MANDATORY: Before completing any task, run all affected test scripts and ensure they pass:**
+```bash
+# After changes in packages/web/
+npm run test:web
+
+# After changes in packages/electron/
+npm run test:electron
+
+# After changes in packages/mobile/
+npm run test:mobile
+
+# Always verify the build still works
+npm run build:web
+```
+Never submit changes without confirming the relevant tests pass. If tests fail, fix them before completing the task.
+
 **Test Infrastructure (Web):**
-- **Framework**: Jest with `@swc/jest` transform
-- **Component testing**: `@testing-library/react` + `@testing-library/jest-dom`
+- **Framework**: Vitest (with `globals: false` — imports from `'vitest'` required in every test)
+- **Config**: `packages/web/vitest.config.ts`
+- **Component testing**: `@testing-library/react` + `@testing-library/jest-dom/vitest`
 - **Shared helpers**: `src/__tests__/helpers/renderWithProviders.tsx` — wraps components with Redux Provider + MemoryRouter
-- **Mocks**: `src/__tests__/mocks/` — Dreamer UI components, Firebase config
-- **Setup**: `src/__tests__/setup.ts` (jest-dom matchers, matchMedia/IntersectionObserver mocks)
+- **Mocks**: `src/__tests__/mocks/` — Dreamer UI components/hooks/utils/providers/symbols, Firebase config
+- **Setup**: `src/__tests__/setup.ts` (vitest matchers, cleanup, matchMedia/IntersectionObserver mocks)
+- **UI mode**: `npm run test:ui --workspace=@demmi/web` — opens Vitest UI in browser
 
 **Test Infrastructure (Electron):**
-- **Framework**: Jest with `@swc/jest` transform
-- **Environment**: Node
+- **Framework**: Playwright with `@playwright/test`
+- **Config**: `packages/electron/playwright.config.ts`
+- **E2E tests**: `packages/electron/e2e/` — launches real Electron app
+- **Jest**: Will be added later for IPC handler unit tests (separation of concerns pattern)
 
 **Test Infrastructure (Mobile):**
-- **Framework**: Jest with `react-native` preset
+- **Framework**: Jest 29 with `jest-expo` preset
+- **Config**: `packages/mobile/jest.config.cjs`
 - **Component testing**: `@testing-library/react-native`
+
+**Writing Vitest tests (web package):**
+```tsx
+// Every test file must import what it uses from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Use vi.fn() instead of jest.fn()
+const mockFn = vi.fn();
+
+// Use vi.mock() instead of jest.mock()
+vi.mock('@hooks/useAuth', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
+// vi.importActual is async (unlike jest.requireActual)
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
+  useNavigate: () => mockNavigate,
+}));
+
+// Constructor mocks must use classes (vi.fn doesn't support `new`)
+vi.mock('ollama/browser', () => {
+  class MockOllama {
+    list = vi.fn();
+  }
+  return { Ollama: MockOllama };
+});
+```
 
 **When adding new files:**
 - ✅ New utility function → add `<name>.test.ts` in the same directory
