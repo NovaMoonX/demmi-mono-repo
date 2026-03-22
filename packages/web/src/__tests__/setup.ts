@@ -28,10 +28,7 @@ class MockIntersectionObserver implements IntersectionObserver {
   constructor(
     _callback: IntersectionObserverCallback,
     _options?: IntersectionObserverInit,
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-  ) {
-    void _callback;
-  }
+  ) {}
 
   observe = vi.fn();
   unobserve = vi.fn();
