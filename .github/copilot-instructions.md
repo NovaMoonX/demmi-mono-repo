@@ -1,5 +1,7 @@
 # GitHub AI Instructions for project
 
+**IMPORTANT:** Avoid using UK English spellings in code comments, variable names, or documentation. Always use US English spellings (e.g., "color" instead of "colour", "organize" instead of "organise") to maintain consistency across the codebase and documentation.
+
 ## Core Development Rules
 
 ### 1. Component Creation
