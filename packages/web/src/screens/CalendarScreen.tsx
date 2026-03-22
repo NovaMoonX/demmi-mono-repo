@@ -256,7 +256,7 @@ export function CalendarScreen() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-4xl font-bold text-foreground">Recipe Planner</h1>
+          <h1 className="text-4xl font-bold text-foreground">Meal Planner</h1>
           <Button onClick={() => openAddModal()} variant="primary">
             Add Recipe
           </Button>
@@ -338,7 +338,7 @@ export function CalendarScreen() {
       {/* Totals (hidden for month view) */}
       {view !== 'month' && <TotalsCard totals={totals} dayCount={visibleDays.length} />}
 
-      {/* Recipe Plan Grid */}
+      {/* Meal Plan Grid */}
       {view !== 'month' && (
         view === 'custom' && customEnd < customStart ? (
           <div className="text-center py-12 text-muted-foreground">

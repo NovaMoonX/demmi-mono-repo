@@ -1,6 +1,6 @@
-# Demmi — Your Smart Recipe Planning Companion
+# Demmi — Your Smart Meal Planning Companion
 
-Demmi is a cross-platform cooking and recipe planning assistant powered by a local LLM. It keeps your recipes, ingredients, and grocery planning organized through a simple, friendly interface — with a private AI chat that never sends your data to the cloud.
+Demmi is a cross-platform cooking and meal planning assistant powered by a local LLM. It keeps your recipes, ingredients, and grocery planning organized through a simple, friendly interface — with a private AI chat that never sends your data to the cloud.
 
 ## What Is Demmi?
 
@@ -30,7 +30,7 @@ Demmi solves a real problem: generic AI tools (ChatGPT, Gemini, etc.) don't know
 | 💬 **AI Chat** | Local LLM chat (via Ollama) for recipe ideas, recipe creation, and cooking Q&A |
 | 🍽️ **Recipe Management** | Create, edit, and organize recipes with ingredients, instructions, and nutrition |
 | 🍎 **Ingredient Tracking** | Manage your pantry with types, amounts, servings, pricing, and barcode scanning |
-| 📅 **Recipe Planner** | Calendar view for scheduling recipes by day and recipetime (breakfast, lunch, dinner, snack) |
+| 📅 **Meal Planner** | Calendar view for scheduling recipes by day and mealtime (breakfast, lunch, dinner, snack) |
 | 🛒 **Shopping List** | Auto-generate grocery lists from planned recipes or add items manually |
 | 🔗 **Recipe Sharing** | Share recipes via public link — no account required for viewers |
 | 🤖 **AI Recipe Creation** | Chat-driven multi-step recipe generation with ingredient matching and approval flow |

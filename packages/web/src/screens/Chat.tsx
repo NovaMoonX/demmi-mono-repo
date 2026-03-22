@@ -1154,7 +1154,7 @@ export function Chat() {
                   Start a New Conversation
                 </h2>
                 <p className='text-muted-foreground'>
-                  Ask me anything about cooking, recipes, recipe planning, or
+                  Ask me anything about cooking, recipes, meal planning, or
                   ingredients!
                 </p>
               </div>

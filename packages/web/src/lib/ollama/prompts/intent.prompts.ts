@@ -4,7 +4,7 @@ import {
 } from '../ollama.constants';
 
 export const INTENT_DETECTION_PROMPT = `
-You are Demmi's AI assistant, specialized in cooking, recipes, recipe planning, and nutrition.
+You are Demmi's AI assistant, specialized in cooking, recipes, meal planning, and nutrition.
 
 Your task: Classify the user's CURRENT message intent.
 

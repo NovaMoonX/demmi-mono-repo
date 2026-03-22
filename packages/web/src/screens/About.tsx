@@ -42,7 +42,7 @@ function About() {
               But cooking isn't isolated. It's interconnected. The chicken you bought yesterday affects what you can make today. The recipe prep conversation influences your shopping list. The ingredient substitution discussion should update your saved recipes.
             </p>
             <p className='text-lg text-foreground/80 leading-relaxed'>
-              Even worse, none of these AI conversations connect to actionable data. ChatGPT can suggest recipes, but it can't tell you which ones you can actually make with what's in your fridge. It can estimate nutrition, but it can't calculate exact macros based on your ingredient inventory. It can recommend recipe plans, but it can't track pricing or generate shopping lists.
+              Even worse, none of these AI conversations connect to actionable data. ChatGPT can suggest recipes, but it can't tell you which ones you can actually make with what's in your fridge. It can estimate nutrition, but it can't calculate exact macros based on your ingredient inventory. It can recommend meal plans, but it can't track pricing or generate shopping lists.
             </p>
             <p className='text-lg text-foreground/80 leading-relaxed'>
               The AI is helpful, but it's not useful. There's no mutual connection tying everything together.
@@ -67,7 +67,7 @@ function About() {
               Pricing and nutrition aren't estimates—they're calculations. Each ingredient has real cost data and nutrient profiles. When you plan a recipe, Demmi calculates exactly how much it costs and what macros it provides. When you need to shop, it generates a list with quantities and pricing already figured out.
             </p>
             <p className='text-lg text-foreground/80 leading-relaxed'>
-              Everything ties together. Your AI conversations inform your ingredient tracking. Your recipe planning updates your shopping list. Your calendar drives your prep schedule. It's not just assistance—it's actionable intelligence.
+              Everything ties together. Your AI conversations inform your ingredient tracking. Your meal planning updates your shopping list. Your calendar drives your prep schedule. It's not just assistance—it's actionable intelligence.
             </p>
           </div>
         </section>
@@ -80,7 +80,7 @@ function About() {
               Demmi uses Ollama—a local LLM that runs entirely on your device. No cloud API calls. No data leaving your machine. No corporate servers analyzing your eating habits.
             </p>
             <p className='text-lg text-foreground/80 leading-relaxed'>
-              This matters for two reasons: privacy and control. Your recipe plans, ingredient inventory, dietary preferences, and spending patterns stay on your device. Period. No company is building a profile of what you eat. No algorithm is learning from your kitchen to sell you supplements or recipe kits.
+              This matters for two reasons: privacy and control. Your meal plans, ingredient inventory, dietary preferences, and spending patterns stay on your device. Period. No company is building a profile of what you eat. No algorithm is learning from your kitchen to sell you supplements or recipe kits.
             </p>
             <p className='text-lg text-foreground/80 leading-relaxed'>
               But it's also about practical control. Local AI means instant responses without internet dependency. No usage limits. No monthly subscription fees. No service outages when the cloud provider has issues. The AI works for you because it literally runs on your hardware.

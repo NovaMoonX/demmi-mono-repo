@@ -106,7 +106,7 @@ src/
 │   ├── Ingredients.tsx, IngredientDetail.tsx, IngredientBarcodeEntry.tsx
 │   ├── Recipes.tsx, RecipeDetail.tsx, RecipeFromText.tsx, RecipeFromUrl.tsx
 │   ├── CookMode.tsx                     # Step-by-step cooking
-│   ├── CalendarScreen.tsx               # Recipe planner
+│   ├── CalendarScreen.tsx               # Meal planner
 │   ├── ShoppingList.tsx                 # Shopping list
 │   ├── SharedRecipeView.tsx               # Public shared recipe view
 │   ├── Home.tsx, About.tsx, Account.tsx
@@ -177,7 +177,7 @@ src/
 - **Cook Mode**: immersive step-by-step cooking with progress bar, ingredient drawer, voice navigation ("Hey Demi"), and responsive layout
 - Create from manual entry, pasted text (AI-parsed), or URL
 
-### 📅 Recipe Planner
+### 📅 Meal Planner
 - Day, week, and custom range views with date navigation
 - Plan recipes by category with quick-add buttons and inline edit/remove
 - Automatic nutrition and price totals across the selected period
@@ -325,7 +325,7 @@ Redux Toolkit with typed hooks (`useAppDispatch`, `useAppSelector`). The store i
 | `ingredientsSlice` | Ingredient inventory CRUD |
 | `recipesSlice` | Recipe collection CRUD |
 | `chatsSlice` | Chat conversations and messages |
-| `calendarSlice` | Planned recipes / recipe planner |
+| `calendarSlice` | Planned recipes / meal planner |
 | `shoppingListSlice` | Shopping list items |
 | `userSlice` | Authentication state |
 | `demoSlice` | Demo mode session management |

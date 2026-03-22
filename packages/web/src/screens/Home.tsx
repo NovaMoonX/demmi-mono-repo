@@ -45,13 +45,13 @@ function Home() {
     },
     {
       emoji: '📅',
-      title: 'Recipe Planning',
-      description: 'Plan your recipes for the week with smart calendar integration',
+      title: 'Meal Planning',
+      description: 'Plan your meals for the week with smart calendar integration',
     },
     {
       emoji: '🛒',
       title: 'Shopping Lists',
-      description: 'Auto-generate shopping lists from your recipe plans and recipes',
+      description: 'Auto-generate shopping lists from your meal plans and recipes',
     },
     {
       emoji: '🎭',
@@ -83,7 +83,7 @@ function Home() {
                 {APP_TITLE}
               </h1>
               <p className="text-xl md:text-2xl text-foreground/70 max-w-2xl mx-auto">
-                Your intelligent kitchen companion for recipes, recipe planning, and cooking inspiration
+                Your intelligent kitchen companion for recipes, meal planning, and cooking inspiration
               </p>
             </div>
 

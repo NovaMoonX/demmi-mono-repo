@@ -13,7 +13,7 @@ const MAX_RECENT_SUMMARIES = 10;
  * Intent detection — classifies the user's current message into a supported action type.
  */
 const INTENT_DETECTION_PROMPT = `
-You are Demmi's AI assistant, specialized in cooking, recipes, recipe planning, and nutrition.
+You are Demmi's AI assistant, specialized in cooking, recipes, meal planning, and nutrition.
 
 Your task: Classify the user's CURRENT message intent.
 

@@ -329,7 +329,7 @@ export function generateMockResponse(userMessage: string): string {
   }
   
   if (userMessage.toLowerCase().includes('recipe prep') || userMessage.toLowerCase().includes('planning')) {
-    return "Recipe planning is a great way to stay organized! I can help you plan your recipes for the week. You might want to check out our Calendar feature to schedule your cooking sessions. What's your main goal with recipe planning?";
+    return "Meal planning is a great way to stay organized! I can help you plan your meals for the week. You might want to check out our Calendar feature to schedule your cooking sessions. What's your main goal with meal planning?";
   }
   
   return randomResponse + " What specific aspect would you like to know more about?";
