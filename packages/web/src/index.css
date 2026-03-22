@@ -43,5 +43,5 @@ html, body {
 @import "@moondreamsdev/dreamer-ui/styles"; /* non-TailwindCSS styles */
 @import './dreamer-ui.css'; /* customizable, theme styles */
 
-/* for TailwindCSS styles in library to be processed */
-@source "../node_modules/@moondreamsdev/dreamer-ui/dist/**/*.{js,jsx,ts,tsx}";
+/* for TailwindCSS styles in library to be processed (hoisted to monorepo root node_modules) */
+@source "../../../node_modules/@moondreamsdev/dreamer-ui/dist/**/*.{js,jsx,ts,tsx}";

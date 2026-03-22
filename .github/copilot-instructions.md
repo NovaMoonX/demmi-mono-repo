@@ -49,7 +49,7 @@ const answeredCount = useMemo(() => {
 - Use TailwindCSS exclusively
 - **ALWAYS** use `join` from `@moondreamsdev/dreamer-ui/utils` for conditional class names
 - **NEVER** use template literals with `${` for className - always use `join()` instead
-- Use existing styles and colors from `src/dreamer-ui.css` and `src/index.css` when applicable (do not modify them)
+- Use existing styles and colors from `packages/web/src/dreamer-ui.css` and `packages/web/src/index.css` when applicable (do not modify them)
 
 ```tsx
 import { join } from '@moondreamsdev/dreamer-ui/utils';
@@ -88,10 +88,36 @@ className={join('base-class', isActive ? 'active' : 'inactive')}
 - Import from `@moondreamsdev/dreamer-ui/components`, `/hooks`, `/symbols`, `/utils`
 - Always check existing props of Dream UI components before setting custom styles
 
-### 8. File Structure
+### 8. Monorepo Structure
+
+This is an npm workspaces monorepo with three packages:
+
+```
+demmi-monorepo/
+├── packages/
+│   ├── web/            # React web application (Vite + Firebase) — the core app
+│   ├── electron/       # Electron desktop wrapper — loads web build
+│   └── mobile/         # Expo React Native wrapper — loads web app via WebView
+├── .github/
+│   ├── copilot-instructions.md
+│   └── workflows/
+├── package.json        # Workspace root
+├── tsconfig.json       # Root TypeScript config
+└── README.md           # Consumer-friendly project overview
+```
+
+**Workspace scripts** (run from monorepo root):
+- `npm run dev:web` — Start web dev server
+- `npm run dev:electron` — Build web + launch Electron
+- `npm run dev:mobile` — Start Expo dev server
+- `npm run build:web` — Production build for web
+- `npm run build:electron` — Production build for Electron
+
+### 8a. Web Package File Structure (`packages/web/`)
+
 Follow the existing structure:
 ```
-src/
+packages/web/src/
 ├── components/         # Reusable UI components (organized in subfolders by screen/feature)
 │   ├── calendar/       # Calendar-related components (e.g., TotalsCard, DayCard, MonthView)
 │   ├── chat/           # Chat-related components
@@ -149,18 +175,20 @@ import { helper } from '@utils/helper';
 import { generatedId } from '@utils/generatedId';
 ```
 
-### 10. Available Import Aliases
-- `@/` → `src/`
-- `@components/` → `src/components/`
-- `@contexts/` → `src/contexts/`
-- `@hooks/` → `src/hooks/`
-- `@lib/` → `src/lib/`
-- `@routes/` → `src/routes/`
-- `@screens/` → `src/screens/`
-- `@store/` → `src/store/`
-- `@styles/` → `src/styles/`
-- `@ui/` → `src/ui/`
-- `@utils/` → `src/utils/`
+### 10. Available Import Aliases (Web Package)
+
+These aliases are configured in `packages/web/vite.config.ts` and `packages/web/tsconfig.app.json`:
+- `@/` → `packages/web/src/`
+- `@components/` → `packages/web/src/components/`
+- `@contexts/` → `packages/web/src/contexts/`
+- `@hooks/` → `packages/web/src/hooks/`
+- `@lib/` → `packages/web/src/lib/`
+- `@routes/` → `packages/web/src/routes/`
+- `@screens/` → `packages/web/src/screens/`
+- `@store/` → `packages/web/src/store/`
+- `@styles/` → `packages/web/src/styles/`
+- `@ui/` → `packages/web/src/ui/`
+- `@utils/` → `packages/web/src/utils/`
 
 ### 11. ID Generation
 - **ALWAYS** use `generatedId(entity)` from `@utils/generatedId` for all ID creation
@@ -267,7 +295,7 @@ return <form>...</form>;
 - **Class names: ALWAYS use `join()` for conditionals - NEVER template literals**
 - Check Dreamer UI first
 - Use import aliases: `@components/`, `@hooks/`, `@lib/`, `@screens/`, `@ui/`, etc.
-- **Components: Extract to subfolders under `src/components/` by feature (calendar/, shopping/, meals/)**
+- **Components: Extract to subfolders under `packages/web/src/components/` by feature (calendar/, shopping/, meals/)**
 - **Lib: Organize by domain with `.types.ts`, `.constants.ts`, and barrel `index.ts` exports**
 - Follow structured folder organization with proper separation of concerns
 - **ID generation: ALWAYS use `generatedId(entity)` from `@utils/generatedId`**
@@ -275,6 +303,13 @@ return <form>...</form>;
 - **Form labels: ALWAYS use `Label` from Dreamer UI, NEVER native `<label>` or className on Label**
 - **Nullish coalescing: Use `??` by default, only `||` for explicit falsy checks**
 - **Detail pages: Always implement view/edit mode for existing items**
+
+## Monorepo Rules
+- **Electron and Mobile packages wrap the web build** — they have no UI code of their own
+- **All source code changes happen in `packages/web/`** unless modifying the Electron main process or Expo app shell
+- **Root `package.json`** only defines workspaces and cross-package scripts — no dependencies
+- **Each package has its own `package.json`, `tsconfig.json`, and `README.md`**
+- **Workflows reference `packages/web/`** for builds and Firebase deploys (use `entryPoint: packages/web`)
 
 ## ⚠️ Critical Reminders
 - **2 spaces for indentation - ALWAYS**
@@ -293,7 +328,7 @@ return <form>...</form>;
 
 ## Firestore Security Rules
 
-Rules live in `firestore.rules`. Always use the reusable helper functions defined at the top of the rules file:
+Rules live in `packages/web/firestore.rules`. Always use the reusable helper functions defined at the top of the rules file:
 
 - `isSignedIn()` — returns `true` if the request is authenticated
 - `isOwner(userId)` — returns `true` if the requester is signed in and their uid matches `userId`
@@ -320,7 +355,7 @@ match /chats/{chatId} {
 
 ### Async Thunks and Demo Mode
 
-All Firestore async thunks (in `src/store/actions/`) must:
+All Firestore async thunks (in `packages/web/src/store/actions/`) must:
 
 1. Read the current user from Redux state via `getState().user.user?.uid` — never accept `userId` as a parameter.
 2. Use the `condition` option to silently skip execution when demo mode is active:
@@ -333,8 +368,16 @@ This ensures demo mode never touches Firestore and throws no errors.
 
 
 
-### 11. README.md Update Rule
-**CRITICAL**: The README.md must be updated with **EVERY** change to the codebase.
+### 16. README.md Update Rule
+**CRITICAL**: READMEs must be updated with **EVERY** change to the codebase.
+
+This is a monorepo with multiple READMEs:
+- **Root `README.md`** — Consumer-facing project overview (what Demmi is, who it's for, features, use cases)
+- **`packages/web/README.md`** — Web app developer docs (setup, scripts, architecture, data schema)
+- **`packages/electron/README.md`** — Electron developer docs (setup, scripts, packaging)
+- **`packages/mobile/README.md`** — Expo/React Native developer docs (setup, scripts, configuration)
+
+Update the appropriate README(s) based on what changed.
 
 **When to Update README:**
 - ✅ Adding new features or functionality
@@ -390,16 +433,10 @@ The README is the **primary documentation** for potential users. Outdated docume
 ```
 
 **README Sections to Monitor:**
-1. Features (categorized by Security, Authentication, Data Management, UI)
-2. Tech Stack (versions matter!)
-3. Security Architecture (encryption details, iterations, algorithms)
-4. Usage Guide (step-by-step user flows)
-5. Security Notes (critical warnings)
-6. Data Schema (TypeScript interfaces)
-7. Design & Visual Aesthetic (visual design system)
-8. Firestore Rules (security rule explanations)
-9. Troubleshooting (common issues and solutions)
-10. Project Structure (file organization)
+1. Root README: Features, Tech Stack, Repository Structure, Quick Start
+2. Web README: Features, Tech Stack, Setup, Data Schema, Project Structure
+3. Electron README: Setup, Scripts, Configuration
+4. Mobile README: Setup, Scripts, Configuration, WebView URL
 
 **Enforcement:**
 - Every PR should include README updates if applicable
