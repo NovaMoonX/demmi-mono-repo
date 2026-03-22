@@ -6,7 +6,7 @@ The Expo (React Native) mobile application for **Demmi**. This package wraps the
 
 ## How It Works
 
-The mobile app uses a `WebView` component to load the hosted Demmi web application (`https://demmi.web.app`). The entire UI is the same React web app — rendered inside a native mobile container with safe area handling and platform-appropriate status bar styling.
+The mobile app uses a `WebView` component to load the hosted Demmi web application (`https://demmi.moondreams.dev/`). The entire UI is the same React web app — rendered inside a native mobile container with safe area handling and platform-appropriate status bar styling.
 
 **Architecture:**
 
@@ -94,7 +94,7 @@ packages/mobile/
 The WebView points to the deployed web app:
 
 ```typescript
-const WEB_APP_URL = 'https://demmi.web.app';
+const WEB_APP_URL = 'https://demmi.moondreams.dev/';
 ```
 
 To use a local dev server instead during development, update the URL in `app/index.tsx`:

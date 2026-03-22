@@ -4,7 +4,7 @@ import { WebView } from 'react-native-webview';
 import Constants from 'expo-constants';
 import { useRef } from 'react';
 
-const WEB_APP_URL = 'https://demmi.web.app';
+const WEB_APP_URL = 'https://demmi.moondreams.dev/';
 
 export default function Index() {
   const webViewRef = useRef<WebView>(null);
