@@ -1,11 +1,11 @@
-import { MealCategory } from '@lib/meals';
+import { RecipeCategory } from '@lib/recipes';
 
-export interface PlannedMeal {
+export interface PlannedRecipe {
   id: string;
   userId: string;
-  mealId: string;
+  recipeId: string;
   date: number; // start-of-day timestamp (ms)
-  category: MealCategory;
+  category: RecipeCategory;
   notes: string | null;
 }
 

@@ -1,7 +1,7 @@
 import type { ChatMessage } from '@lib/chat';
 import { AgentAction } from '../action-types';
 
-export type ActionType = 'general' | 'createMeal';
+export type ActionType = 'general' | 'createRecipe';
 
 // Pure data context for LLM calls — no store references, no chatId/messageId.
 export interface ActionContext<ResultType extends Record<string, unknown>> {

@@ -1,4 +1,4 @@
-import { PlannedMeal } from '@lib/calendar';
+import { PlannedRecipe } from '@lib/calendar';
 import { DEMO_USER_ID } from '@lib/app';
 import { db } from '@lib/firebase/firebase.config';
 import { generatedId } from '@utils/generatedId';
@@ -22,28 +22,28 @@ function isDemoActive(getState: () => unknown): boolean {
 }
 
 /**
- * Fetch all planned meals belonging to the current user from Firestore.
+ * Fetch all planned recipes belonging to the current user from Firestore.
  * No-ops silently when demo mode is active.
  */
-export const fetchPlannedMeals = createAsyncThunk(
-  'calendar/fetchPlannedMeals',
+export const fetchPlannedRecipes = createAsyncThunk(
+  'calendar/fetchPlannedRecipes',
   async (_, { getState }) => {
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
-      if (!userId) throw new Error('You must be signed in to fetch planned meals.');
+      if (!userId) throw new Error('You must be signed in to fetch planned recipes.');
 
       const q = query(
-        collection(db, 'plannedMeals'),
+        collection(db, 'plannedRecipes'),
         where('userId', '==', userId),
       );
       const snapshot = await getDocs(q);
-      const plannedMeals: PlannedMeal[] = snapshot.docs.map(
-        (d: QueryDocumentSnapshot) => d.data() as PlannedMeal,
+      const plannedRecipes: PlannedRecipe[] = snapshot.docs.map(
+        (d: QueryDocumentSnapshot) => d.data() as PlannedRecipe,
       );
-      return plannedMeals;
+      return plannedRecipes;
     } catch (err) {
-      console.error('Error fetching planned meals:', err);
+      console.error('Error fetching planned recipes:', err);
       throw err;
     }
   },
@@ -51,105 +51,105 @@ export const fetchPlannedMeals = createAsyncThunk(
 );
 
 /**
- * Create a new planned meal. In demo mode, persists to local Redux state only.
+ * Create a new planned recipe. In demo mode, persists to local Redux state only.
  * In normal mode, persists to Firestore.
  */
-export const createPlannedMeal = createAsyncThunk(
-  'calendar/createPlannedMealAsync',
-  async (params: Omit<PlannedMeal, 'id' | 'userId'>, { getState }) => {
+export const createPlannedRecipe = createAsyncThunk(
+  'calendar/createPlannedRecipeAsync',
+  async (params: Omit<PlannedRecipe, 'id' | 'userId'>, { getState }) => {
     const state = getState() as RootState;
-    const plannedMealId = generatedId('planned');
+    const plannedRecipeId = generatedId('planned');
 
     if (isDemoActive(getState)) {
-      const newPlannedMeal: PlannedMeal = { ...params, id: plannedMealId, userId: DEMO_USER_ID };
-      return newPlannedMeal;
+      const newPlannedRecipe: PlannedRecipe = { ...params, id: plannedRecipeId, userId: DEMO_USER_ID };
+      return newPlannedRecipe;
     }
 
     try {
       const userId = state.user.user?.uid;
-      if (!userId) throw new Error('You must be signed in to create a planned meal.');
+      if (!userId) throw new Error('You must be signed in to create a planned recipe.');
 
-      const docRef = doc(db, 'plannedMeals', plannedMealId);
-      const newPlannedMeal: PlannedMeal = { ...params, id: plannedMealId, userId };
-      await setDoc(docRef, newPlannedMeal);
-      return newPlannedMeal;
+      const docRef = doc(db, 'plannedRecipes', plannedRecipeId);
+      const newPlannedRecipe: PlannedRecipe = { ...params, id: plannedRecipeId, userId };
+      await setDoc(docRef, newPlannedRecipe);
+      return newPlannedRecipe;
     } catch (err) {
-      console.error('Error creating planned meal:', err);
+      console.error('Error creating planned recipe:', err);
       throw err;
     }
   },
 );
 
 /**
- * Update an existing planned meal. In demo mode, updates local Redux state only.
+ * Update an existing planned recipe. In demo mode, updates local Redux state only.
  * In normal mode, updates Firestore.
  */
-export const updatePlannedMeal = createAsyncThunk(
-  'calendar/updatePlannedMealAsync',
-  async (plannedMeal: PlannedMeal, { getState }) => {
+export const updatePlannedRecipe = createAsyncThunk(
+  'calendar/updatePlannedRecipeAsync',
+  async (plannedRecipe: PlannedRecipe, { getState }) => {
     if (isDemoActive(getState)) {
-      return plannedMeal;
+      return plannedRecipe;
     }
 
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
-      if (!userId) throw new Error('You must be signed in to update a planned meal.');
+      if (!userId) throw new Error('You must be signed in to update a planned recipe.');
 
-      const docRef = doc(db, 'plannedMeals', plannedMeal.id);
+      const docRef = doc(db, 'plannedRecipes', plannedRecipe.id);
 
       await runTransaction(db, async (tx: Transaction) => {
         const snap = await tx.get(docRef);
-        if (!snap.exists()) throw new Error('Planned meal not found.');
+        if (!snap.exists()) throw new Error('Planned recipe not found.');
 
-        const existing = snap.data() as PlannedMeal;
+        const existing = snap.data() as PlannedRecipe;
         if (existing.userId !== userId)
-          throw new Error('You can only update your own planned meals.');
+          throw new Error('You can only update your own planned recipes.');
 
-        const { id: _id, userId: _userId, ...updatableFields } = plannedMeal;
+        const { id: _id, userId: _userId, ...updatableFields } = plannedRecipe;
         tx.update(docRef, updatableFields);
       });
 
-      return plannedMeal;
+      return plannedRecipe;
     } catch (err) {
-      console.error('Error updating planned meal:', err);
+      console.error('Error updating planned recipe:', err);
       throw err;
     }
   },
 );
 
 /**
- * Delete a planned meal. In demo mode, removes from local Redux state only.
+ * Delete a planned recipe. In demo mode, removes from local Redux state only.
  * In normal mode, deletes from Firestore.
  */
-export const deletePlannedMeal = createAsyncThunk(
-  'calendar/deletePlannedMealAsync',
-  async (plannedMealId: string, { getState }) => {
+export const deletePlannedRecipe = createAsyncThunk(
+  'calendar/deletePlannedRecipeAsync',
+  async (plannedRecipeId: string, { getState }) => {
     if (isDemoActive(getState)) {
-      return plannedMealId;
+      return plannedRecipeId;
     }
 
     const state = getState() as RootState;
     try {
       const userId = state.user.user?.uid;
-      if (!userId) throw new Error('You must be signed in to delete a planned meal.');
+      if (!userId) throw new Error('You must be signed in to delete a planned recipe.');
 
-      const docRef = doc(db, 'plannedMeals', plannedMealId);
+      const docRef = doc(db, 'plannedRecipes', plannedRecipeId);
 
       await runTransaction(db, async (tx: Transaction) => {
         const snap = await tx.get(docRef);
-        if (!snap.exists()) throw new Error('Planned meal not found.');
+        if (!snap.exists()) throw new Error('Planned recipe not found.');
 
-        const plannedMeal = snap.data() as PlannedMeal;
-        if (plannedMeal.userId !== userId)
-          throw new Error('You can only delete your own planned meals.');
+        const plannedRecipe = snap.data() as PlannedRecipe;
+        if (plannedRecipe.userId !== userId)
+          throw new Error('You can only delete your own planned recipes.');
 
         tx.delete(docRef);
       });
 
-      return plannedMealId;
+      return plannedRecipeId;
     } catch (err) {
-      console.error('Error deleting planned meal:', err);
+      console.error('Error deleting planned recipe:', err);
       throw err;
     }
   },

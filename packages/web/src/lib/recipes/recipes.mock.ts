@@ -1,8 +1,8 @@
-import { Meal } from './meals.types';
+import { Recipe } from './recipes.types';
 
-export const mockMeals: Meal[] = [
+export const mockRecipes: Recipe[] = [
   {
-    id: 'meal-001',
+    id: 'recipe-001',
     userId: 'demo',
     title: 'Classic Pancakes',
     // ingredients: whole milk (ing-003) x2 servings
@@ -25,7 +25,7 @@ export const mockMeals: Meal[] = [
     ]
   },
   {
-    id: 'meal-002',
+    id: 'recipe-002',
     userId: 'demo',
     title: 'Grilled Chicken Caesar Salad',
     // ingredients: chicken breast (ing-001) x2 servings, olive oil (ing-006) x1 serving, tomatoes (ing-010) x1 serving
@@ -52,7 +52,7 @@ export const mockMeals: Meal[] = [
     ]
   },
   {
-    id: 'meal-003',
+    id: 'recipe-003',
     userId: 'demo',
     title: 'Spaghetti Carbonara',
     // ingredients: olive oil (ing-006) x1 serving, garlic powder (ing-007) x1 serving, cheddar cheese (ing-012) x2 servings
@@ -79,7 +79,7 @@ export const mockMeals: Meal[] = [
     ]
   },
   {
-    id: 'meal-004',
+    id: 'recipe-004',
     userId: 'demo',
     title: 'Trail Mix Energy Balls',
     // ingredients: almonds (ing-008) x1 serving
@@ -102,7 +102,7 @@ export const mockMeals: Meal[] = [
     ]
   },
   {
-    id: 'meal-005',
+    id: 'recipe-005',
     userId: 'demo',
     title: 'Chocolate Lava Cake',
     ingredients: [],
@@ -126,7 +126,7 @@ export const mockMeals: Meal[] = [
     ]
   },
   {
-    id: 'meal-006',
+    id: 'recipe-006',
     userId: 'demo',
     title: 'Mango Smoothie',
     // ingredients: whole milk (ing-003) x1 serving
@@ -149,7 +149,7 @@ export const mockMeals: Meal[] = [
     ]
   },
   {
-    id: 'meal-007',
+    id: 'recipe-007',
     userId: 'demo',
     title: 'Avocado Toast',
     // ingredients: olive oil (ing-006) x0.5 servings
@@ -173,7 +173,7 @@ export const mockMeals: Meal[] = [
     ]
   },
   {
-    id: 'meal-008',
+    id: 'recipe-008',
     userId: 'demo',
     title: 'Beef Tacos',
     // ingredients: ground beef (ing-011) x4 servings, cheddar cheese (ing-012) x2 servings, tomatoes (ing-010) x2 servings

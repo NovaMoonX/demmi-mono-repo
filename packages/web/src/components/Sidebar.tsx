@@ -19,7 +19,7 @@ type Tab = {
 
 const tabs: Tab[] = [
   { id: 'chat', label: 'Chat', emoji: '💬', path: '/chat' },
-  { id: 'meals', label: 'Meals', emoji: '🍽️', path: '/meals' },
+  { id: 'recipes', label: 'Recipes', emoji: '🍽️', path: '/recipes' },
   {
     id: 'ingredients',
     label: 'Ingredients',

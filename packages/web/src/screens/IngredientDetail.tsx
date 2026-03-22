@@ -44,20 +44,20 @@ export function IngredientDetail() {
 
   const [isViewMode, setIsViewMode] = useState(isEditing);
 
-  // Navigation state set by MealDetail when the user comes here to create an ingredient for a meal
-  const fromMealPath =
-    (location.state as { fromMealPath?: string } | null)?.fromMealPath ?? null;
+  // Navigation state set by RecipeDetail when the user comes here to create an ingredient for a recipe
+  const fromRecipePath =
+    (location.state as { fromRecipePath?: string } | null)?.fromRecipePath ?? null;
 
   const fromBarcodeEntry =
     (location.state as { fromBarcodeEntry?: boolean } | null)?.fromBarcodeEntry ?? false;
 
   const backLinkTo =
-    fromMealPath ?? (fromBarcodeEntry ? '/ingredients/new/barcode-entry' : '/ingredients');
+    fromRecipePath ?? (fromBarcodeEntry ? '/ingredients/new/barcode-entry' : '/ingredients');
   const backLinkState =
-    fromBarcodeEntry && fromMealPath ? { fromMealPath } : undefined;
+    fromBarcodeEntry && fromRecipePath ? { fromRecipePath } : undefined;
   const backLinkText =
-    fromMealPath
-      ? '← Back to Meal'
+    fromRecipePath
+      ? '← Back to Recipe'
       : fromBarcodeEntry
         ? '← Back to Barcode Entry'
         : '← Back to Ingredients';
@@ -288,11 +288,11 @@ export function IngredientDetail() {
       if (isEditing && existingIngredient) {
         const updatedIngredient: Ingredient = { ...ingredientData, id: existingIngredient.id, userId: existingIngredient.userId };
         await dispatch(updateIngredientAsync(updatedIngredient)).unwrap();
-        navigate(fromMealPath ?? '/ingredients');
+        navigate(fromRecipePath ?? '/ingredients');
       } else {
         const newIngredient = await dispatch(createIngredientAsync(ingredientData)).unwrap();
-        if (fromMealPath) {
-          navigate(fromMealPath, { state: { newIngredientId: newIngredient.id } });
+        if (fromRecipePath) {
+          navigate(fromRecipePath, { state: { newIngredientId: newIngredient.id } });
         } else {
           navigate('/ingredients');
         }
@@ -337,7 +337,7 @@ export function IngredientDetail() {
     if (isEditing) {
       setIsViewMode(true);
     } else {
-      navigate(fromMealPath ?? '/ingredients');
+      navigate(fromRecipePath ?? '/ingredients');
     }
   };
 
@@ -546,8 +546,8 @@ export function IngredientDetail() {
         <p className='text-muted-foreground'>
           {isEditing
             ? 'Update the details of your ingredient'
-            : fromMealPath
-              ? 'Add a new ingredient to use in your meal'
+            : fromRecipePath
+              ? 'Add a new ingredient to use in your recipe'
               : 'Add a new ingredient to your inventory'}
         </p>
       </div>

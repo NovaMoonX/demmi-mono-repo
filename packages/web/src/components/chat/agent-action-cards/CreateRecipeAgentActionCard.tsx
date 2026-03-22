@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { INGREDIENT_TYPE_EMOJIS } from '@lib/ingredients';
-import type { MealCategory } from '@lib/meals';
-import { MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS } from '@lib/meals';
+import type { RecipeCategory } from '@lib/recipes';
+import { RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
 import type {
   AgentIngredientProposal,
-  AgentMealProposal,
+  AgentRecipeProposal,
   AgentPartialRecipe,
-  CreateMealAgentActionStatus,
-  MealIterableField,
-} from '@lib/ollama/action-types/createMealAction.types';
+  CreateRecipeAgentActionStatus,
+  RecipeIterableField,
+} from '@lib/ollama/action-types/createRecipeAction.types';
 import { Badge, Button, Card, Skeleton } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { GeneratingIndicator } from '../GeneratingIndicator';
 import { AgentActionCardProps } from './types';
 
-const GENERATING_STATUSES = new Set<CreateMealAgentActionStatus>([
+const GENERATING_STATUSES = new Set<CreateRecipeAgentActionStatus>([
   'generating_name',
   'generating_info',
   'generating_description',
@@ -23,7 +23,7 @@ const GENERATING_STATUSES = new Set<CreateMealAgentActionStatus>([
   'generating_instructions',
 ]);
 
-const STEP_LABELS: Partial<Record<CreateMealAgentActionStatus, string>> = {
+const STEP_LABELS: Partial<Record<CreateRecipeAgentActionStatus, string>> = {
   generating_name: 'Generating name…',
   generating_info: 'Generating basic info…',
   generating_description: 'Generating description…',
@@ -31,7 +31,7 @@ const STEP_LABELS: Partial<Record<CreateMealAgentActionStatus, string>> = {
   generating_instructions: 'Generating instructions…',
 };
 
-const FIELD_LABELS: Record<MealIterableField, string> = {
+const FIELD_LABELS: Record<RecipeIterableField, string> = {
   name: 'name',
   info: 'basic info',
   description: 'description',
@@ -39,14 +39,14 @@ const FIELD_LABELS: Record<MealIterableField, string> = {
   instructions: 'instructions',
 };
 
-function IteratingMealCard({
-  meal,
+function IteratingRecipeCard({
+  recipe,
   updatingFields,
 }: {
-  meal: AgentMealProposal;
-  updatingFields: MealIterableField[];
+  recipe: AgentRecipeProposal;
+  updatingFields: RecipeIterableField[];
 }) {
-  const totalTime = meal.prepTime + meal.cookTime;
+  const totalTime = recipe.prepTime + recipe.cookTime;
   const updatingName = updatingFields.includes('name');
   const updatingInfo = updatingFields.includes('info');
   const updatingDescription = updatingFields.includes('description');
@@ -61,7 +61,7 @@ function IteratingMealCard({
             {updatingName ? (
               <Skeleton shape='rectangle' className='h-5 w-40' />
             ) : (
-              <h4 className='text-foreground text-base font-semibold'>{meal.title}</h4>
+              <h4 className='text-foreground text-base font-semibold'>{recipe.title}</h4>
             )}
             {updatingDescription ? (
               <div className='mt-1.5 flex flex-col gap-1'>
@@ -70,12 +70,12 @@ function IteratingMealCard({
               </div>
             ) : (
               <p className='text-muted-foreground mt-0.5 line-clamp-2 text-sm'>
-                {meal.description}
+                {recipe.description}
               </p>
             )}
           </div>
           <span className='shrink-0 text-2xl'>
-            {updatingInfo ? '…' : MEAL_CATEGORY_EMOJIS[meal.category]}
+            {updatingInfo ? '…' : RECIPE_CATEGORY_EMOJIS[recipe.category]}
           </span>
         </div>
 
@@ -89,15 +89,15 @@ function IteratingMealCard({
           <div className='flex flex-wrap items-center gap-2'>
             <Badge
               variant='base'
-              className={join('capitalize', MEAL_CATEGORY_COLORS[meal.category])}
+              className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
             >
-              {meal.category}
+              {recipe.category}
             </Badge>
             <span className='text-muted-foreground text-xs'>
-              Prep {meal.prepTime}m · Cook {meal.cookTime}m · {totalTime}m total
+              Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m total
             </span>
             <span className='text-muted-foreground text-xs'>
-              {meal.servingSize} {meal.servingSize === 1 ? 'serving' : 'servings'}
+              {recipe.servingSize} {recipe.servingSize === 1 ? 'serving' : 'servings'}
             </span>
           </div>
         )}
@@ -105,10 +105,10 @@ function IteratingMealCard({
         {updatingInstructions ? (
           <Skeleton shape='rectangle' className='h-3.5 w-36' />
         ) : (
-          meal.instructions.length > 0 && (
+          recipe.instructions.length > 0 && (
             <div className='text-muted-foreground text-xs'>
-              {meal.instructions.length} instruction{' '}
-              {meal.instructions.length === 1 ? 'step' : 'steps'}
+              {recipe.instructions.length} instruction{' '}
+              {recipe.instructions.length === 1 ? 'step' : 'steps'}
             </div>
           )
         )}
@@ -129,15 +129,15 @@ function IteratingMealCard({
             </div>
           </div>
         ) : (
-          meal.ingredients.length > 0 && <IngredientList ingredients={meal.ingredients} />
+          recipe.ingredients.length > 0 && <IngredientList ingredients={recipe.ingredients} />
         )}
       </div>
     </Card>
   );
 }
 
-function MealPreviewCard({ meal }: { meal: AgentMealProposal }) {
-  const totalTime = meal.prepTime + meal.cookTime;
+function RecipePreviewCard({ recipe }: { recipe: AgentRecipeProposal }) {
+  const totalTime = recipe.prepTime + recipe.cookTime;
 
   return (
     <Card className='overflow-hidden'>
@@ -145,41 +145,41 @@ function MealPreviewCard({ meal }: { meal: AgentMealProposal }) {
         <div className='flex items-start justify-between gap-2'>
           <div className='min-w-0 flex-1'>
             <h4 className='text-foreground text-base font-semibold'>
-              {meal.title}
+              {recipe.title}
             </h4>
             <p className='text-muted-foreground mt-0.5 line-clamp-2 text-sm'>
-              {meal.description}
+              {recipe.description}
             </p>
           </div>
           <span className='shrink-0 text-2xl'>
-            {MEAL_CATEGORY_EMOJIS[meal.category]}
+            {RECIPE_CATEGORY_EMOJIS[recipe.category]}
           </span>
         </div>
 
         <div className='flex flex-wrap items-center gap-2'>
           <Badge
             variant='base'
-            className={join('capitalize', MEAL_CATEGORY_COLORS[meal.category])}
+            className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
           >
-            {meal.category}
+            {recipe.category}
           </Badge>
           <span className='text-muted-foreground text-xs'>
-            Prep {meal.prepTime}m · Cook {meal.cookTime}m · {totalTime}m total
+            Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m total
           </span>
           <span className='text-muted-foreground text-xs'>
-            {meal.servingSize} {meal.servingSize === 1 ? 'serving' : 'servings'}
+            {recipe.servingSize} {recipe.servingSize === 1 ? 'serving' : 'servings'}
           </span>
         </div>
 
-        {meal.instructions.length > 0 && (
+        {recipe.instructions.length > 0 && (
           <div className='text-muted-foreground text-xs'>
-            {meal.instructions.length} instruction{' '}
-            {meal.instructions.length === 1 ? 'step' : 'steps'}
+            {recipe.instructions.length} instruction{' '}
+            {recipe.instructions.length === 1 ? 'step' : 'steps'}
           </div>
         )}
 
-        {meal.ingredients.length > 0 && (
-          <IngredientList ingredients={meal.ingredients} />
+        {recipe.ingredients.length > 0 && (
+          <IngredientList ingredients={recipe.ingredients} />
         )}
       </div>
     </Card>
@@ -275,7 +275,7 @@ function PartialRecipeCard({ recipe }: { recipe: AgentPartialRecipe }) {
         </div>
         {showCategory && (
           <span className='shrink-0 text-2xl'>
-            {MEAL_CATEGORY_EMOJIS[recipe.category as MealCategory]}
+            {RECIPE_CATEGORY_EMOJIS[recipe.category as RecipeCategory]}
           </span>
         )}
       </div>
@@ -286,7 +286,7 @@ function PartialRecipeCard({ recipe }: { recipe: AgentPartialRecipe }) {
             variant='base'
             className={join(
               'capitalize',
-              MEAL_CATEGORY_COLORS[recipe.category as MealCategory],
+              RECIPE_CATEGORY_COLORS[recipe.category as RecipeCategory],
             )}
           >
             {recipe.category}
@@ -318,7 +318,7 @@ function PartialRecipeCard({ recipe }: { recipe: AgentPartialRecipe }) {
   );
 }
 
-export function CreateMealAgentActionCard({
+export function CreateRecipeAgentActionCard({
   action,
   onConfirmIntent,
   onRejectIntent,
@@ -330,8 +330,8 @@ export function CreateMealAgentActionCard({
   const [isAdding, setIsAdding] = useState(false);
   if (action.status === 'pending_confirmation') {
     const name =
-      action.proposedName || (action.meals[0]?.title ?? 'this recipe');
-    const mealCount = action.meals.length;
+      action.proposedName || (action.recipes[0]?.title ?? 'this recipe');
+    const recipeCount = action.recipes.length;
 
     return (
       <div className='border-border bg-card/50 mt-3 flex flex-col gap-3 rounded-xl border p-4'>
@@ -340,7 +340,7 @@ export function CreateMealAgentActionCard({
           <div className='flex-1'>
             <p className='text-foreground text-sm'>
               Sounds like you want to create{' '}
-              {mealCount > 1 ? `${mealCount} recipes` : 'a recipe'} for{' '}
+              {recipeCount > 1 ? `${recipeCount} recipes` : 'a recipe'} for{' '}
               <span className='text-foreground font-semibold'>{name}</span>. Is
               that correct?
             </p>
@@ -387,7 +387,7 @@ export function CreateMealAgentActionCard({
   }
 
   if (action.status === 'iterating') {
-    const meal = action.meals[0];
+    const recipe = action.recipes[0];
     const updatingFields = action.updatingFields ?? [];
 
     const fieldNames = updatingFields.map((f) => FIELD_LABELS[f]).join(', ')
@@ -402,8 +402,8 @@ export function CreateMealAgentActionCard({
           {statusText && <span className='text-muted-foreground text-xs'>{statusText}</span>}
         </div>
 
-        {meal && updatingFields.length > 0 && (
-          <IteratingMealCard meal={meal} updatingFields={updatingFields} />
+        {recipe && updatingFields.length > 0 && (
+          <IteratingRecipeCard recipe={recipe} updatingFields={updatingFields} />
         )}
       </div>
     );
@@ -415,22 +415,22 @@ export function CreateMealAgentActionCard({
         <div className='flex items-center gap-2'>
           <span className='text-lg'>✅</span>
           <span className='text-foreground text-sm font-semibold'>
-            {action.meals.length === 1
+            {action.recipes.length === 1
               ? 'Recipe ready'
-              : `${action.meals.length} recipes ready`}{' '}
+              : `${action.recipes.length} recipes ready`}{' '}
             — review before saving
           </span>
         </div>
 
         <div className='flex flex-col gap-2'>
-          {action.meals.map((meal, i) => (
-            <MealPreviewCard key={i} meal={meal} />
+          {action.recipes.map((recipe, i) => (
+            <RecipePreviewCard key={i} recipe={recipe} />
           ))}
         </div>
 
         <div className='flex items-center gap-2'>
           <Button variant='primary' size='sm' onClick={onApprove}>
-            ✓ Save to My Meals
+            ✓ Save to My Recipes
           </Button>
           <Button variant='secondary' size='sm' onClick={onReject}>
             Decline
@@ -454,8 +454,8 @@ export function CreateMealAgentActionCard({
         </div>
 
         <div className='flex flex-col gap-2'>
-          {action.meals.map((meal, i) => (
-            <MealPreviewCard key={i} meal={meal} />
+          {action.recipes.map((recipe, i) => (
+            <RecipePreviewCard key={i} recipe={recipe} />
           ))}
         </div>
 
@@ -475,29 +475,29 @@ export function CreateMealAgentActionCard({
         <div className='flex items-center gap-2 px-1'>
           <span className='text-base text-green-600 dark:text-green-400'>✓</span>
           <span className='text-sm font-medium text-green-700 dark:text-green-400'>
-            {action.meals.length === 1
-              ? 'Meal saved'
-              : `${action.meals.length} meals saved`}{' '}
+            {action.recipes.length === 1
+              ? 'Recipe saved'
+              : `${action.recipes.length} recipes saved`}{' '}
             to your collection
           </span>
         </div>
 
         <div className='flex flex-col gap-2'>
-          {action.meals.map((meal, i) => (
+          {action.recipes.map((recipe, i) => (
             <div key={i} className='flex items-start justify-between gap-2 px-1'>
               <div className='min-w-0 flex-1'>
-                <h4 className='text-foreground text-sm font-semibold'>{meal.title}</h4>
-                {meal.description && (
+                <h4 className='text-foreground text-sm font-semibold'>{recipe.title}</h4>
+                {recipe.description && (
                   <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
-                    {meal.description}
+                    {recipe.description}
                   </p>
                 )}
               </div>
               <Badge
                 variant='base'
-                className={join('shrink-0 capitalize', MEAL_CATEGORY_COLORS[meal.category])}
+                className={join('shrink-0 capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
               >
-                {MEAL_CATEGORY_EMOJIS[meal.category]} {meal.category}
+                {RECIPE_CATEGORY_EMOJIS[recipe.category]} {recipe.category}
               </Badge>
             </div>
           ))}
@@ -552,9 +552,9 @@ export function CreateMealAgentActionCard({
   }
 
   if (action.status === 'rejected') {
-    const meal = action.meals[0];
-    const name = meal?.title ?? action.proposedName;
-    const category = meal?.category;
+    const recipe = action.recipes[0];
+    const name = recipe?.title ?? action.proposedName;
+    const category = recipe?.category;
 
     return (
       <div className='border-border bg-muted/30 mt-3 flex items-center gap-3 rounded-xl border px-4 py-3 opacity-50'>
@@ -565,9 +565,9 @@ export function CreateMealAgentActionCard({
         {category && (
           <Badge
             variant='base'
-            className={join('shrink-0 capitalize', MEAL_CATEGORY_COLORS[category])}
+            className={join('shrink-0 capitalize', RECIPE_CATEGORY_COLORS[category])}
           >
-            {MEAL_CATEGORY_EMOJIS[category]} {category}
+            {RECIPE_CATEGORY_EMOJIS[category]} {category}
           </Badge>
         )}
         <span className='text-muted-foreground shrink-0 text-xs'>Declined</span>

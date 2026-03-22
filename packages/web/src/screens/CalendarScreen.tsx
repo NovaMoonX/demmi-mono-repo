@@ -14,21 +14,21 @@ import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useActionModal, useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import {
-  createPlannedMeal as createPlannedMealAsync,
-  updatePlannedMeal as updatePlannedMealAsync,
-  deletePlannedMeal as deletePlannedMealAsync,
+  createPlannedRecipe as createPlannedRecipeAsync,
+  updatePlannedRecipe as updatePlannedRecipeAsync,
+  deletePlannedRecipe as deletePlannedRecipeAsync,
 } from '@store/actions/calendarActions';
-import { PlannedMeal, CalendarView, NutrientTotals } from '@lib/calendar';
-import { Meal, MEAL_CATEGORY_OPTIONS, MealCategory } from '@lib/meals';
+import { PlannedRecipe, CalendarView, NutrientTotals } from '@lib/calendar';
+import { Recipe, RECIPE_CATEGORY_OPTIONS, RecipeCategory } from '@lib/recipes';
 import { Ingredient } from '@lib/ingredients';
 import { TotalsCard, DayCard, DayDetailModal, MonthView } from '@components/calendar';
 import { getPricePerServing } from '@/lib/ingredients/ingredients.utils';
 import { formatDateFull, formatDateInput, formatDateShort, getDaysInRange, getStartOfDay, getWeekStart, parseDateInput } from '@/utils';
 import { calculateTotals } from '@/lib/calendar/calendar.utils';
 
-function calculateMealTotals(meal: Meal, ingredients: Ingredient[]): NutrientTotals {
+function calculateRecipeTotals(recipe: Recipe, ingredients: Ingredient[]): NutrientTotals {
   const totals: NutrientTotals = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, price: 0 };
-  for (const mi of meal.ingredients) {
+  for (const mi of recipe.ingredients) {
     const ingredient = ingredients.find((i) => i.id === mi.ingredientId);
     if (!ingredient) continue;
     totals.calories += mi.servings * ingredient.nutrients.calories;
@@ -50,31 +50,31 @@ export function CalendarScreen() {
   );
 
   const [showModal, setShowModal] = useState(false);
-  const [editingPlannedMeal, setEditingPlannedMeal] = useState<PlannedMeal | null>(null);
+  const [editingPlannedRecipe, setEditingPlannedRecipe] = useState<PlannedRecipe | null>(null);
   const [detailDay, setDetailDay] = useState<number | null>(null);
 
-  const [formMealId, setFormMealId] = useState('');
+  const [formRecipeId, setFormRecipeId] = useState('');
   const [formDate, setFormDate] = useState(() => formatDateInput(getStartOfDay(Date.now())));
   const [formCategory, setFormCategory] = useState<string>('breakfast');
   const [formNotes, setFormNotes] = useState('');
-  const [showMealStats, setShowMealStats] = useState(false);
+  const [showRecipeStats, setShowRecipeStats] = useState(false);
 
-  const plannedMeals = useAppSelector((state) => state.calendar.plannedMeals);
-  const meals = useAppSelector((state) => state.meals.items);
+  const plannedRecipes = useAppSelector((state) => state.calendar.plannedRecipes);
+  const recipes = useAppSelector((state) => state.recipes.items);
   const ingredients = useAppSelector((state) => state.ingredients.items);
   const dispatch = useAppDispatch();
   const { confirm } = useActionModal();
   const { addToast } = useToast();
 
-  const mealOptions = useMemo(
+  const recipeOptions = useMemo(
     () =>
-      meals.map((m) => {
-        if (!showMealStats) return { value: m.id, text: m.title };
-        const t = calculateMealTotals(m, ingredients);
+      recipes.map((m) => {
+        if (!showRecipeStats) return { value: m.id, text: m.title };
+        const t = calculateRecipeTotals(m, ingredients);
         const description = `🔥 ${Math.round(t.calories)} kcal · 💪 ${Math.round(t.protein)}g · 🌾 ${Math.round(t.carbs)}g · 🥑 ${Math.round(t.fat)}g · 💰 $${t.price.toFixed(2)}`;
         return { value: m.id, text: m.title, description };
       }),
-    [meals, ingredients, showMealStats]
+    [recipes, ingredients, showRecipeStats]
   );
 
   const dateRange = useMemo(() => {
@@ -93,18 +93,18 @@ export function CalendarScreen() {
     [dateRange]
   );
 
-  const visiblePlannedMeals = useMemo(
+  const visiblePlannedRecipes = useMemo(
     () =>
-      plannedMeals.filter((pm) => {
+      plannedRecipes.filter((pm) => {
         const pmDay = getStartOfDay(pm.date);
         return pmDay >= dateRange.start && pmDay <= dateRange.end;
       }),
-    [plannedMeals, dateRange]
+    [plannedRecipes, dateRange]
   );
 
   const totals = useMemo(
-    () => calculateTotals(visiblePlannedMeals, meals, ingredients),
-    [visiblePlannedMeals, meals, ingredients]
+    () => calculateTotals(visiblePlannedRecipes, recipes, ingredients),
+    [visiblePlannedRecipes, recipes, ingredients]
   );
 
   const dateRangeLabel = useMemo(() => {
@@ -131,18 +131,18 @@ export function CalendarScreen() {
     }
   };
 
-  const openAddModal = (date?: number, category?: MealCategory) => {
-    setEditingPlannedMeal(null);
-    setFormMealId(mealOptions[0]?.value ?? '');
+  const openAddModal = (date?: number, category?: RecipeCategory) => {
+    setEditingPlannedRecipe(null);
+    setFormRecipeId(recipeOptions[0]?.value ?? '');
     setFormDate(formatDateInput(date ?? selectedDate));
     setFormCategory(category ?? 'breakfast');
     setFormNotes('');
     setShowModal(true);
   };
 
-  const openEditModal = (pm: PlannedMeal) => {
-    setEditingPlannedMeal(pm);
-    setFormMealId(pm.mealId);
+  const openEditModal = (pm: PlannedRecipe) => {
+    setEditingPlannedRecipe(pm);
+    setFormRecipeId(pm.recipeId);
     setFormDate(formatDateInput(pm.date));
     setFormCategory(pm.category);
     setFormNotes(pm.notes ?? '');
@@ -151,43 +151,43 @@ export function CalendarScreen() {
 
   const handleModalClose = () => {
     setShowModal(false);
-    setEditingPlannedMeal(null);
+    setEditingPlannedRecipe(null);
   };
 
   const handleSubmit = async () => {
-    if (!formMealId) return;
+    if (!formRecipeId) return;
 
     const data = {
-      mealId: formMealId,
+      recipeId: formRecipeId,
       date: parseDateInput(formDate),
-      category: formCategory as MealCategory,
+      category: formCategory as RecipeCategory,
       notes: formNotes.trim() || null,
     };
 
     try {
-      if (editingPlannedMeal) {
-        const updatedPlannedMeal: PlannedMeal = { ...editingPlannedMeal, ...data };
-        await dispatch(updatePlannedMealAsync(updatedPlannedMeal)).unwrap();
+      if (editingPlannedRecipe) {
+        const updatedPlannedRecipe: PlannedRecipe = { ...editingPlannedRecipe, ...data };
+        await dispatch(updatePlannedRecipeAsync(updatedPlannedRecipe)).unwrap();
       } else {
-        await dispatch(createPlannedMealAsync(data)).unwrap();
+        await dispatch(createPlannedRecipeAsync(data)).unwrap();
       }
       handleModalClose();
     } catch (err) {
-      console.error(editingPlannedMeal ? 'Failed to update planned meal:' : 'Failed to add planned meal:', err);
+      console.error(editingPlannedRecipe ? 'Failed to update planned recipe:' : 'Failed to add planned recipe:', err);
       addToast({
-        title: editingPlannedMeal ? 'Failed to update planned meal' : 'Failed to add planned meal',
+        title: editingPlannedRecipe ? 'Failed to update planned recipe' : 'Failed to add planned recipe',
         description: 'An error occurred. Please try again.',
         type: 'destructive',
       });
     }
   };
 
-  const handleDelete = async (pm: PlannedMeal) => {
-    const meal = meals.find((m) => m.id === pm.mealId);
+  const handleDelete = async (pm: PlannedRecipe) => {
+    const recipe = recipes.find((m) => m.id === pm.recipeId);
 
     const confirmed = await confirm({
-      title: 'Remove Planned Meal',
-      message: `Remove "${meal?.title ?? 'this meal'}" from your plan? This cannot be undone.`,
+      title: 'Remove Planned Recipe',
+      message: `Remove "${recipe?.title ?? 'this recipe'}" from your plan? This cannot be undone.`,
       confirmText: 'Remove',
       cancelText: 'Cancel',
       destructive: true,
@@ -196,11 +196,11 @@ export function CalendarScreen() {
     if (!confirmed) return;
 
     try {
-      await dispatch(deletePlannedMealAsync(pm.id)).unwrap();
+      await dispatch(deletePlannedRecipeAsync(pm.id)).unwrap();
     } catch (err) {
-      console.error('Failed to remove planned meal:', err);
+      console.error('Failed to remove planned recipe:', err);
       addToast({
-        title: 'Failed to remove planned meal',
+        title: 'Failed to remove planned recipe',
         description: 'An error occurred. Please try again.',
         type: 'destructive',
       });
@@ -208,12 +208,12 @@ export function CalendarScreen() {
   };
 
   const handleDeleteFromModal = async () => {
-    if (!editingPlannedMeal) return;
-    const meal = meals.find((m) => m.id === editingPlannedMeal.mealId);
+    if (!editingPlannedRecipe) return;
+    const recipe = recipes.find((m) => m.id === editingPlannedRecipe.recipeId);
 
     const confirmed = await confirm({
-      title: 'Remove Planned Meal',
-      message: `Remove "${meal?.title ?? 'this meal'}" from your plan? This cannot be undone.`,
+      title: 'Remove Planned Recipe',
+      message: `Remove "${recipe?.title ?? 'this recipe'}" from your plan? This cannot be undone.`,
       confirmText: 'Remove',
       cancelText: 'Cancel',
       destructive: true,
@@ -222,12 +222,12 @@ export function CalendarScreen() {
     if (!confirmed) return;
 
     try {
-      await dispatch(deletePlannedMealAsync(editingPlannedMeal.id)).unwrap();
+      await dispatch(deletePlannedRecipeAsync(editingPlannedRecipe.id)).unwrap();
       handleModalClose();
     } catch (err) {
-      console.error('Failed to remove planned meal:', err);
+      console.error('Failed to remove planned recipe:', err);
       addToast({
-        title: 'Failed to remove planned meal',
+        title: 'Failed to remove planned recipe',
         description: 'An error occurred. Please try again.',
         type: 'destructive',
       });
@@ -236,7 +236,7 @@ export function CalendarScreen() {
 
   const isWeekOrCustom = view === 'week' || view === 'custom';
 
-  const handleDetailEdit = (pm: PlannedMeal) => {
+  const handleDetailEdit = (pm: PlannedRecipe) => {
     setDetailDay(null);
     openEditModal(pm);
   };
@@ -258,11 +258,11 @@ export function CalendarScreen() {
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-4xl font-bold text-foreground">Meal Planner</h1>
           <Button onClick={() => openAddModal()} variant="primary">
-            Add Meal
+            Add Recipe
           </Button>
         </div>
         <p className="text-muted-foreground mb-6">
-          Plan your meals for the day, week, or any custom period.
+          Plan your recipes for the day, week, or any custom period.
         </p>
 
         {/* View Tabs */}
@@ -332,7 +332,7 @@ export function CalendarScreen() {
 
       {/* Month View */}
       {view === 'month' && (
-        <MonthView plannedMeals={plannedMeals} onDateSelect={handleMonthDateSelect} />
+        <MonthView plannedRecipes={plannedRecipes} onDateSelect={handleMonthDateSelect} />
       )}
 
       {/* Totals (hidden for month view) */}
@@ -357,8 +357,8 @@ export function CalendarScreen() {
                 key={day}
                 day={day}
                 compact={isWeekOrCustom}
-                plannedMeals={visiblePlannedMeals.filter((pm) => getStartOfDay(pm.date) === day)}
-                meals={meals}
+                plannedRecipes={visiblePlannedRecipes.filter((pm) => getStartOfDay(pm.date) === day)}
+                recipes={recipes}
                 ingredients={ingredients}
                 onAdd={openAddModal}
                 onEdit={openEditModal}
@@ -373,23 +373,23 @@ export function CalendarScreen() {
       {/* Day Detail Modal */}
       <DayDetailModal
         day={detailDay}
-        plannedMeals={plannedMeals}
-        meals={meals}
+        plannedRecipes={plannedRecipes}
+        recipes={recipes}
         ingredients={ingredients}
         onClose={() => setDetailDay(null)}
         onEdit={handleDetailEdit}
         onDelete={handleDelete}
       />
 
-      {/* Add / Edit Planned Meal Modal */}
+      {/* Add / Edit Planned Recipe Modal */}
       <Modal
         isOpen={showModal}
         onClose={handleModalClose}
-        title={editingPlannedMeal ? 'Edit Planned Meal' : 'Add a Meal'}
+        title={editingPlannedRecipe ? 'Edit Planned Recipe' : 'Add a Recipe'}
         actions={[
           { label: 'Cancel', variant: 'secondary', onClick: handleModalClose },
           {
-            label: editingPlannedMeal ? 'Save Changes' : 'Add Meal',
+            label: editingPlannedRecipe ? 'Save Changes' : 'Add Recipe',
             variant: 'primary',
             onClick: () => { void handleSubmit(); },
           },
@@ -398,24 +398,24 @@ export function CalendarScreen() {
         <div className="space-y-4 min-w-0 sm:min-w-80">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <Label>Meal *</Label>
+              <Label>Recipe *</Label>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-muted-foreground">Show stats</span>
                 <Toggle
                   size="sm"
-                  checked={showMealStats}
-                  onCheckedChange={setShowMealStats}
-                  aria-label="Toggle meal stats in dropdown"
+                  checked={showRecipeStats}
+                  onCheckedChange={setShowRecipeStats}
+                  aria-label="Toggle recipe stats in dropdown"
                 />
               </div>
             </div>
             <Select
-              options={mealOptions}
-              value={formMealId}
-              onChange={setFormMealId}
-              placeholder="Select a meal"
+              options={recipeOptions}
+              value={formRecipeId}
+              onChange={setFormRecipeId}
+              placeholder="Select a recipe"
               searchable
-              searchPlaceholder="Search meals..."
+              searchPlaceholder="Search recipes..."
             />
           </div>
           <div>
@@ -429,7 +429,7 @@ export function CalendarScreen() {
           <div>
             <Label>Category *</Label>
             <Select
-              options={MEAL_CATEGORY_OPTIONS}
+              options={RECIPE_CATEGORY_OPTIONS}
               value={formCategory}
               onChange={setFormCategory}
               placeholder="Select category"
@@ -444,7 +444,7 @@ export function CalendarScreen() {
               rows={2}
             />
           </div>
-          {editingPlannedMeal && (
+          {editingPlannedRecipe && (
             <div className="pt-2 border-t border-border">
               <Button
                 variant="secondary"
@@ -452,7 +452,7 @@ export function CalendarScreen() {
                 onClick={() => { void handleDeleteFromModal(); }}
                 className="w-full text-destructive border-destructive/40 hover:bg-destructive/10"
               >
-                🗑️ Delete Planned Meal
+                🗑️ Delete Planned Recipe
               </Button>
             </div>
           )}

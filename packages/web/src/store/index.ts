@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import ingredientsReducer from './slices/ingredientsSlice';
-import mealsReducer from './slices/mealsSlice';
+import recipesReducer from './slices/recipesSlice';
 import chatsReducer from './slices/chatsSlice';
 import userReducer from './slices/userSlice';
 import calendarReducer from './slices/calendarSlice';
@@ -11,7 +11,7 @@ import { openFoodFactsApi } from './api/openFoodFactsApi';
 export const store = configureStore({
   reducer: {
     ingredients: ingredientsReducer,
-    meals: mealsReducer,
+    recipes: recipesReducer,
     chats: chatsReducer,
     user: userReducer,
     calendar: calendarReducer,

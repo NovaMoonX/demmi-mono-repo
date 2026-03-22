@@ -121,14 +121,14 @@ packages/web/src/
 ├── components/         # Reusable UI components (organized in subfolders by screen/feature)
 │   ├── calendar/       # Calendar-related components (e.g., TotalsCard, DayCard, MonthView)
 │   ├── chat/           # Chat-related components
-│   ├── meals/          # Meals-related components
+│   ├── recipes/          # Recipes-related components
 │   └── shopping/       # Shopping list components (e.g., ItemRow, ItemFormModal)
 ├── contexts/           # React context providers (Should always import the context from its hook file)
 ├── hooks/              # Custom React hooks (should always declare the context they use)
 ├── lib/                # Domain logic, types, constants, and utilities per feature
 │   ├── calendar/       # Calendar types, constants
 │   ├── ingredients/    # Ingredient types, constants, emojis, colors
-│   ├── meals/          # Meal types, constants, emojis, colors
+│   ├── recipes/          # Recipe types, constants, emojis, colors
 │   └── shoppingList/   # Shopping list types
 ├── routes/             # Router configuration
 ├── screens/            # Page/route components (main views)
@@ -139,14 +139,14 @@ packages/web/src/
 ```
 
 **Components folder rules:**
-- Organize components into subfolders by screen/tab/feature (e.g., `calendar/`, `meals/`, `shopping/`)
+- Organize components into subfolders by screen/tab/feature (e.g., `calendar/`, `recipes/`, `shopping/`)
 - Extract sub-components from screen files into dedicated component files
 - Each subfolder should have a barrel `index.ts` that re-exports all components, types, and utilities
 - Component files may include utility functions specific to that component
 - Never dump all components directly in `components/` root — always use a subfolder
 
 **Lib folder rules:**
-- Each feature domain gets its own subfolder (e.g., `meals/`, `ingredients/`, `calendar/`)
+- Each feature domain gets its own subfolder (e.g., `recipes/`, `ingredients/`, `calendar/`)
 - Use `.types.ts` for TypeScript interfaces and types
 - Use `.constants.ts` for constants, colors, emojis, and options
 - Use `.mock.ts` for mock data (development only)
@@ -164,7 +164,7 @@ import { APP_TITLE } from '@lib/app';
 import Home from '@screens/Home';
 import Layout from '@ui/Layout';
 import { router } from '@routes/AppRoutes';
-import { MealCard } from '@components/meals';
+import { RecipeCard } from '@components/recipes';
 import { ChatHistory } from '@components/chat';
 import { TotalsCard, DayCard, MonthView } from '@components/calendar';
 import { ItemRow, ItemFormModal } from '@components/shopping';
@@ -193,18 +193,18 @@ These aliases are configured in `packages/web/vite.config.ts` and `packages/web/
 ### 11. ID Generation
 - **ALWAYS** use `generatedId(entity)` from `@utils/generatedId` for all ID creation
 - **NEVER** use `Date.now()`, `Math.random()`, or template literals to create IDs inline
-- Uses **nanoid** for URL-friendly entities (appear in routes): `'meal'`, `'ingredient'`, `'planned'`
+- Uses **nanoid** for URL-friendly entities (appear in routes): `'recipe'`, `'ingredient'`, `'planned'`
 - Uses **uuid v4** for other entities: `'chat'`, `'msg'`, `'sl'`, `'prod'`
 - The `entity` param is a typed union — use the right entity type for the context
 
 ```tsx
 // ❌ NEVER DO THIS - inline ID generation
-id: `meal-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+id: `recipe-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 id: `msg-${Date.now()}`
 
 // ✅ ALWAYS DO THIS - use generatedId utility
 import { generatedId } from '@utils/generatedId';
-id: generatedId('meal')      // nanoid - URL-friendly
+id: generatedId('recipe')      // nanoid - URL-friendly
 id: generatedId('msg')       // uuid v4
 id: generatedId('ingredient') // nanoid - URL-friendly
 ```
@@ -295,7 +295,7 @@ return <form>...</form>;
 - **Class names: ALWAYS use `join()` for conditionals - NEVER template literals**
 - Check Dreamer UI first
 - Use import aliases: `@components/`, `@hooks/`, `@lib/`, `@screens/`, `@ui/`, etc.
-- **Components: Extract to subfolders under `packages/web/src/components/` by feature (calendar/, shopping/, meals/)**
+- **Components: Extract to subfolders under `packages/web/src/components/` by feature (calendar/, shopping/, recipes/)**
 - **Lib: Organize by domain with `.types.ts`, `.constants.ts`, and barrel `index.ts` exports**
 - Follow structured folder organization with proper separation of concerns
 - **ID generation: ALWAYS use `generatedId(entity)` from `@utils/generatedId`**

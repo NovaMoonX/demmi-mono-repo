@@ -1,11 +1,11 @@
 import { Ingredient } from '../ingredients';
 import { getPricePerServing } from '../ingredients/ingredients.utils';
-import { Meal } from '../meals';
-import { NutrientTotals, PlannedMeal } from './calendar.types';
+import { Recipe } from '../recipes';
+import { NutrientTotals, PlannedRecipe } from './calendar.types';
 
 export function calculateTotals(
-  plannedMeals: PlannedMeal[],
-  meals: Meal[],
+  plannedRecipes: PlannedRecipe[],
+  recipes: Recipe[],
   ingredients: Ingredient[],
 ): NutrientTotals {
   const totals: NutrientTotals = {
@@ -17,11 +17,11 @@ export function calculateTotals(
     price: 0,
   };
 
-  for (const pm of plannedMeals) {
-    const meal = meals.find((m) => m.id === pm.mealId);
-    if (!meal) continue;
+  for (const pm of plannedRecipes) {
+    const recipe = recipes.find((m) => m.id === pm.recipeId);
+    if (!recipe) continue;
 
-    for (const mi of meal.ingredients) {
+    for (const mi of recipe.ingredients) {
       const ingredient = ingredients.find((i) => i.id === mi.ingredientId);
       if (!ingredient) continue;
 

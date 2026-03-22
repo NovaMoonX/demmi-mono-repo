@@ -20,7 +20,7 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.userId);
     }
 
-    match /meals/{mealId} {
+    match /recipes/{recipeId} {
       allow read: if isOwner(resource.data.userId);
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid;
@@ -47,7 +47,7 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.userId);
     }
 
-    match /plannedMeals/{plannedMealId} {
+    match /plannedRecipes/{plannedRecipeId} {
       allow read: if isOwner(resource.data.userId);
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid;

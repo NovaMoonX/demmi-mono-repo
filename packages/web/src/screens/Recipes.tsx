@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Select, Input, Toggle, Button } from '@moondreamsdev/dreamer-ui/components';
-import { MealCard } from '@components/meals/MealCard';
-import { CreateMealModal } from '@components/meals/CreateMealModal';
+import { RecipeCard } from '@components/recipes/RecipeCard';
+import { CreateRecipeModal } from '@components/recipes/CreateRecipeModal';
 import { useAppSelector } from '@store/hooks';
-import { Meal, MEAL_CATEGORY_OPTIONS } from '@lib/meals';
+import { Recipe, RECIPE_CATEGORY_OPTIONS } from '@lib/recipes';
 
-export function Meals() {
-  const meals = useAppSelector((state) => state.meals.items);
+export function Recipes() {
+  const recipes = useAppSelector((state) => state.recipes.items);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -17,7 +17,7 @@ export function Meals() {
 
   const categoryOptions = [
     { value: 'all', text: 'All Categories' },
-    ...MEAL_CATEGORY_OPTIONS,
+    ...RECIPE_CATEGORY_OPTIONS,
   ];
 
   const timeOptions = [
@@ -28,17 +28,17 @@ export function Meals() {
     { value: 'over-60', text: 'Over 60 minutes' },
   ];
 
-  const filteredMeals = meals.filter((meal) => {
-    const totalTime = meal.prepTime + meal.cookTime;
+  const filteredRecipes = recipes.filter((recipe) => {
+    const totalTime = recipe.prepTime + recipe.cookTime;
     const query = searchQuery.toLowerCase();
     
     // Search by name or description only
     const matchesSearch = 
-      meal.title.toLowerCase().includes(query) ||
-      meal.description.toLowerCase().includes(query);
+      recipe.title.toLowerCase().includes(query) ||
+      recipe.description.toLowerCase().includes(query);
     
     // Filter by category
-    const matchesCategory = categoryFilter === 'all' || meal.category === categoryFilter;
+    const matchesCategory = categoryFilter === 'all' || recipe.category === categoryFilter;
     
     // Filter by total cook time
     let matchesTime = true;
@@ -53,17 +53,17 @@ export function Meals() {
     }
     
     // Filter by no prep time
-    const matchesNoPrepTime = !noPrepTime || meal.prepTime === 0;
+    const matchesNoPrepTime = !noPrepTime || recipe.prepTime === 0;
     
     return matchesSearch && matchesCategory && matchesTime && matchesNoPrepTime;
   });
 
-  const handleCreateMeal = () => {
+  const handleCreateRecipe = () => {
     setIsCreateModalOpen(true);
   };
 
-  const handleMealClick = (meal: Meal) => {
-    navigate(`/meals/${meal.id}`);
+  const handleRecipeClick = (recipe: Recipe) => {
+    navigate(`/recipes/${recipe.id}`);
   };
 
   const handleClearFilters = () => {
@@ -80,22 +80,22 @@ export function Meals() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto mt-10 md:mt-0">
-      <CreateMealModal
+      <CreateRecipeModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSelectManual={() => navigate('/meals/new')}
-        onSelectFromText={() => navigate('/meals/new/from-text')}
-        onSelectFromUrl={() => navigate('/meals/new/from-url')}
+        onSelectManual={() => navigate('/recipes/new')}
+        onSelectFromText={() => navigate('/recipes/new/from-text')}
+        onSelectFromUrl={() => navigate('/recipes/new/from-url')}
       />
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-4xl font-bold text-foreground">Meals</h1>
-          <Button onClick={handleCreateMeal} variant="primary">
-            Create Meal
+          <h1 className="text-4xl font-bold text-foreground">Recipes</h1>
+          <Button onClick={handleCreateRecipe} variant="primary">
+            Create Recipe
           </Button>
         </div>
         <p className="text-muted-foreground mb-6">
-          Browse your meal recipes
+          Browse your recipes
         </p>
         
         {/* Search and Filters */}
@@ -138,7 +138,7 @@ export function Meals() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredMeals.length === 0 ? (
+        {filteredRecipes.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <p className="text-muted-foreground text-lg">
               No matching recipes found
@@ -150,11 +150,11 @@ export function Meals() {
             </div>
           </div>
         ) : (
-          filteredMeals.map((meal) => (
-            <MealCard
-              key={meal.id}
-              meal={meal}
-              onClick={handleMealClick}
+          filteredRecipes.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onClick={handleRecipeClick}
             />
           ))
         )}
@@ -163,4 +163,4 @@ export function Meals() {
   );
 }
 
-export default Meals;
+export default Recipes;

@@ -1,25 +1,25 @@
-import { MEAL_CATEGORIES } from '@lib/meals';
+import { RECIPE_CATEGORIES } from '@lib/recipes';
 import { INGREDIENT_TYPES, MEASUREMENT_UNITS } from '@lib/ingredients';
 
-export const MEAL_NAME_SCHEMA: Record<string, unknown> = {
+export const RECIPE_NAME_SCHEMA: Record<string, unknown> = {
   type: 'object',
   required: ['name'],
   properties: {
     name: {
       type: 'string',
-      description: 'The specific name of the meal (1–4 words, proper capitalization)',
+      description: 'The specific name of the recipe (1–4 words, proper capitalization)',
     },
   },
 };
 
-export const MEAL_INFO_SCHEMA: Record<string, unknown> = {
+export const RECIPE_INFO_SCHEMA: Record<string, unknown> = {
   type: 'object',
   required: ['category', 'servings', 'totalTime'],
   properties: {
     category: {
       type: 'string',
-      enum: MEAL_CATEGORIES,
-      description: 'The meal category',
+      enum: RECIPE_CATEGORIES,
+      description: 'The recipe category',
     },
     servings: {
       type: 'integer',
@@ -35,18 +35,18 @@ export const MEAL_INFO_SCHEMA: Record<string, unknown> = {
   },
 };
 
-export const MEAL_DESCRIPTION_SCHEMA: Record<string, unknown> = {
+export const RECIPE_DESCRIPTION_SCHEMA: Record<string, unknown> = {
   type: 'object',
   required: ['description'],
   properties: {
     description: {
       type: 'string',
-      description: 'A 1–2 sentence appetizing description of the meal',
+      description: 'A 1–2 sentence appetizing description of the recipe',
     },
   },
 };
 
-export const MEAL_INGREDIENTS_SCHEMA: Record<string, unknown> = {
+export const RECIPE_INGREDIENTS_SCHEMA: Record<string, unknown> = {
   type: 'object',
   required: ['ingredients'],
   properties: {
@@ -79,7 +79,7 @@ export const MEAL_INGREDIENTS_SCHEMA: Record<string, unknown> = {
   },
 };
 
-export const MEAL_INSTRUCTIONS_SCHEMA: Record<string, unknown> = {
+export const RECIPE_INSTRUCTIONS_SCHEMA: Record<string, unknown> = {
   type: 'object',
   required: ['steps'],
   properties: {
@@ -91,7 +91,7 @@ export const MEAL_INSTRUCTIONS_SCHEMA: Record<string, unknown> = {
   },
 };
 
-export const MEAL_FIELD_DETECTION_SCHEMA: Record<string, unknown> = {
+export const RECIPE_FIELD_DETECTION_SCHEMA: Record<string, unknown> = {
   type: 'object',
   required: ['shouldUpdate', 'reason'],
   properties: {
@@ -107,7 +107,7 @@ export const MEAL_FIELD_DETECTION_SCHEMA: Record<string, unknown> = {
   },
 };
 
-export const MEAL_ITERATION_SUMMARY_SCHEMA: Record<string, unknown> = {
+export const RECIPE_ITERATION_SUMMARY_SCHEMA: Record<string, unknown> = {
   type: 'object',
   required: ['summary'],
   properties: {
@@ -118,7 +118,7 @@ export const MEAL_ITERATION_SUMMARY_SCHEMA: Record<string, unknown> = {
   },
 };
 
-export const MEAL_ITERATION_VALIDATION_SCHEMA: Record<string, unknown> = {
+export const RECIPE_ITERATION_VALIDATION_SCHEMA: Record<string, unknown> = {
   type: 'object',
   required: ['valid', 'agentMessage'],
   properties: {

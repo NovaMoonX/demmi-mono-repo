@@ -1,17 +1,17 @@
 # Demmi — Your Smart Meal Planning Companion
 
-Demmi is a cross-platform cooking and meal planning assistant powered by a local LLM. It keeps your meals, ingredients, and grocery planning organized through a simple, friendly interface — with a private AI chat that never sends your data to the cloud.
+Demmi is a cross-platform cooking and meal planning assistant powered by a local LLM. It keeps your recipes, ingredients, and grocery planning organized through a simple, friendly interface — with a private AI chat that never sends your data to the cloud.
 
 ## What Is Demmi?
 
-Demmi solves a real problem: generic AI tools (ChatGPT, Gemini, etc.) don't know what's in your kitchen, what you cooked last week, or what you need to buy. Every conversation starts from scratch. Demmi connects the dots — your ingredient inventory, saved recipes, meal calendar, and shopping list all feed into a local AI assistant that actually understands your cooking context.
+Demmi solves a real problem: generic AI tools (ChatGPT, Gemini, etc.) don't know what's in your kitchen, what you cooked last week, or what you need to buy. Every conversation starts from scratch. Demmi connects the dots — your ingredient inventory, saved recipes, recipe calendar, and shopping list all feed into a local AI assistant that actually understands your cooking context.
 
 ## Who Is It For?
 
-- **Home cooks** who want to organize recipes, plan weekly meals, and generate shopping lists in one place
+- **Home cooks** who want to organize recipes, plan weekly recipes, and generate shopping lists in one place
 - **Health-conscious individuals** tracking nutrition and ingredient inventory
 - **Privacy-first users** who want AI assistance without sending personal data to cloud services
-- **Busy families** who need a streamlined meal-to-grocery workflow
+- **Busy families** who need a streamlined recipe-to-grocery workflow
 - **Developers** interested in building with local LLMs and modern web technologies
 
 ## Goals
@@ -27,21 +27,21 @@ Demmi solves a real problem: generic AI tools (ChatGPT, Gemini, etc.) don't know
 | Feature | Description |
 |---|---|
 | 🎭 **Demo Mode** | Try the full app without creating an account — pre-loaded with realistic mock data |
-| 💬 **AI Chat** | Local LLM chat (via Ollama) for recipe ideas, meal creation, and cooking Q&A |
-| 🍽️ **Meal Management** | Create, edit, and organize recipes with ingredients, instructions, and nutrition |
+| 💬 **AI Chat** | Local LLM chat (via Ollama) for recipe ideas, recipe creation, and cooking Q&A |
+| 🍽️ **Recipe Management** | Create, edit, and organize recipes with ingredients, instructions, and nutrition |
 | 🍎 **Ingredient Tracking** | Manage your pantry with types, amounts, servings, pricing, and barcode scanning |
-| 📅 **Meal Planner** | Calendar view for scheduling meals by day and mealtime (breakfast, lunch, dinner, snack) |
-| 🛒 **Shopping List** | Auto-generate grocery lists from planned meals or add items manually |
+| 📅 **Meal Planner** | Calendar view for scheduling recipes by day and mealtime (breakfast, lunch, dinner, snack) |
+| 🛒 **Shopping List** | Auto-generate grocery lists from planned recipes or add items manually |
 | 🔗 **Recipe Sharing** | Share recipes via public link — no account required for viewers |
-| 🤖 **AI Meal Creation** | Chat-driven multi-step recipe generation with ingredient matching and approval flow |
+| 🤖 **AI Recipe Creation** | Chat-driven multi-step recipe generation with ingredient matching and approval flow |
 | 🎨 **Light & Dark Mode** | Full theme support with a warm, cooking-inspired orange accent palette |
 
 ## Use Cases
 
 - *"What can I cook with what I already have?"* — Ask the AI, and it checks your ingredient inventory
-- *"Plan my meals for the week"* — Schedule breakfast, lunch, dinner, and snacks on the calendar
+- *"Plan my recipes for the week"* — Schedule breakfast, lunch, dinner, and snacks on the calendar
 - *"Create a pasta carbonara recipe"* — The AI generates a full recipe with ingredients, instructions, and nutrition, then adds it to your collection on approval
-- *"Generate my shopping list"* — Pull ingredients from planned meals into a grocery checklist
+- *"Generate my shopping list"* — Pull ingredients from planned recipes into a grocery checklist
 - *"Share this recipe with a friend"* — One-click shareable link, viewable without an account
 
 ## Tech Stack

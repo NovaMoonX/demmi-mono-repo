@@ -7,26 +7,26 @@ import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { OllamaModelControl } from '@components/chat/OllamaModelControl';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import { createIngredient } from '@store/actions/ingredientActions';
-import { createMeal } from '@store/actions/mealActions';
+import { createRecipe } from '@store/actions/recipeActions';
 import { createShoppingListItem } from '@store/actions/shoppingListActions';
-import { createMealAction } from '@lib/ollama/actions';
-import type { MealCategory } from '@lib/meals';
-import { MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS } from '@lib/meals';
+import { createRecipeAction } from '@lib/ollama/actions';
+import type { RecipeCategory } from '@lib/recipes';
+import { RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
 import { INGREDIENT_TYPE_EMOJIS } from '@lib/ingredients';
 import type {
-  AgentMealProposal,
+  AgentRecipeProposal,
   AgentPartialRecipe,
   AgentIngredientProposal,
-  CreateMealAgentActionStatus,
-} from '@lib/ollama/action-types/createMealAction.types';
-import type { RecipeStep } from '@lib/ollama/action-types/createMealAction.types';
-import type { MealIngredient } from '@lib/meals';
+  CreateRecipeAgentActionStatus,
+} from '@lib/ollama/action-types/createRecipeAction.types';
+import type { RecipeStep } from '@lib/ollama/action-types/createRecipeAction.types';
+import type { RecipeIngredient } from '@lib/recipes';
 import { generatedId } from '@utils/generatedId';
 import { ChatMessage } from '@/lib/chat';
 
 type ScreenPhase = 'paste' | 'generating' | 'result';
 
-const STEP_LABELS: Partial<Record<CreateMealAgentActionStatus, string>> = {
+const STEP_LABELS: Partial<Record<CreateRecipeAgentActionStatus, string>> = {
   generating_name: 'Generating name…',
   generating_info: 'Generating basic info…',
   generating_description: 'Generating description…',
@@ -34,7 +34,7 @@ const STEP_LABELS: Partial<Record<CreateMealAgentActionStatus, string>> = {
   generating_instructions: 'Generating instructions…',
 };
 
-const STEP_STATUS_MAP: Partial<Record<RecipeStep, CreateMealAgentActionStatus>> = {
+const STEP_STATUS_MAP: Partial<Record<RecipeStep, CreateRecipeAgentActionStatus>> = {
   name: 'generating_info',
   info: 'generating_description',
   description: 'generating_ingredients',
@@ -72,7 +72,7 @@ function PartialRecipePreview({ recipe }: { recipe: AgentPartialRecipe }) {
         </div>
         {showCategory && (
           <span className='shrink-0 text-2xl'>
-            {MEAL_CATEGORY_EMOJIS[recipe.category as MealCategory]}
+            {RECIPE_CATEGORY_EMOJIS[recipe.category as RecipeCategory]}
           </span>
         )}
       </div>
@@ -80,7 +80,7 @@ function PartialRecipePreview({ recipe }: { recipe: AgentPartialRecipe }) {
         <div className='flex flex-wrap items-center gap-2'>
           <Badge
             variant='base'
-            className={join('capitalize', MEAL_CATEGORY_COLORS[recipe.category as MealCategory])}
+            className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category as RecipeCategory])}
           >
             {recipe.category}
           </Badge>
@@ -122,43 +122,43 @@ function PartialRecipePreview({ recipe }: { recipe: AgentPartialRecipe }) {
   );
 }
 
-function MealProposalCard({ meal }: { meal: AgentMealProposal }) {
-  const totalTime = meal.prepTime + meal.cookTime;
+function RecipeProposalCard({ recipe }: { recipe: AgentRecipeProposal }) {
+  const totalTime = recipe.prepTime + recipe.cookTime;
 
   return (
     <Card className='overflow-hidden'>
       <div className='flex flex-col gap-3 p-4'>
         <div className='flex items-start justify-between gap-2'>
           <div className='min-w-0 flex-1'>
-            <h4 className='text-foreground text-base font-semibold'>{meal.title}</h4>
-            <p className='text-muted-foreground mt-0.5 line-clamp-3 text-sm'>{meal.description}</p>
+            <h4 className='text-foreground text-base font-semibold'>{recipe.title}</h4>
+            <p className='text-muted-foreground mt-0.5 line-clamp-3 text-sm'>{recipe.description}</p>
           </div>
-          <span className='shrink-0 text-2xl'>{MEAL_CATEGORY_EMOJIS[meal.category]}</span>
+          <span className='shrink-0 text-2xl'>{RECIPE_CATEGORY_EMOJIS[recipe.category]}</span>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <Badge
             variant='base'
-            className={join('capitalize', MEAL_CATEGORY_COLORS[meal.category])}
+            className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
           >
-            {meal.category}
+            {recipe.category}
           </Badge>
           <span className='text-muted-foreground text-xs'>
-            Prep {meal.prepTime}m · Cook {meal.cookTime}m · {totalTime}m total
+            Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m total
           </span>
           <span className='text-muted-foreground text-xs'>
-            {meal.servingSize} {meal.servingSize === 1 ? 'serving' : 'servings'}
+            {recipe.servingSize} {recipe.servingSize === 1 ? 'serving' : 'servings'}
           </span>
         </div>
-        {meal.ingredients.length > 0 && (
-          <IngredientProposalList ingredients={meal.ingredients} />
+        {recipe.ingredients.length > 0 && (
+          <IngredientProposalList ingredients={recipe.ingredients} />
         )}
-        {meal.instructions.length > 0 && (
+        {recipe.instructions.length > 0 && (
           <div className='flex flex-col gap-1.5'>
             <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
               Instructions
             </p>
             <ol className='flex flex-col gap-1'>
-              {meal.instructions.map((step, i) => (
+              {recipe.instructions.map((step, i) => (
                 <li key={i} className='text-foreground flex gap-2 text-sm'>
                   <span className='text-muted-foreground shrink-0 font-medium'>{i + 1}.</span>
                   <span>{step}</span>
@@ -206,7 +206,7 @@ function IngredientProposalList({ ingredients }: { ingredients: AgentIngredientP
   );
 }
 
-export function MealFromText() {
+export function RecipeFromText() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { addToast } = useToast();
@@ -216,11 +216,11 @@ export function MealFromText() {
   const [recipeText, setRecipeText] = useState('');
   const [phase, setPhase] = useState<ScreenPhase>('paste');
   const [generatingStatus, setGeneratingStatus] =
-    useState<CreateMealAgentActionStatus>('generating_name');
+    useState<CreateRecipeAgentActionStatus>('generating_name');
   const [partialRecipe, setPartialRecipe] = useState<AgentPartialRecipe | null>(null);
-  const [proposal, setProposal] = useState<AgentMealProposal | null>(null);
+  const [proposal, setProposal] = useState<AgentRecipeProposal | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [savedMealId, setSavedMealId] = useState<string | null>(null);
+  const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
   const [shoppingListPhase, setShoppingListPhase] = useState<'idle' | 'prompt' | 'adding' | 'done'>('idle');
   const [ingredientsAddedCount, setIngredientsAddedCount] = useState(0);
 
@@ -252,7 +252,7 @@ export function MealFromText() {
     ];
 
     try {
-      const result = await createMealAction.execute(
+      const result = await createRecipeAction.execute(
         selectedModel,
         { messages },
         {
@@ -311,17 +311,17 @@ export function MealFromText() {
     setProposal(null);
   };
 
-  const handleCreateMeal = async () => {
+  const handleCreateRecipe = async () => {
     if (!proposal) return;
 
     setIsSaving(true);
-    const mealIngredients: MealIngredient[] = [];
-    let newlySavedMealId: string | null = null;
+    const recipeIngredients: RecipeIngredient[] = [];
+    let newlySavedRecipeId: string | null = null;
 
     try {
       for (const ingredientProposal of proposal.ingredients) {
         if (!ingredientProposal.isNew && ingredientProposal.existingIngredientId) {
-          mealIngredients.push({
+          recipeIngredients.push({
             ingredientId: ingredientProposal.existingIngredientId,
             servings: ingredientProposal.servings,
           });
@@ -350,15 +350,15 @@ export function MealFromText() {
             }),
           ).unwrap();
 
-          mealIngredients.push({
+          recipeIngredients.push({
             ingredientId: created.id,
             servings: ingredientProposal.servings,
           });
         }
       }
 
-      const savedMeal = await dispatch(
-        createMeal({
+      const savedRecipe = await dispatch(
+        createRecipe({
           title: proposal.title,
           description: proposal.description,
           category: proposal.category,
@@ -367,15 +367,15 @@ export function MealFromText() {
           servingSize: proposal.servingSize,
           instructions: proposal.instructions,
           imageUrl: proposal.imageUrl,
-          ingredients: mealIngredients,
+          ingredients: recipeIngredients,
           share: null,
         }),
       ).unwrap();
 
-      newlySavedMealId = savedMeal.id;
+      newlySavedRecipeId = savedRecipe.id;
 
       addToast({
-        title: 'Meal saved!',
+        title: 'Recipe saved!',
         description: `"${proposal.title}" has been added to your collection.`,
         type: 'success',
       });
@@ -383,8 +383,8 @@ export function MealFromText() {
       const errMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
       addToast({ title: 'Failed to save', description: errMsg, type: 'error' });
     } finally {
-      if (newlySavedMealId) {
-        setSavedMealId(newlySavedMealId);
+      if (newlySavedRecipeId) {
+        setSavedRecipeId(newlySavedRecipeId);
         setShoppingListPhase('prompt');
         setIsSaving(false);
       } else {
@@ -434,10 +434,10 @@ export function MealFromText() {
       <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
         <div className='mb-8'>
           <Link
-            to='/meals'
+            to='/recipes'
             className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
           >
-            ← Back to Meals
+            ← Back to Recipes
           </Link>
           <h1 className='text-foreground mb-2 text-4xl font-bold'>Generating Recipe…</h1>
           <p className='text-muted-foreground'>
@@ -476,23 +476,23 @@ export function MealFromText() {
       <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
         <div className='mb-8'>
           <Link
-            to='/meals'
+            to='/recipes'
             className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
           >
-            ← Back to Meals
+            ← Back to Recipes
           </Link>
           <h1 className='text-foreground mb-2 text-4xl font-bold'>
-            {isSaved ? 'Meal Created!' : 'Recipe Ready!'}
+            {isSaved ? 'Recipe Created!' : 'Recipe Ready!'}
           </h1>
           <p className='text-muted-foreground'>
             {isSaved
-              ? 'Your meal has been saved to your collection.'
+              ? 'Your recipe has been saved to your collection.'
               : 'Review your recipe below, then save it to your collection.'}
           </p>
         </div>
 
         <div className='flex flex-col gap-6'>
-          <MealProposalCard meal={proposal} />
+          <RecipeProposalCard recipe={proposal} />
 
           {shoppingListPhase === 'prompt' && (
             <div className='border-border flex flex-col gap-3 rounded-xl border p-4'>
@@ -540,14 +540,14 @@ export function MealFromText() {
                 <Button
                   variant='primary'
                   className='flex-1'
-                  onClick={() => navigate(`/meals/${savedMealId}`)}
+                  onClick={() => navigate(`/recipes/${savedRecipeId}`)}
                 >
                   View Recipe
                 </Button>
                 <Button
                   variant='secondary'
                   className='flex-1'
-                  onClick={() => navigate('/meals')}
+                  onClick={() => navigate('/recipes')}
                 >
                   Exit
                 </Button>
@@ -560,10 +560,10 @@ export function MealFromText() {
               <Button
                 variant='primary'
                 className='flex-1'
-                onClick={handleCreateMeal}
+                onClick={handleCreateRecipe}
                 disabled={isSaving}
               >
-                {isSaving ? 'Saving…' : '✓ Create Meal'}
+                {isSaving ? 'Saving…' : '✓ Create Recipe'}
               </Button>
               <Button variant='secondary' className='flex-1' onClick={handleRepaste}>
                 Repaste
@@ -579,10 +579,10 @@ export function MealFromText() {
     <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
       <div className='mb-8'>
         <Link
-          to='/meals'
+          to='/recipes'
           className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
         >
-          ← Back to Meals
+          ← Back to Recipes
         </Link>
         <h1 className='text-foreground mb-2 text-4xl font-bold'>Paste Your Recipe</h1>
         <p className='text-muted-foreground'>
@@ -630,7 +630,7 @@ export function MealFromText() {
           <Button
             variant='secondary'
             className='flex-1'
-            onClick={() => navigate('/meals')}
+            onClick={() => navigate('/recipes')}
           >
             Cancel
           </Button>
@@ -640,4 +640,4 @@ export function MealFromText() {
   );
 }
 
-export default MealFromText;
+export default RecipeFromText;

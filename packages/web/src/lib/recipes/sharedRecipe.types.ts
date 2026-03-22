@@ -1,24 +1,24 @@
-import { MealCategory } from './meals.types';
+import { RecipeCategory } from './recipes.types';
 
-export interface SharedMealIngredient {
+export interface SharedRecipeIngredient {
   ingredientId: string;
   name: string;
   servings: number;
   unit: string;
 }
 
-export interface SharedMeal {
+export interface SharedRecipe {
   shareId: string;
-  mealId: string;
+  recipeId: string;
   userId: string;
   title: string;
   description: string;
-  category: MealCategory;
+  category: RecipeCategory;
   prepTime: number;
   cookTime: number;
   servingSize: number;
   imageUrl: string;
   instructions: string[];
-  ingredients: SharedMealIngredient[];
+  ingredients: SharedRecipeIngredient[];
   sharedAt: number;
 }

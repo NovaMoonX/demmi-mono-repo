@@ -2,22 +2,22 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input, Button, Label } from '@moondreamsdev/dreamer-ui/components';
 
-export function MealFromUrl() {
+export function RecipeFromUrl() {
   const navigate = useNavigate();
   const [url, setUrl] = useState('');
 
   const handleContinue = () => {
-    navigate('/meals/new', { state: { sourceUrl: url } });
+    navigate('/recipes/new', { state: { sourceUrl: url } });
   };
 
   return (
     <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
       <div className='mb-8'>
         <Link
-          to='/meals'
+          to='/recipes'
           className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
         >
-          ← Back to Meals
+          ← Back to Recipes
         </Link>
         <h1 className='text-foreground mb-2 text-4xl font-bold'>Import from URL</h1>
         <p className='text-muted-foreground'>
@@ -65,7 +65,7 @@ export function MealFromUrl() {
           <Button
             variant='secondary'
             className='flex-1'
-            onClick={() => navigate('/meals')}
+            onClick={() => navigate('/recipes')}
           >
             Cancel
           </Button>
@@ -75,4 +75,4 @@ export function MealFromUrl() {
   );
 }
 
-export default MealFromUrl;
+export default RecipeFromUrl;

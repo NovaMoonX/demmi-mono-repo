@@ -42,8 +42,8 @@
 
 3. **Use typed `ActionHandler<ResultType, ValidStepNames>`** for multi-step actions:
    ```typescript
-   type MealStepName = 'proposeName' | 'generateBasicInfo' | 'generateDescription';
-   export const createMealAction = { ... } satisfies ActionHandler<MealResult, MealStepName>
+   type RecipeStepName = 'proposeName' | 'generateBasicInfo' | 'generateDescription';
+   export const createRecipeAction = { ... } satisfies ActionHandler<RecipeResult, RecipeStepName>
    ```
 
 4. **Implement `getUpdatedMessageContentFromResult`** on all handlers:
@@ -107,9 +107,9 @@ User sends message
     │   [2] getGeneralResponse() - streaming ✓
     │       User sees response progressively
     │
-    └─→ "wantsToCreateMeal"
+    └─→ "wantsToCreateRecipe"
             ↓
-        [2] getMealNameProposal() - non-streaming (100-200ms)
+        [2] getRecipeNameProposal() - non-streaming (100-200ms)
             Show confirmation UI
             ↓
         User clicks "Yes, create it"
@@ -131,7 +131,7 @@ User sends message
 - Response: Streaming (feels instant)
 - **Total perceived latency: ~200ms** ✓
 
-**Create Meal Flow:**
+**Create Recipe Flow:**
 - Detection: 100-200ms
 - Name proposal: 100-200ms
 - **User sees confirmation: 200-400ms** (not bad)
@@ -147,7 +147,7 @@ src/lib/ollama/
   │   ├── listLocalModels()
   │   ├── detectAction()
   │   ├── getGeneralResponse()
-  │   ├── getMealNameProposal()
+  │   ├── getRecipeNameProposal()
   │   ├── generateRecipe()
   │   ├── parseOllamaResponse()
   │   ├── parseGeneralResponse()
@@ -181,10 +181,10 @@ User sends message
     │   [3] Generate summary async (non-blocking)
     │       Store for future intent detection
     │
-    └─→ "createMeal"
+    └─→ "createRecipe"
             ↓
         [2] Execute multi-step handler
-            ├─→ Step 1: Meal Name (80ms)
+            ├─→ Step 1: Recipe Name (80ms)
             │   UI: Show name in confirmation card
             │   ↓
             │   User clicks "Yes, create it"
@@ -215,7 +215,7 @@ User sends message
 - Summary generation: Async, non-blocking
 - **Total perceived latency: ~100ms** ✓ (faster than before)
 
-**Create Meal Flow:**
+**Create Recipe Flow:**
 - Detection: 80-120ms
 - Name: 80ms
 - **User sees name: ~200ms** ✓ (faster)
@@ -247,7 +247,7 @@ src/lib/ollama/
   │   │   ├── executeGeneral() - handles execution + dispatch
   │   │   └── Exports generalAction handler
   │   │
-  │   ├── createMealAction.ts
+  │   ├── createRecipeAction.ts
   │   │   ├── Imports prompts from @lib/ollama/prompts
   │   │   ├── Imports schemas from @lib/ollama/schemas
   │   │   ├── steps[] - each step handles its own dispatch
@@ -256,20 +256,20 @@ src/lib/ollama/
   │   │   │   ├── generateDescriptionStep
   │   │   │   ├── generateIngredientsStep
   │   │   │   └── generateInstructionsStep
-  │   │   └── Exports createMealAction handler
+  │   │   └── Exports createRecipeAction handler
   │   │
   │   └── ... (future actions: addIngredient, planWeek, etc.)
   │
   ├── prompts/
   │   ├── intent.prompts.ts - Intent detection prompts
   │   ├── general.prompts.ts - General conversation prompts
-  │   ├── meal.prompts.ts - Meal creation prompts
+  │   ├── recipe.prompts.ts - Recipe creation prompts
   │   └── summary.prompts.ts - Summary generation prompts
   │
   ├── schemas/
   │   ├── intent.schema.ts - Intent detection schemas
   │   ├── general.schema.ts - General response schemas
-  │   ├── meal.schemas.ts - Meal step schemas
+  │   ├── recipe.schemas.ts - Recipe step schemas
   │   └── summary.schema.ts - Summary generation schema
   │
   └── index.ts (clean exports)
@@ -540,14 +540,14 @@ export interface ActionResult<ResultType extends Record<string, unknown>> {
 
 3. **Type-safe step names**: Multi-step actions use a string literal union for `ValidStepNames`:
    ```typescript
-   type MealStepName = 'proposeName' | 'generateBasicInfo' | 'generateDescription';
+   type RecipeStepName = 'proposeName' | 'generateBasicInfo' | 'generateDescription';
    ```
 
 4. **Registry typing**: The `ACTION_REGISTRY` in [`registry.ts`](../src/lib/ollama/actions/registry.ts) uses a mapped type for type-safe lookups:
    ```typescript
    type ActionHandlerMap = {
      general: typeof generalAction; // Concrete type with GeneralResult
-     createMeal: typeof createMealAction; // Concrete type with MealResult
+     createRecipe: typeof createRecipeAction; // Concrete type with RecipeResult
    };
    ```
 ```
@@ -631,13 +631,13 @@ export const generalAction = {
 - ✅ `getUpdatedMessageContentFromResult` transforms `GeneralResult` → message content
 - ✅ Single-step actions handle streaming and Redux updates in `execute()`
 
-#### Example: Create Meal Action (Multi-Step) - Pseudocode
+#### Example: Create Recipe Action (Multi-Step) - Pseudocode
 
-**Note:** This is a conceptual example showing the multi-step pattern. See [Implementation Plan](#implementation-plan) for the actual multi-step meal creation task.
+**Note:** This is a conceptual example showing the multi-step pattern. See [Implementation Plan](#implementation-plan) for the actual multi-step recipe creation task.
 
 ```typescript
 // Define the result type for this action
-interface MealResult extends Record<string, unknown> {
+interface RecipeResult extends Record<string, unknown> {
   name: string;
   category: string;
   description: string;
@@ -648,18 +648,18 @@ interface MealResult extends Record<string, unknown> {
 }
 
 // Define the valid step names as a type-safe union
-type MealStepName = 
+type RecipeStepName = 
   | 'proposeName' 
   | 'generateBasicInfo' 
   | 'generateDescription' 
   | 'generateIngredients' 
   | 'generateInstructions';
 
-// Step 1: Propose meal name
-const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
+// Step 1: Propose recipe name
+const proposeNameStep: ActionStep<RecipeResult, 'proposeName'> = {
   name: 'proposeName',
   
-  async execute(model, context, runtime): Promise<StepResult<MealResult, 'proposeName'>> {
+  async execute(model, context, runtime): Promise<StepResult<RecipeResult, 'proposeName'>> {
     const { messages, chatId, messageId } = context;
     const { dispatch, abortSignal } = runtime;
     
@@ -667,20 +667,20 @@ const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
     const response = await ollamaClient.chat({
       model,
       messages: [
-        { role: 'system', content: MEAL_NAME_PROMPT },
+        { role: 'system', content: RECIPE_NAME_PROMPT },
         ...messages.slice(-3).map(m => ({
           role: m.role as 'user' | 'assistant',
           content: m.content,
         })),
       ],
       stream: false,
-      format: MEAL_NAME_SCHEMA,
+      format: RECIPE_NAME_SCHEMA,
     });
 
     const parsed = JSON.parse(response.message.content);
     
     // Update Redux with partial result
-    dispatch(updateMealProposal({
+    dispatch(updateRecipeProposal({
       chatId,
       messageId,
       data: { name: parsed.name },
@@ -689,18 +689,18 @@ const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
     // Return typed result
     return {
       stepName: 'proposeName',
-      data: { name: parsed.name }, // Partial<MealResult>
+      data: { name: parsed.name }, // Partial<RecipeResult>
     };
   },
 };
 
 // Step 2: Generate basic info (uses previous results)
-const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> = {
+const generateBasicInfoStep: ActionStep<RecipeResult, 'generateBasicInfo'> = {
   name: 'generateBasicInfo',
   
-  async execute(model, context, runtime): Promise<StepResult<MealResult, 'generateBasicInfo'>> {
+  async execute(model, context, runtime): Promise<StepResult<RecipeResult, 'generateBasicInfo'>> {
     // Access previous results with type safety
-    const mealName = context.previousResults?.name; // string | undefined
+    const recipeName = context.previousResults?.name; // string | undefined
     
     // ... execute logic ...
     
@@ -718,9 +718,9 @@ const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> = {
 // ... remaining steps (generateDescription, generateIngredients, generateInstructions) ...
 
 // Export the complete action handler
-export const createMealAction = {
-  type: 'createMeal',
-  description: 'Create a new meal recipe with ingredients and instructions',
+export const createRecipeAction = {
+  type: 'createRecipe',
+  description: 'Create a new recipe with ingredients and instructions',
   isMultiStep: true,
   
   // Type-safe step array
@@ -734,9 +734,9 @@ export const createMealAction = {
   getUpdatedMessageContentFromResult(result) {
     // For multi-step, this may create an action card instead of text
     return {
-      content: `Created meal: ${result.name}`,
+      content: `Created recipe: ${result.name}`,
       agentAction: {
-        type: 'createMealProposal',
+        type: 'createRecipeProposal',
         status: 'pending',
         data: result,
       },
@@ -745,7 +745,7 @@ export const createMealAction = {
   
   // Optional: Called before starting
   onStart(context, runtime) {
-    runtime.dispatch(initializeMealProposal({ 
+    runtime.dispatch(initializeRecipeProposal({ 
       chatId: context.chatId, 
       messageId: context.messageId 
     }));
@@ -753,16 +753,16 @@ export const createMealAction = {
   
   // Optional: Called after all steps complete
   onComplete(context, runtime, result) {
-    runtime.dispatch(finalizeMealProposal({ 
+    runtime.dispatch(finalizeRecipeProposal({ 
       chatId: context.chatId, 
       messageId: context.messageId,
-      meal: result,
+      recipe: result,
     }));
   },
   
   // Optional: Called on cancellation (type-safe completedSteps)
   onCancel(context, runtime, completedSteps) {
-    // completedSteps: MealStepName[] (type-safe!)
+    // completedSteps: RecipeStepName[] (type-safe!)
     console.log(`Cancelled after: ${completedSteps.join(', ')}`);
     
     if (completedSteps.length === 0) {
@@ -772,7 +772,7 @@ export const createMealAction = {
       }));
     }
   },
-} satisfies ActionHandler<MealResult, MealStepName>;
+} satisfies ActionHandler<RecipeResult, RecipeStepName>;
 ```
 
 #### Action Registry
@@ -783,12 +783,12 @@ See [`src/lib/ollama/actions/registry.ts`](../src/lib/ollama/actions/registry.ts
 // Type-safe registry mapping action types to their concrete handler types
 type ActionHandlerMap = {
   general: typeof generalAction; // ActionHandler<GeneralResult>
-  createMeal: typeof createMealAction; // ActionHandler<MealResult, MealStepName> (when implemented)
+  createRecipe: typeof createRecipeAction; // ActionHandler<RecipeResult, RecipeStepName> (when implemented)
 };
 
 const ACTION_REGISTRY: ActionHandlerMap = {
   general: generalAction,
-  createMeal: undefined, // Placeholder until implemented
+  createRecipe: undefined, // Placeholder until implemented
 };
 
 // Type-safe getter with exact return types
@@ -931,7 +931,7 @@ export function Chat() {
 
 | Step | What | Time | Schema Complexity | UI Update |
 |------|------|------|-------------------|-----------|
-| 1 | Meal Name | ~80ms | Simple (1 field) | Show name in card |
+| 1 | Recipe Name | ~80ms | Simple (1 field) | Show name in card |
 | 2 | Category + Servings + Time | ~100ms | Simple (3 fields) | Add category badge |
 | 3 | Description | ~150ms | Simple (1 field) | Show description |
 | 4 | Ingredients | ~200ms | Medium (array) | List appears |
@@ -943,7 +943,7 @@ export function Chat() {
 
 ```typescript
 // Step 1: Name only
-export const MEAL_NAME_SCHEMA = {
+export const RECIPE_NAME_SCHEMA = {
   type: 'object',
   required: ['name'],
   properties: {
@@ -952,18 +952,18 @@ export const MEAL_NAME_SCHEMA = {
 };
 
 // Step 2: Basic info
-export const MEAL_INFO_SCHEMA = {
+export const RECIPE_INFO_SCHEMA = {
   type: 'object',
   required: ['category', 'servings', 'totalTime'],
   properties: {
-    category: { type: 'string', enum: MEAL_CATEGORIES },
+    category: { type: 'string', enum: RECIPE_CATEGORIES },
     servings: { type: 'integer', minimum: 1 },
     totalTime: { type: 'integer', minimum: 1 },
   },
 };
 
 // Step 3: Description
-export const MEAL_DESCRIPTION_SCHEMA = {
+export const RECIPE_DESCRIPTION_SCHEMA = {
   type: 'object',
   required: ['description'],
   properties: {
@@ -972,7 +972,7 @@ export const MEAL_DESCRIPTION_SCHEMA = {
 };
 
 // Step 4: Ingredients (simplified!)
-export const MEAL_INGREDIENTS_SCHEMA = {
+export const RECIPE_INGREDIENTS_SCHEMA = {
   type: 'object',
   required: ['ingredients'],
   properties: {
@@ -991,7 +991,7 @@ export const MEAL_INGREDIENTS_SCHEMA = {
 };
 
 // Step 5: Instructions
-export const MEAL_INSTRUCTIONS_SCHEMA = {
+export const RECIPE_INSTRUCTIONS_SCHEMA = {
   type: 'object',
   required: ['instructions'],
   properties: {
@@ -1003,7 +1003,7 @@ export const MEAL_INSTRUCTIONS_SCHEMA = {
 };
 ```
 
-#### UI Updates (CreateMealAgentActionCard)
+#### UI Updates (CreateRecipeAgentActionCard)
 
 ```typescript
 // New status states for multi-step progress
@@ -1019,8 +1019,8 @@ export type AgentActionStatus =
   | 'rejected'
   | 'cancelled'; // New: for interrupted generation
 
-// CreateMealAgentActionCard shows progressive updates
-export function CreateMealAgentActionCard({ action }: Props) {
+// CreateRecipeAgentActionCard shows progressive updates
+export function CreateRecipeAgentActionCard({ action }: Props) {
   if (action.status === 'generating_name') {
     return <LoadingState message="Thinking of a name..." />;
   }
@@ -1028,7 +1028,7 @@ export function CreateMealAgentActionCard({ action }: Props) {
   if (action.status === 'generating_info') {
     return (
       <Card>
-        <h3>{action.meals[0].name}</h3>
+        <h3>{action.recipes[0].name}</h3>
         <LoadingState message="Getting details..." />
       </Card>
     );
@@ -1037,9 +1037,9 @@ export function CreateMealAgentActionCard({ action }: Props) {
   if (action.status === 'generating_description') {
     return (
       <Card>
-        <h3>{action.meals[0].name}</h3>
-        <Badge>{action.meals[0].category}</Badge>
-        <p>{action.meals[0].servings} servings · {action.meals[0].totalTime}m</p>
+        <h3>{action.recipes[0].name}</h3>
+        <Badge>{action.recipes[0].category}</Badge>
+        <p>{action.recipes[0].servings} servings · {action.recipes[0].totalTime}m</p>
         <LoadingState message="Writing description..." />
       </Card>
     );
@@ -1076,7 +1076,7 @@ export function CreateMealAgentActionCard({ action }: Props) {
 #### Benefits
 
 - ✅ **True modularity:** Actions are completely self-contained
-- ✅ **No coupling:** Chat.tsx doesn't need to know about meal-specific Redux actions
+- ✅ **No coupling:** Chat.tsx doesn't need to know about recipe-specific Redux actions
 - ✅ **Easier testing:** Mock dispatch to test action behavior in isolation
 - ✅ **Clean separation:** Business context vs runtime concerns
 - ✅ **React compliant:** `useAppDispatch()` called at component top level
@@ -1087,7 +1087,7 @@ export function CreateMealAgentActionCard({ action }: Props) {
 
 **Before (Chat.tsx knows about recipe actions):**
 ```typescript
-// Chat.tsx needs to import meal-specific actions
+// Chat.tsx needs to import recipe-specific actions
 import { updateRecipeStep, markRecipeComplete } from '@store/slices/chatsSlice';
 
 const handleSendMessage = async () => {
@@ -1209,7 +1209,7 @@ export function Chat() {
 
 **4. Actions clean up on cancellation:**
 ```typescript
-export const createMealAction: ActionHandler = {
+export const createRecipeAction: ActionHandler = {
   // ...
   
   onCancel(context, runtime, completedSteps) {
@@ -1270,25 +1270,25 @@ src/lib/ollama/
   ├── prompts/
   │   ├── intent.prompts.ts    ← INTENT_DETECTION_PROMPT defined here
   │   ├── general.prompts.ts   ← GENERAL_PROMPT defined here
-  │   ├── meal.prompts.ts      ← MEAL_NAME_PROMPT, etc. defined here
+  │   ├── recipe.prompts.ts      ← RECIPE_NAME_PROMPT, etc. defined here
   │   └── summary.prompts.ts   ← SUMMARY_GENERATION_PROMPT defined here
   │
   ├── schemas/
   │   ├── intent.schema.ts     ← INTENT_SCHEMA defined here
   │   ├── general.schema.ts    ← GENERAL_SCHEMA defined here
-  │   ├── meal.schemas.ts      ← MEAL_NAME_SCHEMA, etc. defined here
+  │   ├── recipe.schemas.ts      ← RECIPE_NAME_SCHEMA, etc. defined here
   │   └── summary.schema.ts    ← SUMMARY_SCHEMA defined here
   │
   └── actions/
       ├── generalAction.ts     ← IMPORTS from prompts/ and schemas/
-      └── createMealAction.ts  ← IMPORTS from prompts/ and schemas/
+      └── createRecipeAction.ts  ← IMPORTS from prompts/ and schemas/
 ```
 
 #### Example Files
 
-**prompts/meal.prompts.ts:**
+**prompts/recipe.prompts.ts:**
 ```typescript
-export const MEAL_NAME_PROMPT = `Extract the meal name from the user's request.
+export const RECIPE_NAME_PROMPT = `Extract the recipe name from the user's request.
 
 Rules:
 - Be specific (not "pasta" but "Spaghetti Carbonara")
@@ -1296,19 +1296,19 @@ Rules:
 - Use proper capitalization
 - If name not provided, infer from context
 
-Respond with JSON: { "name": "Meal Name" }`;
+Respond with JSON: { "name": "Recipe Name" }`;
 
-export const MEAL_INFO_PROMPT = `Provide basic information for this meal...`;
-export const MEAL_DESCRIPTION_PROMPT = `Write a 1-2 sentence description...`;
-export const MEAL_INGREDIENTS_PROMPT = `List all ingredients with amounts...`;
-export const MEAL_INSTRUCTIONS_PROMPT = `Write step-by-step cooking instructions...`;
+export const RECIPE_INFO_PROMPT = `Provide basic information for this recipe...`;
+export const RECIPE_DESCRIPTION_PROMPT = `Write a 1-2 sentence description...`;
+export const RECIPE_INGREDIENTS_PROMPT = `List all ingredients with amounts...`;
+export const RECIPE_INSTRUCTIONS_PROMPT = `Write step-by-step cooking instructions...`;
 ```
 
-**schemas/meal.schemas.ts:**
+**schemas/recipe.schemas.ts:**
 ```typescript
-import { MEAL_CATEGORIES } from '@lib/meals';
+import { RECIPE_CATEGORIES } from '@lib/recipes';
 
-export const MEAL_NAME_SCHEMA = {
+export const RECIPE_NAME_SCHEMA = {
   type: 'object',
   required: ['name'],
   properties: {
@@ -1316,11 +1316,11 @@ export const MEAL_NAME_SCHEMA = {
   },
 };
 
-export const MEAL_INFO_SCHEMA = {
+export const RECIPE_INFO_SCHEMA = {
   type: 'object',
   required: ['category', 'servings', 'totalTime'],
   properties: {
-    category: { type: 'string', enum: MEAL_CATEGORIES },
+    category: { type: 'string', enum: RECIPE_CATEGORIES },
     servings: { type: 'integer', minimum: 1 },
     totalTime: { type: 'integer', minimum: 1 },
   },
@@ -1329,25 +1329,25 @@ export const MEAL_INFO_SCHEMA = {
 // ... other schemas
 ```
 
-**actions/createMealAction.ts:**
+**actions/createRecipeAction.ts:**
 ```typescript
 // Import prompts
 import {
-  MEAL_NAME_PROMPT,
-  MEAL_INFO_PROMPT,
-  MEAL_DESCRIPTION_PROMPT,
-  MEAL_INGREDIENTS_PROMPT,
-  MEAL_INSTRUCTIONS_PROMPT,
-} from '@lib/ollama/prompts/meal.prompts';
+  RECIPE_NAME_PROMPT,
+  RECIPE_INFO_PROMPT,
+  RECIPE_DESCRIPTION_PROMPT,
+  RECIPE_INGREDIENTS_PROMPT,
+  RECIPE_INSTRUCTIONS_PROMPT,
+} from '@lib/ollama/prompts/recipe.prompts';
 
 // Import schemas
 import {
-  MEAL_NAME_SCHEMA,
-  MEAL_INFO_SCHEMA,
-  MEAL_DESCRIPTION_SCHEMA,
-  MEAL_INGREDIENTS_SCHEMA,
-  MEAL_INSTRUCTIONS_SCHEMA,
-} from '@lib/ollama/schemas/meal.schemas';
+  RECIPE_NAME_SCHEMA,
+  RECIPE_INFO_SCHEMA,
+  RECIPE_DESCRIPTION_SCHEMA,
+  RECIPE_INGREDIENTS_SCHEMA,
+  RECIPE_INSTRUCTIONS_SCHEMA,
+} from '@lib/ollama/schemas/recipe.schemas';
 
 // Use in steps
 const proposeNameStep: ActionStep = {
@@ -1489,13 +1489,13 @@ const proposeNameStep: ActionStep = {
 #### Tasks
 
 1. **Define recipe prompts and schemas**
-   - [ ] Create `prompts/meal.prompts.ts` with all 5 step prompts
-   - [ ] Create `schemas/meal.schemas.ts` with all 5 step schemas
+   - [ ] Create `prompts/recipe.prompts.ts` with all 5 step prompts
+   - [ ] Create `schemas/recipe.schemas.ts` with all 5 step schemas
    - [ ] Keep schemas simple (1-3 fields each)
    - [ ] Write concise, focused prompts
 
-2. **Implement createMealAction** ✅ **With internal dispatch via runtime**
-   - [ ] Create `actions/createMealAction.ts`
+2. **Implement createRecipeAction** ✅ **With internal dispatch via runtime**
+   - [ ] Create `actions/createRecipeAction.ts`
    - [ ] Import prompts and schemas
    - [ ] Implement all 5 steps as `ActionStep` objects
    - [ ] Each step signature: `execute(model, context, runtime)`
@@ -1517,7 +1517,7 @@ const proposeNameStep: ActionStep = {
    - [ ] Add `cancelled` status
    - [ ] Handle partial recipe state
 
-5. **Update CreateMealAgentActionCard for progressive UI**
+5. **Update CreateRecipeAgentActionCard for progressive UI**
    - [ ] Add UI for each generation state
    - [ ] Show loading indicators for current step
    - [ ] Display completed steps while generating next
@@ -1903,14 +1903,14 @@ Your task: Classify the user's CURRENT message intent.
 
 Actions:
 - "general": Questions, tips, discussions about cooking/nutrition
-- "createMeal": Explicit request to CREATE/MAKE/GENERATE a recipe
+- "createRecipe": Explicit request to CREATE/MAKE/GENERATE a recipe
 
 Rules:
 - Focus ONLY on current message
-- "createMeal" requires explicit creation language
+- "createRecipe" requires explicit creation language
 - All other cases use "general"
 
-Respond with JSON: { "action": "general" | "createMeal" }`;
+Respond with JSON: { "action": "general" | "createRecipe" }`;
 ```
 
 ### Summary Generation Prompt
@@ -1927,10 +1927,10 @@ Include:
 Be concise but preserve critical details.`;
 ```
 
-### Meal Name Prompt
+### Recipe Name Prompt
 
 ```typescript
-export const MEAL_NAME_PROMPT = `Extract the meal name from the user's request.
+export const RECIPE_NAME_PROMPT = `Extract the recipe name from the user's request.
 
 Rules:
 - Be specific (not "pasta" but "Spaghetti Carbonara")
@@ -1938,13 +1938,13 @@ Rules:
 - Use proper capitalization
 - If name not provided, infer from context
 
-Respond with JSON: { "name": "Meal Name" }`;
+Respond with JSON: { "name": "Recipe Name" }`;
 ```
 
-### Meal Basic Info Prompt
+### Recipe Basic Info Prompt
 
 ```typescript
-export const MEAL_INFO_PROMPT = `Provide basic information for this meal.
+export const RECIPE_INFO_PROMPT = `Provide basic information for this recipe.
 
 Required:
 - Category: breakfast, lunch, dinner, snack, or dessert
@@ -1956,10 +1956,10 @@ Be realistic and practical.
 Respond with JSON: { "category": "dinner", "servings": 4, "totalTime": 45 }`;
 ```
 
-### Meal Description Prompt
+### Recipe Description Prompt
 
 ```typescript
-export const MEAL_DESCRIPTION_PROMPT = `Write a 1-2 sentence description for this meal.
+export const RECIPE_DESCRIPTION_PROMPT = `Write a 1-2 sentence description for this recipe.
 
 Focus on:
 - What makes it special
@@ -1971,10 +1971,10 @@ Be enticing but concise.
 Respond with JSON: { "description": "..." }`;
 ```
 
-### Meal Ingredients Prompt
+### Recipe Ingredients Prompt
 
 ```typescript
-export const MEAL_INGREDIENTS_PROMPT = `List all ingredients with amounts for this meal.
+export const RECIPE_INGREDIENTS_PROMPT = `List all ingredients with amounts for this recipe.
 
 Rules:
 - Use standard measurements (cups, tbsp, oz, etc.)
@@ -1990,10 +1990,10 @@ Example format:
 Respond with JSON: { "ingredients": [{ "name": "flour", "amount": "2 cups" }, ...] }`;
 ```
 
-### Meal Instructions Prompt
+### Recipe Instructions Prompt
 
 ```typescript
-export const MEAL_INSTRUCTIONS_PROMPT = `Write step-by-step cooking instructions.
+export const RECIPE_INSTRUCTIONS_PROMPT = `Write step-by-step cooking instructions.
 
 Rules:
 - One step per line
@@ -2012,7 +2012,7 @@ Respond with JSON: { "instructions": ["Step 1...", "Step 2...", ...] }`;
 ### Performance Metrics
 
 **Before:**
-- Time to first token (Create Meal): 200-400ms
+- Time to first token (Create Recipe): 200-400ms
 - Time to complete recipe: 2,200-5,400ms
 - User perceived wait: 2-5 seconds with no feedback
 

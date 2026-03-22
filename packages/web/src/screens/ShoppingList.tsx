@@ -21,7 +21,7 @@ import {
   type ItemFormState,
 } from '@components/shopping';
 import { capitalize } from '@utils/capitalize';
-import { MEAL_CATEGORY_OPTIONS } from '@/lib/meals';
+import { RECIPE_CATEGORY_OPTIONS } from '@/lib/recipes';
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
@@ -334,7 +334,7 @@ export function ShoppingList() {
         form={form}
         ingredientOptions={ingredientOptions}
         productOptions={productOptionsForIngredient}
-        categoryOptions={MEAL_CATEGORY_OPTIONS}
+        categoryOptions={RECIPE_CATEGORY_OPTIONS}
         onFormChange={handleFormChange}
         onSubmit={handleSubmit}
         onClose={handleClose}

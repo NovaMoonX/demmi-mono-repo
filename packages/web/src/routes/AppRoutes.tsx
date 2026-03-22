@@ -44,8 +44,8 @@ export const router = createBrowserRouter([
         path: 'shared/:shareId',
         HydrateFallback: Loading,
         lazy: async () => {
-          const { default: SharedMealView } = await import('@screens/SharedMealView');
-          return { Component: SharedMealView };
+          const { default: SharedRecipeView } = await import('@screens/SharedRecipeView');
+          return { Component: SharedRecipeView };
         },
       },
       // Protected routes - require authentication and email verification (unless demo mode is active)
@@ -96,23 +96,23 @@ export const router = createBrowserRouter([
                 },
               },
               {
-                path: 'meals',
+                path: 'recipes',
                 HydrateFallback: Loading,
                 lazy: async () => {
-                  const { default: Meals } = await import('@screens/Meals');
-                  return { Component: Meals };
+                  const { default: Recipes } = await import('@screens/Recipes');
+                  return { Component: Recipes };
                 },
               },
               {
-                path: 'meals/:id',
+                path: 'recipes/:id',
                 HydrateFallback: Loading,
                 lazy: async () => {
-                  const { default: MealDetail } = await import('@screens/MealDetail');
-                  return { Component: MealDetail };
+                  const { default: RecipeDetail } = await import('@screens/RecipeDetail');
+                  return { Component: RecipeDetail };
                 },
               },
               {
-                path: 'meals/:id/cook',
+                path: 'recipes/:id/cook',
                 HydrateFallback: Loading,
                 lazy: async () => {
                   const { default: CookMode } = await import('@screens/CookMode');
@@ -120,19 +120,19 @@ export const router = createBrowserRouter([
                 },
               },
               {
-                path: 'meals/new/from-text',
+                path: 'recipes/new/from-text',
                 HydrateFallback: Loading,
                 lazy: async () => {
-                  const { default: MealFromText } = await import('@screens/MealFromText');
-                  return { Component: MealFromText };
+                  const { default: RecipeFromText } = await import('@screens/RecipeFromText');
+                  return { Component: RecipeFromText };
                 },
               },
               {
-                path: 'meals/new/from-url',
+                path: 'recipes/new/from-url',
                 HydrateFallback: Loading,
                 lazy: async () => {
-                  const { default: MealFromUrl } = await import('@screens/MealFromUrl');
-                  return { Component: MealFromUrl };
+                  const { default: RecipeFromUrl } = await import('@screens/RecipeFromUrl');
+                  return { Component: RecipeFromUrl };
                 },
               },
               {

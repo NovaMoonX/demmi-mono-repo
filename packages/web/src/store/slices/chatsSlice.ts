@@ -1,12 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ChatConversation, ChatMessage } from '@lib/chat';
 import type {
-  AgentCreateMealAction,
-  AgentMealProposal,
+  AgentCreateRecipeAction,
+  AgentRecipeProposal,
   AgentPartialRecipe,
-  MealIterableField,
+  RecipeIterableField,
   RecipeStep,
-} from '@lib/ollama/action-types/createMealAction.types';
+} from '@lib/ollama/action-types/createRecipeAction.types';
 import { generatedId } from '@utils/generatedId';
 import {
   fetchChats,
@@ -185,8 +185,8 @@ const chatsSlice = createSlice({
         chatId: string;
         messageId: string;
         status: AgentActionStatus;
-        meals?: AgentMealProposal[];
-        updatingFields?: MealIterableField[] | null;
+        recipes?: AgentRecipeProposal[];
+        updatingFields?: RecipeIterableField[] | null;
       }>,
     ) => {
       const conversation = state.conversations.find(
@@ -199,17 +199,17 @@ const chatsSlice = createSlice({
         if (message?.agentAction) {
           message.agentAction.status = action.payload.status;
           if (
-            action.payload.meals !== undefined &&
-            message.agentAction.type === 'create_meal'
+            action.payload.recipes !== undefined &&
+            message.agentAction.type === 'create_recipe'
           ) {
-            (message.agentAction as AgentCreateMealAction).meals =
-              action.payload.meals;
+            (message.agentAction as AgentCreateRecipeAction).recipes =
+              action.payload.recipes;
           }
           if (
             action.payload.updatingFields !== undefined &&
-            message.agentAction.type === 'create_meal'
+            message.agentAction.type === 'create_recipe'
           ) {
-            (message.agentAction as AgentCreateMealAction).updatingFields =
+            (message.agentAction as AgentCreateRecipeAction).updatingFields =
               action.payload.updatingFields ?? null;
           }
         }
@@ -239,9 +239,9 @@ const chatsSlice = createSlice({
       const chat = state.conversations.find((c) => c.id === action.payload.chatId);
       const message = chat?.messages.find((m) => m.id === action.payload.messageId);
       if (message?.agentAction) {
-        (message.agentAction as AgentCreateMealAction).status = 'generating_name';
-        (message.agentAction as AgentCreateMealAction).recipe = { ...EMPTY_PARTIAL_RECIPE };
-        (message.agentAction as AgentCreateMealAction).completedSteps = [];
+        (message.agentAction as AgentCreateRecipeAction).status = 'generating_name';
+        (message.agentAction as AgentCreateRecipeAction).recipe = { ...EMPTY_PARTIAL_RECIPE };
+        (message.agentAction as AgentCreateRecipeAction).completedSteps = [];
       }
     },
     updateRecipeStep: (
@@ -255,7 +255,7 @@ const chatsSlice = createSlice({
     ) => {
       // Maps each completed step to the next generation status.
       // 'instructions' is the final step — status stays at 'generating_instructions'
-      // until createMealAction.onComplete transitions to 'pending_approval'.
+      // until createRecipeAction.onComplete transitions to 'pending_approval'.
       const stepStatusMap: Partial<Record<RecipeStep, AgentActionStatus>> = {
         name: 'generating_info',
         info: 'generating_description',
@@ -265,7 +265,7 @@ const chatsSlice = createSlice({
 
       const chat = state.conversations.find((c) => c.id === action.payload.chatId);
       const message = chat?.messages.find((m) => m.id === action.payload.messageId);
-      const agentAction = message?.agentAction as AgentCreateMealAction | undefined;
+      const agentAction = message?.agentAction as AgentCreateRecipeAction | undefined;
       if (agentAction) {
         agentAction.recipe = { ...(agentAction.recipe ?? { ...EMPTY_PARTIAL_RECIPE }), ...action.payload.data };
         agentAction.completedSteps = [
@@ -285,7 +285,7 @@ const chatsSlice = createSlice({
       const chat = state.conversations.find((c) => c.id === action.payload.chatId);
       const message = chat?.messages.find((m) => m.id === action.payload.messageId);
       if (message?.agentAction) {
-        (message.agentAction as AgentCreateMealAction).status = 'cancelled';
+        (message.agentAction as AgentCreateRecipeAction).status = 'cancelled';
       }
     },
     markMessageIterationInvalid: (
@@ -298,7 +298,7 @@ const chatsSlice = createSlice({
         message.iterationInvalid = true;
       }
     },
-    setMealActionShoppingListDecision: (
+    setRecipeActionShoppingListDecision: (
       state,
       action: PayloadAction<{
         chatId: string;
@@ -309,10 +309,10 @@ const chatsSlice = createSlice({
     ) => {
       const chat = state.conversations.find((c) => c.id === action.payload.chatId);
       const message = chat?.messages.find((m) => m.id === action.payload.messageId);
-      if (message?.agentAction?.type === 'create_meal') {
-        const mealAction = message.agentAction as AgentCreateMealAction;
-        mealAction.shoppingListDecision = action.payload.decision;
-        mealAction.shoppingListItemsAdded = action.payload.itemsAdded;
+      if (message?.agentAction?.type === 'create_recipe') {
+        const recipeAction = message.agentAction as AgentCreateRecipeAction;
+        recipeAction.shoppingListDecision = action.payload.decision;
+        recipeAction.shoppingListItemsAdded = action.payload.itemsAdded;
       }
     },
     resetChats: (state) => {
@@ -385,7 +385,7 @@ export const {
   updateAgentActionStatus,
   updateMessageSummary,
   markMessageIterationInvalid,
-  setMealActionShoppingListDecision,
+  setRecipeActionShoppingListDecision,
   startRecipeGeneration,
   updateRecipeStep,
   cancelRecipeGeneration,

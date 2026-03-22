@@ -12,67 +12,67 @@ import {
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
-import { Meal, MealCategory, MealIngredient, MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS } from '@lib/meals';
+import { Recipe, RecipeCategory, RecipeIngredient, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import {
-  createMeal as createMealAsync,
-  updateMeal as updateMealAsync,
-  deleteMeal as deleteMealAsync,
-} from '@store/actions/mealActions';
-import { shareMeal, unshareMeal } from '@store/actions/shareMealActions';
+  createRecipe as createRecipeAsync,
+  updateRecipe as updateRecipeAsync,
+  deleteRecipe as deleteRecipeAsync,
+} from '@store/actions/recipeActions';
+import { shareRecipe, unshareRecipe } from '@store/actions/shareRecipeActions';
 import { createShoppingListItem } from '@store/actions/shoppingListActions';
 import type { DynamicListItem } from '@moondreamsdev/dreamer-ui/components';
-import { MealIngredientSelector } from '@components/meals/MealIngredientSelector';
+import { RecipeIngredientSelector } from '@components/recipes/RecipeIngredientSelector';
 
-export function MealDetail() {
+export function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const meals = useAppSelector((state) => state.meals.items);
+  const recipes = useAppSelector((state) => state.recipes.items);
   const allIngredients = useAppSelector((state) => state.ingredients.items);
   const { confirm } = useActionModal();
   const { addToast } = useToast();
 
   const isEditing = id !== 'new';
-  const existingMeal = isEditing ? meals.find((m) => m.id === id) : undefined;
+  const existingRecipe = isEditing ? recipes.find((m) => m.id === id) : undefined;
 
   const [isViewMode, setIsViewMode] = useState(isEditing);
   const [pendingShoppingListIngredients, setPendingShoppingListIngredients] =
-    useState<MealIngredient[] | null>(null);
+    useState<RecipeIngredient[] | null>(null);
   const [shoppingListPhase, setShoppingListPhase] = useState<'prompt' | 'adding' | 'done' | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
 
-  const fromMealPath =
-    isEditing && existingMeal ? `/meals/${existingMeal.id}` : '/meals/new';
+  const fromRecipePath =
+    isEditing && existingRecipe ? `/recipes/${existingRecipe.id}` : '/recipes/new';
 
-  const [title, setTitle] = useState(existingMeal?.title || '');
+  const [title, setTitle] = useState(existingRecipe?.title || '');
   const [description, setDescription] = useState(
-    existingMeal?.description || '',
+    existingRecipe?.description || '',
   );
   const [category, setCategory] = useState<string>(
-    existingMeal?.category ?? 'breakfast',
+    existingRecipe?.category ?? 'breakfast',
   );
   const [prepTime, setPrepTime] = useState(
-    existingMeal?.prepTime.toString() ?? '0',
+    existingRecipe?.prepTime.toString() ?? '0',
   );
   const [cookTime, setCookTime] = useState(
-    existingMeal?.cookTime.toString() ?? '0',
+    existingRecipe?.cookTime.toString() ?? '0',
   );
   const [servingSize, setServingSize] = useState(
-    existingMeal?.servingSize.toString() ?? '1',
+    existingRecipe?.servingSize.toString() ?? '1',
   );
   const [imageUrl, setImageUrl] = useState<string>(
-    existingMeal?.imageUrl || '',
+    existingRecipe?.imageUrl || '',
   );
   const [instructions, setInstructions] = useState<DynamicListItem<object>[]>(
-    existingMeal?.instructions.map((inst, index) => ({
+    existingRecipe?.instructions.map((inst, index) => ({
       id: `inst-${index}`,
       content: inst,
     })) ?? [],
   );
-  const [selectedIngredients, setSelectedIngredients] = useState<MealIngredient[]>(
-    existingMeal?.ingredients ?? [],
+  const [selectedIngredients, setSelectedIngredients] = useState<RecipeIngredient[]>(
+    existingRecipe?.ingredients ?? [],
   );
 
   // Auto-add a newly created ingredient when returning from the ingredient creation flow
@@ -95,7 +95,7 @@ export function MealDetail() {
     }
   }, [location.state, allIngredients]);
 
-  const categoryOptions = Object.entries(MEAL_CATEGORY_EMOJIS).map(
+  const categoryOptions = Object.entries(RECIPE_CATEGORY_EMOJIS).map(
     ([cat, emoji]) => ({
       value: cat,
       text: `${emoji} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
@@ -129,10 +129,10 @@ export function MealDetail() {
   };
 
   const handleShare = async () => {
-    if (!existingMeal) return;
+    if (!existingRecipe) return;
     setShareLoading(true);
     try {
-      const result = await dispatch(shareMeal(existingMeal)).unwrap();
+      const result = await dispatch(shareRecipe(existingRecipe)).unwrap();
       const shareUrl = `${window.location.origin}/shared/${result.share!.id}`;
       navigator.clipboard.writeText(shareUrl).catch((err) => {
         console.error('Failed to copy share link:', err);
@@ -143,7 +143,7 @@ export function MealDetail() {
         type: 'success',
       });
     } catch (err) {
-      console.error('Failed to share meal:', err);
+      console.error('Failed to share recipe:', err);
       addToast({
         title: 'Failed to share recipe',
         description: 'An error occurred. Please try again.',
@@ -155,7 +155,7 @@ export function MealDetail() {
   };
 
   const handleUnshare = async () => {
-    if (!existingMeal) return;
+    if (!existingRecipe) return;
 
     const confirmed = await confirm({
       title: 'Stop Sharing',
@@ -169,14 +169,14 @@ export function MealDetail() {
 
     setShareLoading(true);
     try {
-      await dispatch(unshareMeal(existingMeal)).unwrap();
+      await dispatch(unshareRecipe(existingRecipe)).unwrap();
       addToast({
         title: 'Sharing stopped',
         description: 'This recipe is no longer shared.',
         type: 'success',
       });
     } catch (err) {
-      console.error('Failed to unshare meal:', err);
+      console.error('Failed to unshare recipe:', err);
       addToast({
         title: 'Failed to stop sharing',
         description: 'An error occurred. Please try again.',
@@ -188,8 +188,8 @@ export function MealDetail() {
   };
 
   const handleCopyShareLink = () => {
-    if (!existingMeal?.share) return;
-    const shareUrl = `${window.location.origin}/shared/${existingMeal.share.id}`;
+    if (!existingRecipe?.share) return;
+    const shareUrl = `${window.location.origin}/shared/${existingRecipe.share.id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       addToast({
         title: 'Link copied',
@@ -206,44 +206,44 @@ export function MealDetail() {
       .map((item) => (typeof item.content === 'string' ? item.content : ''))
       .filter((line) => line.trim().length > 0);
 
-    const ingredientsList: MealIngredient[] = selectedIngredients
+    const ingredientsList: RecipeIngredient[] = selectedIngredients
       .filter((item) => item.ingredientId.trim().length > 0)
       .map((item) => ({
         ingredientId: item.ingredientId,
         servings: item.servings > 0 ? item.servings : 1,
       }));
 
-    const mealData: Omit<Meal, 'id' | 'userId'> = {
+    const recipeData: Omit<Recipe, 'id' | 'userId'> = {
       title,
       description,
-      category: category as MealCategory,
+      category: category as RecipeCategory,
       prepTime: Number(prepTime) || 0,
       cookTime: Number(cookTime) || 0,
       servingSize: Number(servingSize) || 1,
       imageUrl: imageUrl,
       instructions: instructionsList,
       ingredients: ingredientsList,
-      share: existingMeal?.share ?? null,
+      share: existingRecipe?.share ?? null,
     };
 
     try {
-      if (isEditing && existingMeal) {
-        const updatedMeal: Meal = { ...existingMeal, ...mealData };
-        await dispatch(updateMealAsync(updatedMeal)).unwrap();
-        navigate('/meals');
+      if (isEditing && existingRecipe) {
+        const updatedRecipe: Recipe = { ...existingRecipe, ...recipeData };
+        await dispatch(updateRecipeAsync(updatedRecipe)).unwrap();
+        navigate('/recipes');
       } else {
-        await dispatch(createMealAsync(mealData)).unwrap();
+        await dispatch(createRecipeAsync(recipeData)).unwrap();
         if (ingredientsList.length > 0) {
           setPendingShoppingListIngredients(ingredientsList);
           setShoppingListPhase('prompt');
         } else {
-          navigate('/meals');
+          navigate('/recipes');
         }
       }
     } catch (err) {
-      console.error(isEditing ? 'Failed to update meal:' : 'Failed to create meal:', err);
+      console.error(isEditing ? 'Failed to update recipe:' : 'Failed to create recipe:', err);
       addToast({
-        title: isEditing ? 'Failed to update meal' : 'Failed to create meal',
+        title: isEditing ? 'Failed to update recipe' : 'Failed to create recipe',
         description: 'An error occurred. Please try again.',
         type: 'destructive',
       });
@@ -255,8 +255,8 @@ export function MealDetail() {
     setShoppingListPhase('adding');
 
     let itemsAdded = 0;
-    for (const mealIngredient of pendingShoppingListIngredients) {
-      const ingredient = allIngredients.find((i) => i.id === mealIngredient.ingredientId);
+    for (const recipeIngredient of pendingShoppingListIngredients) {
+      const ingredient = allIngredients.find((i) => i.id === recipeIngredient.ingredientId);
       if (!ingredient) continue;
 
       try {
@@ -265,7 +265,7 @@ export function MealDetail() {
             name: ingredient.name,
             ingredientId: ingredient.id,
             productId: null,
-            amount: mealIngredient.servings,
+            amount: recipeIngredient.servings,
             unit: ingredient.unit,
             category: ingredient.type,
             note: `For ${title}`,
@@ -287,20 +287,20 @@ export function MealDetail() {
     }
 
     setShoppingListPhase('done');
-    navigate('/meals');
+    navigate('/recipes');
   };
 
   const handleSkipShoppingList = () => {
     setShoppingListPhase('done');
-    navigate('/meals');
+    navigate('/recipes');
   };
 
   const handleDelete = async () => {
-    if (!existingMeal) return;
+    if (!existingRecipe) return;
 
     const confirmed = await confirm({
-      title: 'Delete Meal',
-      message: `Are you sure you want to delete "${existingMeal.title}"? This action cannot be undone.`,
+      title: 'Delete Recipe',
+      message: `Are you sure you want to delete "${existingRecipe.title}"? This action cannot be undone.`,
       confirmText: 'Delete',
       cancelText: 'Cancel',
       destructive: true,
@@ -309,12 +309,12 @@ export function MealDetail() {
     if (!confirmed) return;
 
     try {
-      await dispatch(deleteMealAsync(existingMeal.id)).unwrap();
-      navigate('/meals');
+      await dispatch(deleteRecipeAsync(existingRecipe.id)).unwrap();
+      navigate('/recipes');
     } catch (err) {
-      console.error('Failed to delete meal:', err);
+      console.error('Failed to delete recipe:', err);
       addToast({
-        title: 'Failed to delete meal',
+        title: 'Failed to delete recipe',
         description: 'An error occurred. Please try again.',
         type: 'destructive',
       });
@@ -325,41 +325,41 @@ export function MealDetail() {
     if (isEditing) {
       setIsViewMode(true);
     } else {
-      navigate('/meals');
+      navigate('/recipes');
     }
   };
 
-  if (isViewMode && isEditing && existingMeal) {
+  if (isViewMode && isEditing && existingRecipe) {
     return (
       <div className='mx-auto mt-10 max-w-4xl p-6 md:mt-0'>
         <div className='mb-8'>
           <Link
-            to='/meals'
+            to='/recipes'
             className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
           >
-            ← Back to Meals
+            ← Back to Recipes
           </Link>
           <div className='flex items-start justify-between gap-4'>
             <div>
               <h1 className='text-foreground mb-2 text-4xl font-bold'>
-                {existingMeal.title}
+                {existingRecipe.title}
               </h1>
               <Badge
                 variant='base'
                 className={join(
                   'capitalize',
-                  MEAL_CATEGORY_COLORS[existingMeal.category],
+                  RECIPE_CATEGORY_COLORS[existingRecipe.category],
                 )}
               >
-                {MEAL_CATEGORY_EMOJIS[existingMeal.category]} {existingMeal.category}
+                {RECIPE_CATEGORY_EMOJIS[existingRecipe.category]} {existingRecipe.category}
               </Badge>
             </div>
             <div className='hidden md:flex shrink-0 gap-2'>
               <Button
                 type='button'
                 variant='primary'
-                onClick={() => navigate(`/meals/${existingMeal.id}/cook`)}
-                disabled={existingMeal.instructions.length === 0}
+                onClick={() => navigate(`/recipes/${existingRecipe.id}/cook`)}
+                disabled={existingRecipe.instructions.length === 0}
               >
                 🍳 Cook
               </Button>
@@ -382,45 +382,45 @@ export function MealDetail() {
         </div>
 
         <div className='space-y-6'>
-          {existingMeal.imageUrl && (
+          {existingRecipe.imageUrl && (
             <img
-              src={existingMeal.imageUrl}
-              alt={existingMeal.title}
+              src={existingRecipe.imageUrl}
+              alt={existingRecipe.title}
               className='border-border h-64 w-full rounded-lg border object-cover'
             />
           )}
 
-          <p className='text-foreground'>{existingMeal.description}</p>
+          <p className='text-foreground'>{existingRecipe.description}</p>
 
           <div className='border-border grid grid-cols-3 gap-4 rounded-lg border p-4'>
             <div className='text-center'>
               <div className='text-foreground text-2xl font-bold'>
-                {existingMeal.prepTime}m
+                {existingRecipe.prepTime}m
               </div>
               <div className='text-muted-foreground text-xs'>Prep Time</div>
             </div>
             <div className='text-center'>
               <div className='text-foreground text-2xl font-bold'>
-                {existingMeal.cookTime}m
+                {existingRecipe.cookTime}m
               </div>
               <div className='text-muted-foreground text-xs'>Cook Time</div>
             </div>
             <div className='text-center'>
               <div className='text-foreground text-2xl font-bold'>
-                {existingMeal.servingSize}
+                {existingRecipe.servingSize}
               </div>
               <div className='text-muted-foreground text-xs'>
-                {existingMeal.servingSize === 1 ? 'Serving' : 'Servings'}
+                {existingRecipe.servingSize === 1 ? 'Serving' : 'Servings'}
               </div>
             </div>
           </div>
 
           <div className='border-border rounded-lg border p-4'>
-            {existingMeal.share ? (
+            {existingRecipe.share ? (
               <div className='flex flex-col gap-1'>
                 <div className='flex flex-wrap justify-between gap-x-3 gap-y-1'>
                   <span className='text-muted-foreground text-xs'>
-                    🔗 Shared on {formatSharedAt(existingMeal.share.sharedAt)}
+                    🔗 Shared on {formatSharedAt(existingRecipe.share.sharedAt)}
                   </span>
                   <div className='flex flex-wrap gap-x-3 gap-y-1'>
                   <button
@@ -469,13 +469,13 @@ export function MealDetail() {
             )}
           </div>
 
-          {existingMeal.ingredients.length > 0 && (
+          {existingRecipe.ingredients.length > 0 && (
             <div>
               <h2 className='text-foreground mb-3 text-xl font-semibold'>
                 Ingredients
               </h2>
               <ul className='border-border divide-border divide-y rounded-lg border'>
-                {existingMeal.ingredients.map((ing) => {
+                {existingRecipe.ingredients.map((ing) => {
                   const ingredient = allIngredients.find(
                     (i) => i.id === ing.ingredientId,
                   );
@@ -497,13 +497,13 @@ export function MealDetail() {
             </div>
           )}
 
-          {existingMeal.instructions.length > 0 && (
+          {existingRecipe.instructions.length > 0 && (
             <div>
               <h2 className='text-foreground mb-3 text-xl font-semibold'>
                 Instructions
               </h2>
               <ol className='space-y-2'>
-                {existingMeal.instructions.map((step, index) => (
+                {existingRecipe.instructions.map((step, index) => (
                   <li key={index} className='flex gap-3'>
                     <span className='text-primary shrink-0 font-bold'>
                       {index + 1}.
@@ -520,8 +520,8 @@ export function MealDetail() {
           <Button
             type='button'
             variant='primary'
-            onClick={() => navigate(`/meals/${existingMeal.id}/cook`)}
-            disabled={existingMeal.instructions.length === 0}
+            onClick={() => navigate(`/recipes/${existingRecipe.id}/cook`)}
+            disabled={existingRecipe.instructions.length === 0}
             className='flex-1'
           >
             🍳 Cook
@@ -551,18 +551,18 @@ export function MealDetail() {
     <div className='mx-auto mt-10 max-w-4xl p-6 md:mt-0'>
       <div className='mb-8'>
         <Link
-          to='/meals'
+          to='/recipes'
           className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
         >
-          ← Back to Meals
+          ← Back to Recipes
         </Link>
         <h1 className='text-foreground mb-2 text-4xl font-bold'>
-          {isEditing ? 'Edit Meal' : 'Create New Meal'}
+          {isEditing ? 'Edit Recipe' : 'Create New Recipe'}
         </h1>
         <p className='text-muted-foreground'>
           {isEditing
-            ? 'Update the details of your meal recipe'
-            : 'Add a new meal to your collection'}
+            ? 'Update the details of your recipe'
+            : 'Add a new recipe to your collection'}
         </p>
       </div>
 
@@ -576,7 +576,7 @@ export function MealDetail() {
             type='text'
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder='Enter meal title'
+            placeholder='Enter recipe title'
             required
           />
         </div>
@@ -589,7 +589,7 @@ export function MealDetail() {
             id='description'
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder='Enter meal description'
+            placeholder='Enter recipe description'
             required
             rows={3}
           />
@@ -653,7 +653,7 @@ export function MealDetail() {
 
         <div>
           <Label htmlFor='image'>
-            Meal Image
+            Recipe Image
           </Label>
           <input
             id='image'
@@ -669,7 +669,7 @@ export function MealDetail() {
               </p>
               <img
                 src={imageUrl}
-                alt='Meal preview'
+                alt='Recipe preview'
                 className='border-border h-48 w-full max-w-md rounded-lg border object-cover'
               />
             </div>
@@ -680,11 +680,11 @@ export function MealDetail() {
           <Label>
             Ingredients
           </Label>
-          <MealIngredientSelector
+          <RecipeIngredientSelector
             ingredients={allIngredients}
             selectedIngredients={selectedIngredients}
             onChange={setSelectedIngredients}
-            fromMealPath={fromMealPath}
+            fromRecipePath={fromRecipePath}
           />
         </div>
 
@@ -737,7 +737,7 @@ export function MealDetail() {
                 className='flex-1'
                 disabled={shoppingListPhase === 'adding'}
               >
-                {isEditing ? 'Update Meal' : 'Create Meal'}
+                {isEditing ? 'Update Recipe' : 'Create Recipe'}
               </Button>
               <Button
                 type='button'
@@ -750,7 +750,7 @@ export function MealDetail() {
               </Button>
               {isEditing && (
                 <Button type='button' variant='destructive' onClick={handleDelete}>
-                  Delete Meal
+                  Delete Recipe
                 </Button>
               )}
             </>
@@ -761,4 +761,4 @@ export function MealDetail() {
   );
 }
 
-export default MealDetail;
+export default RecipeDetail;

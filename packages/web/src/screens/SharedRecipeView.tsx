@@ -2,17 +2,17 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Badge, Button } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
-import { fetchSharedMeal } from '@store/actions/shareMealActions';
-import { SharedMeal } from '@lib/meals/sharedMeal.types';
-import { MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS } from '@lib/meals';
+import { fetchSharedRecipe } from '@store/actions/shareRecipeActions';
+import { SharedRecipe } from '@lib/recipes/sharedRecipe.types';
+import { RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
 import { useAppDispatch } from '@store/hooks';
 
-export function SharedMealView() {
+export function SharedRecipeView() {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const [meal, setMeal] = useState<SharedMeal | null>(null);
+  const [recipe, setRecipe] = useState<SharedRecipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -24,13 +24,13 @@ export function SharedMealView() {
       return;
     }
 
-    dispatch(fetchSharedMeal(shareId))
+    dispatch(fetchSharedRecipe(shareId))
       .unwrap()
       .then((result) => {
         if (!result) {
           setNotFound(true);
         } else {
-          setMeal(result);
+          setRecipe(result);
         }
       })
       .catch(() => {
@@ -49,7 +49,7 @@ export function SharedMealView() {
     );
   }
 
-  if (notFound || !meal) {
+  if (notFound || !recipe) {
     return (
       <div className='flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center'>
         <p className='text-foreground text-5xl'>🍽️</p>
@@ -75,12 +75,12 @@ export function SharedMealView() {
         </Link>
         <div className='flex items-start justify-between gap-4'>
           <div>
-            <h1 className='text-foreground mb-2 text-4xl font-bold'>{meal.title}</h1>
+            <h1 className='text-foreground mb-2 text-4xl font-bold'>{recipe.title}</h1>
             <Badge
               variant='base'
-              className={join('capitalize', MEAL_CATEGORY_COLORS[meal.category])}
+              className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
             >
-              {MEAL_CATEGORY_EMOJIS[meal.category]} {meal.category}
+              {RECIPE_CATEGORY_EMOJIS[recipe.category]} {recipe.category}
             </Badge>
           </div>
           <span className='text-muted-foreground shrink-0 text-xs'>
@@ -90,38 +90,38 @@ export function SharedMealView() {
       </div>
 
       <div className='space-y-6'>
-        {meal.imageUrl && (
+        {recipe.imageUrl && (
           <img
-            src={meal.imageUrl}
-            alt={meal.title}
+            src={recipe.imageUrl}
+            alt={recipe.title}
             className='border-border h-64 w-full rounded-lg border object-cover'
           />
         )}
 
-        <p className='text-foreground'>{meal.description}</p>
+        <p className='text-foreground'>{recipe.description}</p>
 
         <div className='border-border grid grid-cols-3 gap-4 rounded-lg border p-4'>
           <div className='text-center'>
-            <div className='text-foreground text-2xl font-bold'>{meal.prepTime}m</div>
+            <div className='text-foreground text-2xl font-bold'>{recipe.prepTime}m</div>
             <div className='text-muted-foreground text-xs'>Prep Time</div>
           </div>
           <div className='text-center'>
-            <div className='text-foreground text-2xl font-bold'>{meal.cookTime}m</div>
+            <div className='text-foreground text-2xl font-bold'>{recipe.cookTime}m</div>
             <div className='text-muted-foreground text-xs'>Cook Time</div>
           </div>
           <div className='text-center'>
-            <div className='text-foreground text-2xl font-bold'>{meal.servingSize}</div>
+            <div className='text-foreground text-2xl font-bold'>{recipe.servingSize}</div>
             <div className='text-muted-foreground text-xs'>
-              {meal.servingSize === 1 ? 'Serving' : 'Servings'}
+              {recipe.servingSize === 1 ? 'Serving' : 'Servings'}
             </div>
           </div>
         </div>
 
-        {meal.ingredients.length > 0 && (
+        {recipe.ingredients.length > 0 && (
           <div>
             <h2 className='text-foreground mb-3 text-xl font-semibold'>Ingredients</h2>
             <ul className='border-border divide-border divide-y rounded-lg border'>
-              {meal.ingredients.map((ing) => (
+              {recipe.ingredients.map((ing) => (
                 <li
                   key={ing.ingredientId}
                   className='flex items-center justify-between px-4 py-2'
@@ -136,11 +136,11 @@ export function SharedMealView() {
           </div>
         )}
 
-        {meal.instructions.length > 0 && (
+        {recipe.instructions.length > 0 && (
           <div>
             <h2 className='text-foreground mb-3 text-xl font-semibold'>Instructions</h2>
             <ol className='space-y-2'>
-              {meal.instructions.map((step, index) => (
+              {recipe.instructions.map((step, index) => (
                 <li key={index} className='flex gap-3'>
                   <span className='text-primary shrink-0 font-bold'>{index + 1}.</span>
                   <span className='text-foreground'>{step}</span>
@@ -164,4 +164,4 @@ export function SharedMealView() {
   );
 }
 
-export default SharedMealView;
+export default SharedRecipeView;

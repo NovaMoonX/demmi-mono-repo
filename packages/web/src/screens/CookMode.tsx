@@ -3,17 +3,17 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Drawer } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useAppSelector } from '@store/hooks';
-import { MEAL_CATEGORY_EMOJIS, MEAL_PLACEHOLDER_IMAGE_URL } from '@lib/meals';
+import { RECIPE_CATEGORY_EMOJIS, RECIPE_PLACEHOLDER_IMAGE_URL } from '@lib/recipes';
 import { useCookModeVoice } from '@hooks/useCookModeVoice';
 import { VoiceIndicator } from '@components/cook';
 
 export function CookMode() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const meals = useAppSelector((state) => state.meals.items);
+  const recipes = useAppSelector((state) => state.recipes.items);
   const allIngredients = useAppSelector((state) => state.ingredients.items);
 
-  const meal = useMemo(() => meals.find((m) => m.id === id), [meals, id]);
+  const recipe = useMemo(() => recipes.find((m) => m.id === id), [recipes, id]);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [showIngredients, setShowIngredients] = useState(false);
@@ -23,11 +23,11 @@ export function CookMode() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (meal?.servingSize !== undefined && servings === undefined) {
+    if (recipe?.servingSize !== undefined && servings === undefined) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setServings(meal.servingSize);
+      setServings(recipe.servingSize);
     }
-  }, [meal?.servingSize, servings]);
+  }, [recipe?.servingSize, servings]);
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
@@ -38,24 +38,24 @@ export function CookMode() {
     };
   }, []);
 
-  const totalSteps = meal?.instructions.length ?? 0;
+  const totalSteps = recipe?.instructions.length ?? 0;
 
   const handlePrev = useCallback(() => {
     setCurrentStep((s) => Math.max(0, s - 1));
   }, []);
 
   const handleNext = useCallback(() => {
-    if (!meal) return;
+    if (!recipe) return;
     if (currentStep < totalSteps - 1) {
       setCurrentStep((s) => s + 1);
     } else {
-      navigate(`/meals/${meal.id}`);
+      navigate(`/recipes/${recipe.id}`);
     }
-  }, [meal, currentStep, totalSteps, navigate]);
+  }, [recipe, currentStep, totalSteps, navigate]);
 
   const handleExit = useCallback(() => {
-    if (meal) navigate(`/meals/${meal.id}`);
-  }, [meal, navigate]);
+    if (recipe) navigate(`/recipes/${recipe.id}`);
+  }, [recipe, navigate]);
 
   const handleOpenIngredients = useCallback(() => setShowIngredients(true), []);
   const handleCloseIngredients = useCallback(
@@ -99,28 +99,28 @@ export function CookMode() {
     onExit: handleExit,
   });
 
-  if (!meal) {
+  if (!recipe) {
     return (
       <div className='flex h-full flex-col items-center justify-center gap-4'>
-        <p className='text-muted-foreground text-lg'>Meal not found.</p>
-        <Button variant='secondary' onClick={() => navigate('/meals')}>
-          Back to Meals
+        <p className='text-muted-foreground text-lg'>Recipe not found.</p>
+        <Button variant='secondary' onClick={() => navigate('/recipes')}>
+          Back to Recipes
         </Button>
       </div>
     );
   }
 
-  if (meal.instructions.length === 0) {
+  if (recipe.instructions.length === 0) {
     return (
       <div className='flex h-full flex-col items-center justify-center gap-4 p-6'>
         <p className='text-muted-foreground text-lg'>
-          This meal has no instructions yet.
+          This recipe has no instructions yet.
         </p>
         <Link
-          to={`/meals/${meal.id}`}
+          to={`/recipes/${recipe.id}`}
           className='text-primary hover:text-primary/80 text-sm underline'
         >
-          ← Back to {meal.title}
+          ← Back to {recipe.title}
         </Link>
       </div>
     );
@@ -135,9 +135,9 @@ export function CookMode() {
     return result;
   };
 
-  const effectiveServings = servings ?? meal.servingSize;
+  const effectiveServings = servings ?? recipe.servingSize;
   const scaleFactor =
-    meal.servingSize > 0 ? effectiveServings / meal.servingSize : 1;
+    recipe.servingSize > 0 ? effectiveServings / recipe.servingSize : 1;
 
   const getScaledAmount = (baseServings: number) => {
     const result = Number((baseServings * scaleFactor).toFixed(2));
@@ -175,12 +175,12 @@ export function CookMode() {
         </div>
       </div>
       <ul className='divide-border divide-y'>
-        {meal.ingredients.length === 0 ? (
+        {recipe.ingredients.length === 0 ? (
           <li className='text-muted-foreground py-4 text-center text-sm'>
             No ingredients listed.
           </li>
         ) : (
-          meal.ingredients.map((ing) => {
+          recipe.ingredients.map((ing) => {
             const ingredient = allIngredients.find(
               (i) => i.id === ing.ingredientId,
             );
@@ -206,19 +206,19 @@ export function CookMode() {
 
   return (
     <div className='bg-background flex h-full flex-col overflow-hidden md:flex-row'>
-      {/* Desktop: Left panel with image and meal info */}
+      {/* Desktop: Left panel with image and recipe info */}
       <div className='hidden shrink-0 flex-col md:flex md:w-80 lg:w-96'>
         <div className='flex flex-col overflow-y-auto'>
-          {meal.imageUrl ? (
+          {recipe.imageUrl ? (
             <img
-              src={meal.imageUrl || MEAL_PLACEHOLDER_IMAGE_URL}
-              alt={meal.title}
+              src={recipe.imageUrl || RECIPE_PLACEHOLDER_IMAGE_URL}
+              alt={recipe.title}
               className='h-64 w-full object-cover lg:h-80'
             />
           ) : (
             <div className='bg-muted flex h-64 w-full items-center justify-center lg:h-80'>
               <span className='text-6xl'>
-                {MEAL_CATEGORY_EMOJIS[meal.category]}
+                {RECIPE_CATEGORY_EMOJIS[recipe.category]}
               </span>
             </div>
           )}
@@ -226,16 +226,16 @@ export function CookMode() {
           <div className='flex flex-1 flex-col gap-4 p-6'>
             <div>
               <Link
-                to={`/meals/${meal.id}`}
+                to={`/recipes/${recipe.id}`}
                 className='text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm'
               >
                 ← Back
               </Link>
               <h1 className='text-foreground mb-1 text-2xl font-bold'>
-                {meal.title}
+                {recipe.title}
               </h1>
               <p className='text-muted-foreground text-sm'>
-                {meal.description}
+                {recipe.description}
               </p>
             </div>
 
@@ -243,18 +243,18 @@ export function CookMode() {
               <div className='flex items-center justify-center gap-1.5'>
                 <span className='text-muted-foreground text-xs'>Prep</span>
                 <span className='text-foreground font-bold'>
-                  {meal.prepTime}m
+                  {recipe.prepTime}m
                 </span>
               </div>
               <div className='flex items-center justify-center gap-1.5'>
                 <span className='text-muted-foreground text-xs'>Cook</span>
                 <span className='text-foreground font-bold'>
-                  {meal.cookTime}m
+                  {recipe.cookTime}m
                 </span>
               </div>
             </div>
 
-            {meal.ingredients.length > 0 && (
+            {recipe.ingredients.length > 0 && (
               <div>
                 <h2 className='text-foreground mb-2 text-sm font-semibold tracking-wide uppercase'>
                   Ingredients
@@ -272,7 +272,7 @@ export function CookMode() {
         <div className='border-border shrink-0 border-b md:hidden'>
           <div className='flex items-center justify-center px-4 py-3'>
             <h1 className='text-foreground max-w-[70%] truncate text-center text-sm font-semibold'>
-              {meal.title}
+              {recipe.title}
             </h1>
           </div>
           <div className='flex items-center justify-center gap-1.5 pb-2'>
@@ -331,14 +331,14 @@ export function CookMode() {
             </div>
 
             <p className='text-foreground text-xl leading-relaxed font-medium md:text-2xl lg:text-3xl'>
-              {meal.instructions[currentStep]}
+              {recipe.instructions[currentStep]}
             </p>
           </div>
         </div>
 
         {/* Step indicators (dots) */}
         <div className='flex shrink-0 justify-center gap-1.5 px-6 pb-4'>
-          {meal.instructions.map((_, i) => (
+          {recipe.instructions.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrentStep(i)}
@@ -357,7 +357,7 @@ export function CookMode() {
         <div className='border-border shrink-0 border-t px-4 py-4 md:px-6'>
           <div className='mx-auto flex w-full max-w-2xl gap-3'>
             <Link
-              to={`/meals/${meal.id}`}
+              to={`/recipes/${recipe.id}`}
               className='text-muted-foreground hover:text-foreground hover:bg-muted flex shrink-0 items-center justify-center rounded-md px-3 text-sm transition-colors md:hidden'
               aria-label='Exit cook mode'
             >

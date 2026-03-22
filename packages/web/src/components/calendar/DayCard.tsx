@@ -1,40 +1,40 @@
 import { useMemo } from 'react';
 import { Card, Button, Badge } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
-import { NutrientTotals, PlannedMeal } from '@lib/calendar';
-import { Meal, MEAL_CATEGORIES, MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS, MealCategory } from '@lib/meals';
+import { NutrientTotals, PlannedRecipe } from '@lib/calendar';
+import { Recipe, RECIPE_CATEGORIES, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RecipeCategory } from '@lib/recipes';
 import { Ingredient } from '@lib/ingredients';
 import { formatDateShort, formatDayShort } from '@/utils';
 import { calculateTotals } from '@/lib/calendar/calendar.utils';
 
 export interface DayCardProps {
   day: number;
-  plannedMeals: PlannedMeal[];
-  meals: Meal[];
+  plannedRecipes: PlannedRecipe[];
+  recipes: Recipe[];
   ingredients: Ingredient[];
   compact: boolean;
-  onAdd: (date: number, category?: MealCategory) => void;
-  onEdit: (pm: PlannedMeal) => void;
+  onAdd: (date: number, category?: RecipeCategory) => void;
+  onEdit: (pm: PlannedRecipe) => void;
   onViewDetail: (day: number) => void;
   onGoToDay: (day: number) => void;
 }
 
-export function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd, onEdit, onViewDetail, onGoToDay }: DayCardProps) {
-  const hasMeals = plannedMeals.length > 0;
+export function DayCard({ day, plannedRecipes, recipes, ingredients, compact, onAdd, onEdit, onViewDetail, onGoToDay }: DayCardProps) {
+  const hasRecipes = plannedRecipes.length > 0;
 
   const dayTotals = useMemo(
-    () => calculateTotals(plannedMeals, meals, ingredients),
-    [plannedMeals, meals, ingredients]
+    () => calculateTotals(plannedRecipes, recipes, ingredients),
+    [plannedRecipes, recipes, ingredients]
   );
 
-  const mealStats = useMemo(() => {
+  const recipeStats = useMemo(() => {
     if (compact) return new Map<string, NutrientTotals>();
     const map = new Map<string, NutrientTotals>();
-    for (const pm of plannedMeals) {
-      map.set(pm.id, calculateTotals([pm], meals, ingredients));
+    for (const pm of plannedRecipes) {
+      map.set(pm.id, calculateTotals([pm], recipes, ingredients));
     }
     return map;
-  }, [compact, plannedMeals, meals, ingredients]);
+  }, [compact, plannedRecipes, recipes, ingredients]);
 
   return (
     <Card className="p-4">
@@ -64,7 +64,7 @@ export function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd,
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          {hasMeals && compact && (
+          {hasRecipes && compact && (
             <Button
               variant="tertiary"
               size="sm"
@@ -81,25 +81,25 @@ export function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd,
         </div>
       </div>
 
-      {!hasMeals ? (
-        <p className="text-xs text-muted-foreground text-center py-3">No meals planned.</p>
+      {!hasRecipes ? (
+        <p className="text-xs text-muted-foreground text-center py-3">No recipes planned.</p>
       ) : (
         <div className="space-y-3">
-          {MEAL_CATEGORIES.map((cat) => {
-            const catMeals = plannedMeals.filter((pm) => pm.category === cat);
-            if (catMeals.length === 0) return null;
+          {RECIPE_CATEGORIES.map((cat) => {
+            const catRecipes = plannedRecipes.filter((pm) => pm.category === cat);
+            if (catRecipes.length === 0) return null;
 
             return (
               <div key={cat}>
                 <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <span>{MEAL_CATEGORY_EMOJIS[cat]}</span>
+                  <span>{RECIPE_CATEGORY_EMOJIS[cat]}</span>
                   <span className="capitalize">{cat}</span>
                 </p>
                 <div className="space-y-1">
-                  {catMeals.map((pm) => {
-                    const meal = meals.find((m) => m.id === pm.mealId);
-                    const mealEmoji = (meal && MEAL_CATEGORY_EMOJIS[meal.category]) ? MEAL_CATEGORY_EMOJIS[meal.category] : MEAL_CATEGORY_EMOJIS[cat];
-                    const stats = !compact ? mealStats.get(pm.id) : undefined;
+                  {catRecipes.map((pm) => {
+                    const recipe = recipes.find((m) => m.id === pm.recipeId);
+                    const recipeEmoji = (recipe && RECIPE_CATEGORY_EMOJIS[recipe.category]) ? RECIPE_CATEGORY_EMOJIS[recipe.category] : RECIPE_CATEGORY_EMOJIS[cat];
+                    const stats = !compact ? recipeStats.get(pm.id) : undefined;
                     return (
                       <div
                         key={pm.id}
@@ -108,17 +108,17 @@ export function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd,
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit(pm); } }}
-                        aria-label={`Edit ${meal?.title ?? 'meal'}`}
+                        aria-label={`Edit ${recipe?.title ?? 'recipe'}`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-foreground truncate">
-                            {meal?.title ?? 'Unknown Meal'}
+                            {recipe?.title ?? 'Unknown Recipe'}
                           </span>
                           <Badge
                             variant="base"
-                            className={join('shrink-0 text-xs', MEAL_CATEGORY_COLORS[cat])}
+                            className={join('shrink-0 text-xs', RECIPE_CATEGORY_COLORS[cat])}
                           >
-                            {mealEmoji}
+                            {recipeEmoji}
                           </Badge>
                         </div>
                         {!compact && pm.notes && (
@@ -143,7 +143,7 @@ export function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd,
         </div>
       )}
 
-      {hasMeals && (
+      {hasRecipes && (
         <div className="mt-3 pt-3 border-t border-border">
           {compact ? (
             <>
@@ -167,7 +167,7 @@ export function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd,
       )}
 
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-3 pt-3 border-t border-border">
-        {MEAL_CATEGORIES.map((cat) => (
+        {RECIPE_CATEGORIES.map((cat) => (
           <Button
             key={cat}
             variant="tertiary"
@@ -175,7 +175,7 @@ export function DayCard({ day, plannedMeals, meals, ingredients, compact, onAdd,
             onClick={() => onAdd(day, cat)}
             className="text-xs border border-dashed border-border"
           >
-            {MEAL_CATEGORY_EMOJIS[cat]} +
+            {RECIPE_CATEGORY_EMOJIS[cat]} +
           </Button>
         ))}
       </div>

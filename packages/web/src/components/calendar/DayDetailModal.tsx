@@ -1,35 +1,35 @@
 import { Modal, Button, Badge } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
-import { PlannedMeal } from '@lib/calendar';
-import { Meal, MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS } from '@lib/meals';
+import { PlannedRecipe } from '@lib/calendar';
+import { Recipe, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
 import { Ingredient } from '@lib/ingredients';
 import { formatDateFull, getStartOfDay } from '@/utils';
 import { calculateTotals } from '@/lib/calendar/calendar.utils';
 
 export interface DayDetailModalProps {
   day: number | null;
-  plannedMeals: PlannedMeal[];
-  meals: Meal[];
+  plannedRecipes: PlannedRecipe[];
+  recipes: Recipe[];
   ingredients: Ingredient[];
   onClose: () => void;
-  onEdit: (pm: PlannedMeal) => void;
-  onDelete: (pm: PlannedMeal) => void;
+  onEdit: (pm: PlannedRecipe) => void;
+  onDelete: (pm: PlannedRecipe) => void;
 }
 
-export function DayDetailModal({ day, plannedMeals, meals, ingredients, onClose, onEdit, onDelete }: DayDetailModalProps) {
+export function DayDetailModal({ day, plannedRecipes, recipes, ingredients, onClose, onEdit, onDelete }: DayDetailModalProps) {
   if (day === null) return null;
 
-  const dayMeals = plannedMeals.filter((pm) => getStartOfDay(pm.date) === day);
+  const dayRecipes = plannedRecipes.filter((pm) => getStartOfDay(pm.date) === day);
 
-  const rows = dayMeals.map((pm) => {
-    const meal = meals.find((m) => m.id === pm.mealId);
-    const mealTotals = calculateTotals([pm], meals, ingredients);
-    return { pm, meal, totals: mealTotals };
+  const rows = dayRecipes.map((pm) => {
+    const recipe = recipes.find((m) => m.id === pm.recipeId);
+    const recipeTotals = calculateTotals([pm], recipes, ingredients);
+    return { pm, recipe, totals: recipeTotals };
   });
 
-  const grandTotal = calculateTotals(dayMeals, meals, ingredients);
+  const grandTotal = calculateTotals(dayRecipes, recipes, ingredients);
 
-  const handleEditAndClose = (pm: PlannedMeal) => {
+  const handleEditAndClose = (pm: PlannedRecipe) => {
     onEdit(pm);
     onClose();
   };
@@ -43,14 +43,14 @@ export function DayDetailModal({ day, plannedMeals, meals, ingredients, onClose,
     >
       <div className="w-full">
         {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center">No meals planned for this day.</p>
+          <p className="text-sm text-muted-foreground py-4 text-center">No recipes planned for this day.</p>
         ) : (
           <div className="overflow-x-auto max-w-full">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b border-border text-xs text-muted-foreground">
                   <th className="text-left py-2 pr-3 font-medium">Category</th>
-                  <th className="text-left py-2 pr-3 font-medium">Meal</th>
+                  <th className="text-left py-2 pr-3 font-medium">Recipe</th>
                   <th className="text-right py-2 pr-3 font-medium">🔥 kcal</th>
                   <th className="text-right py-2 pr-3 font-medium">💪 g</th>
                   <th className="text-right py-2 pr-3 font-medium">🌾 g</th>
@@ -68,19 +68,19 @@ export function DayDetailModal({ day, plannedMeals, meals, ingredients, onClose,
                 </tr>
               </thead>
               <tbody>
-                {rows.map(({ pm, meal, totals }) => (
+                {rows.map(({ pm, recipe, totals }) => (
                   <tr key={pm.id} className="border-b border-border/50 hover:bg-muted/30 group">
                     <td className="py-2 pr-3">
                       <Badge
                         variant="base"
-                        className={join('capitalize text-xs', MEAL_CATEGORY_COLORS[pm.category])}
+                        className={join('capitalize text-xs', RECIPE_CATEGORY_COLORS[pm.category])}
                       >
-                        <span className="hidden sm:inline pr-1">{MEAL_CATEGORY_EMOJIS[pm.category] + ' '}</span>
+                        <span className="hidden sm:inline pr-1">{RECIPE_CATEGORY_EMOJIS[pm.category] + ' '}</span>
                         {pm.category}
                       </Badge>
                     </td>
                     <td className="py-2 pr-3">
-                      <div className="font-medium text-foreground">{meal?.title ?? 'Unknown'}</div>
+                      <div className="font-medium text-foreground">{recipe?.title ?? 'Unknown'}</div>
                       {pm.notes && (
                         <div className="text-xs text-muted-foreground mt-0.5">{pm.notes}</div>
                       )}
@@ -108,10 +108,10 @@ export function DayDetailModal({ day, plannedMeals, meals, ingredients, onClose,
         )}
         {rows.length > 0 && (
           <div className="mt-4 pt-3 border-t border-border space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Manage meals:</p>
-            {rows.map(({ pm, meal }) => (
+            <p className="text-xs font-medium text-muted-foreground mb-2">Manage recipes:</p>
+            {rows.map(({ pm, recipe }) => (
               <div key={pm.id} className="flex items-center justify-between gap-2 bg-muted/30 rounded-lg px-3 py-1.5">
-                <span className="text-sm text-foreground truncate">{meal?.title ?? 'Unknown'}</span>
+                <span className="text-sm text-foreground truncate">{recipe?.title ?? 'Unknown'}</span>
                 <div className="flex items-center gap-1 shrink-0">
                   <Button variant="tertiary" size="sm" onClick={() => handleEditAndClose(pm)} aria-label="Edit">✏️</Button>
                   <Button variant="tertiary" size="sm" onClick={() => { onDelete(pm); }} aria-label="Remove">🗑️</Button>
