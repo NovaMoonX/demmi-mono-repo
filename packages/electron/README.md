@@ -59,6 +59,7 @@ This runs `concurrently` to:
 | `npm run watch` | Watch Electron TypeScript for changes |
 | `npm run electron:dev` | Launch Electron from compiled output |
 | `npm run package` | Build and package with electron-builder |
+| `npm run test` | Run Jest tests |
 
 ## Project Structure
 

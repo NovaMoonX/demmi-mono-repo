@@ -29,6 +29,7 @@ The dev server starts at `http://localhost:5173` (with `--host` for LAN access /
 | `npm run dev` | Start Vite dev server with `--host` |
 | `npm run build` | Type-check with `tsc` then build with Vite |
 | `npm run lint` | Run ESLint across the project |
+| `npm run test` | Run Jest test suite |
 | `npm run preview` | Preview the production build locally |
 | `npm run fbdeploy` | Build and deploy to Firebase Hosting |
 
@@ -135,6 +136,27 @@ src/
 | [Dreamer UI](https://www.npmjs.com/package/@moondreamsdev/dreamer-ui) | Component library |
 | [React Router](https://reactrouter.com/) 7 | Client-side routing |
 | [React Markdown](https://github.com/remarkjs/react-markdown) | Markdown rendering for AI responses |
+| [Jest](https://jestjs.io/) 30 | Testing framework |
+| [@testing-library/react](https://testing-library.com/) | Component testing utilities |
+
+## Testing
+
+Tests are co-located with source files (e.g., `capitalize.test.ts` next to `capitalize.ts`).
+
+```bash
+npm run test          # Run all tests
+npm run test -- --watch  # Watch mode
+```
+
+**Test structure:**
+- `src/utils/*.test.ts` — Utility function tests
+- `src/lib/**/*.test.ts` — Domain logic tests (calendar utils, ingredient utils)
+- `src/store/slices/*.test.ts` — Redux slice reducer tests
+- `src/hooks/*.test.ts` — Custom hook tests
+- `src/components/**/*.test.tsx` — Component tests
+- `src/screens/*.test.tsx` — Screen integration tests (with mocked child components)
+- `src/__tests__/helpers/` — Shared test utilities (`renderWithProviders`)
+- `src/__tests__/mocks/` — Mocks for Firebase, Dreamer UI components
 
 ## Features
 

@@ -58,6 +58,7 @@ npx expo start --android
 | `npm run ios` | Start Expo for iOS |
 | `npm run build:web` | Build the `@demmi/web` package |
 | `npm run prebuild` | Generate native iOS/Android projects |
+| `npm run test` | Run Jest tests |
 
 ## Project Structure
 

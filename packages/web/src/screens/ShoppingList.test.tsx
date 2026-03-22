@@ -30,8 +30,6 @@ jest.mock('@components/shopping', () => ({
   }),
 }));
 
-import { createAsyncThunk } from '@reduxjs/toolkit';
-
 jest.mock('@store/actions/shoppingListActions', () => {
   const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
   const fetchShoppingList = createAsyncThunk('shoppingList/fetch', async () => []);

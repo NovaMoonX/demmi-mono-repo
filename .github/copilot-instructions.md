@@ -303,6 +303,7 @@ return <form>...</form>;
 - **Form labels: ALWAYS use `Label` from Dreamer UI, NEVER native `<label>` or className on Label**
 - **Nullish coalescing: Use `??` by default, only `||` for explicit falsy checks**
 - **Detail pages: Always implement view/edit mode for existing items**
+- **Testing: Every logic file must have a co-located `.test.ts(x)` file — run `npm test` to validate**
 
 ## Monorepo Rules
 - **Electron and Mobile packages wrap the web build** — they have no UI code of their own
@@ -325,6 +326,8 @@ return <form>...</form>;
 - **Extract screen sub-components to separate files in `@components/<feature>/`**
 - **Use `.types.ts` and `.constants.ts` in `@lib/<feature>/` for domain logic**
 - **Use `??` instead of `||` unless explicitly handling falsy values (empty string, NaN, 0)**
+- **Every logic file (hooks, components, utils, slices) MUST have a co-located test file**
+- **Run `npm test` before submitting changes to ensure all tests pass**
 
 ## Firestore Security Rules
 
@@ -368,7 +371,52 @@ This ensures demo mode never touches Firestore and throws no errors.
 
 
 
-### 16. README.md Update Rule
+### 16. Testing
+Every file that contains logic (hooks, components, utilities, Redux slices) must have a co-located test file named `<filename>.test.ts(x)`.
+
+**Testing Philosophy:**
+- Test what happens **within** the component/hook/utility — not nested child behavior
+- For screens, mock child components (e.g., `IngredientCard`, `RecipeCard`) and verify they are rendered with correct props
+- For Redux slices, test synchronous reducers directly by importing the reducer and action creators
+- Keep tests focused; avoid testing every edge case — test what matters
+
+**Running Tests:**
+```bash
+# All packages
+npm test
+
+# Individual packages
+npm run test:web
+npm run test:electron
+npm run test:mobile
+```
+
+**Test Infrastructure (Web):**
+- **Framework**: Jest with `@swc/jest` transform
+- **Component testing**: `@testing-library/react` + `@testing-library/jest-dom`
+- **Shared helpers**: `src/__tests__/helpers/renderWithProviders.tsx` — wraps components with Redux Provider + MemoryRouter
+- **Mocks**: `src/__tests__/mocks/` — Dreamer UI components, Firebase config
+- **Setup**: `src/__tests__/setup.ts` (jest-dom matchers, matchMedia/IntersectionObserver mocks)
+
+**Test Infrastructure (Electron):**
+- **Framework**: Jest with `@swc/jest` transform
+- **Environment**: Node
+
+**Test Infrastructure (Mobile):**
+- **Framework**: Jest with `react-native` preset
+- **Component testing**: `@testing-library/react-native`
+
+**When adding new files:**
+- ✅ New utility function → add `<name>.test.ts` in the same directory
+- ✅ New Redux slice → add `<sliceName>.test.ts` in `store/slices/`
+- ✅ New hook → add `<hookName>.test.ts` in `hooks/`
+- ✅ New component → add `<ComponentName>.test.tsx` in the same directory
+- ✅ New screen → add `<ScreenName>.test.tsx` in `screens/`
+- ❌ Constant files, type files, mock data files → no tests needed
+
+**CI:** Tests run automatically via GitHub Actions on push to `main` and on pull requests.
+
+### 17. README.md Update Rule
 **CRITICAL**: READMEs must be updated with **EVERY** change to the codebase.
 
 This is a monorepo with multiple READMEs:
