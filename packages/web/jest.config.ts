@@ -26,6 +26,9 @@ const config: Config = {
     '/node_modules/(?!(nanoid|uuid)/)',
   ],
   moduleNameMapper: {
+    '^@moondreamsdev/dreamer-ui/components$': '<rootDir>/src/__tests__/mocks/dreamer-ui-components.tsx',
+    '^@moondreamsdev/dreamer-ui/utils$': '<rootDir>/src/__tests__/mocks/dreamer-ui-utils.ts',
+    '^@moondreamsdev/dreamer-ui/hooks$': '<rootDir>/src/__tests__/mocks/dreamer-ui-hooks.ts',
     '^@lib/firebase/firebase\\.config$': '<rootDir>/src/__tests__/mocks/firebase.config.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
@@ -41,6 +44,7 @@ const config: Config = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|webp|svg|ico)$': '<rootDir>/src/__tests__/fileMock.ts',
   },
+  setupFiles: ['<rootDir>/src/__tests__/setupGlobals.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
 };
 
