@@ -5,3 +5,7 @@ export function useToast() {
 export function useActionModal() {
   return { showModal: jest.fn() };
 }
+
+export function useTheme() {
+  return { resolvedTheme: 'light', toggleTheme: jest.fn() };
+}

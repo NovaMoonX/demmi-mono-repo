@@ -79,3 +79,11 @@ export function Skeleton(props: Record<string, unknown>) {
 export function Separator() {
   return React.createElement('hr', { 'data-testid': 'separator' });
 }
+
+export function Avatar(props: Record<string, unknown>) {
+  return React.createElement('div', { 'data-testid': 'avatar', ...props });
+}
+
+export function CopyButton(props: Record<string, unknown>) {
+  return React.createElement('button', { 'data-testid': 'copy-button', ...props }, 'Copy');
+}

@@ -29,6 +29,7 @@ const config = {
     '^@moondreamsdev/dreamer-ui/utils$': '<rootDir>/src/__tests__/mocks/dreamer-ui-utils.ts',
     '^@moondreamsdev/dreamer-ui/hooks$': '<rootDir>/src/__tests__/mocks/dreamer-ui-hooks.ts',
     '^@moondreamsdev/dreamer-ui/providers$': '<rootDir>/src/__tests__/mocks/dreamer-ui-providers.ts',
+    '^@moondreamsdev/dreamer-ui/symbols$': '<rootDir>/src/__tests__/mocks/dreamer-ui-symbols.tsx',
     '^@lib/firebase/firebase\\.config$': '<rootDir>/src/__tests__/mocks/firebase.config.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
