@@ -5,7 +5,7 @@ const config: Config = {
   roots: ['<rootDir>/src'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   transform: {
-    '^.+\\.tsx?$': [
+    '^.+\\.(ts|tsx|js|jsx)$': [
       '@swc/jest',
       {
         jsc: {
@@ -22,7 +22,11 @@ const config: Config = {
       },
     ],
   },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(nanoid|uuid)/)',
+  ],
   moduleNameMapper: {
+    '^@lib/firebase/firebase\\.config$': '<rootDir>/src/__tests__/mocks/firebase.config.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
     '^@contexts/(.*)$': '<rootDir>/src/contexts/$1',
