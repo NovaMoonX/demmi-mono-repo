@@ -1,16 +1,23 @@
-jest.mock('ollama/browser', () => {
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+vi.mock('ollama/browser', () => {
   const mockClient = {
-    list: jest.fn(),
-    generate: jest.fn(),
-    chat: jest.fn(),
-    pull: jest.fn(),
+    list: vi.fn(),
+    generate: vi.fn(),
+    chat: vi.fn(),
+    pull: vi.fn(),
   };
+  class MockOllama {
+    list = mockClient.list;
+    generate = mockClient.generate;
+    chat = mockClient.chat;
+    pull = mockClient.pull;
+  }
   return {
-    Ollama: jest.fn(() => mockClient),
+    Ollama: MockOllama,
   };
 });
 
-jest.mock('./ollama.constants', () => ({
+vi.mock('./ollama.constants', () => ({
   INTENT_ACTIONS: ['general', 'createRecipe'],
   INTENT_ACTION_PROMPT_DESCRIPTION: {
     general: 'General question',
@@ -33,7 +40,7 @@ import {
 
 describe('ollama.service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('listLocalModels', () => {

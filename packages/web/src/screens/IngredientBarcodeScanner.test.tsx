@@ -1,11 +1,12 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { IngredientBarcodeScanner } from './IngredientBarcodeScanner';
 
-const mockGetUserMedia = jest.fn();
-const mockPermissionsQuery = jest.fn();
+const mockGetUserMedia = vi.fn();
+const mockPermissionsQuery = vi.fn();
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useLocation: () => ({ state: null, pathname: '/ingredients/new/barcode-scanner' }),
   Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
     <a href={to} {...props}>{children}</a>
@@ -13,7 +14,7 @@ jest.mock('react-router-dom', () => ({
 }));
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 
   mockGetUserMedia.mockRejectedValue(new Error('denied'));
   Object.defineProperty(navigator, 'mediaDevices', {

@@ -110,3 +110,7 @@ export function TabsContent({ children, ...props }: React.PropsWithChildren<Reco
 export function AuthForm(props: Record<string, unknown>) {
   return React.createElement('div', { 'data-testid': 'auth-form', ...props });
 }
+
+export function ErrorBoundary({ children }: React.PropsWithChildren<Record<string, unknown>>) {
+  return React.createElement('div', { 'data-testid': 'error-boundary' }, children);
+}

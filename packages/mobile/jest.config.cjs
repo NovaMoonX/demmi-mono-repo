@@ -1,6 +1,6 @@
 /** @type {import('jest').Config} */
 const config = {
-  preset: 'react-native',
+  preset: 'jest-expo',
   roots: ['<rootDir>/app'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   transformIgnorePatterns: [

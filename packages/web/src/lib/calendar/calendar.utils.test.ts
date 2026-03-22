@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { calculateTotals } from './calendar.utils';
 import type { PlannedRecipe, NutrientTotals } from './calendar.types';
 import type { Recipe } from '../recipes';

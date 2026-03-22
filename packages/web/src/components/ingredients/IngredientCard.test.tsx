@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { IngredientCard } from './IngredientCard';
 import type { Ingredient } from '@lib/ingredients';
@@ -24,36 +25,36 @@ function createIngredient(overrides: Partial<Ingredient> = {}): Ingredient {
 describe('IngredientCard', () => {
   it('renders the ingredient name', () => {
     const ingredient = createIngredient();
-    render(<IngredientCard ingredient={ingredient} onClick={jest.fn()} />);
+    render(<IngredientCard ingredient={ingredient} onClick={vi.fn()} />);
     expect(screen.getByText('Chicken Breast')).toBeInTheDocument();
   });
 
   it('renders the ingredient type badge', () => {
     const ingredient = createIngredient();
-    render(<IngredientCard ingredient={ingredient} onClick={jest.fn()} />);
+    render(<IngredientCard ingredient={ingredient} onClick={vi.fn()} />);
     expect(screen.getByText('meat')).toBeInTheDocument();
   });
 
   it('displays servings count based on currentAmount and servingSize', () => {
     const ingredient = createIngredient({ currentAmount: 500, servingSize: 100 });
-    render(<IngredientCard ingredient={ingredient} onClick={jest.fn()} />);
+    render(<IngredientCard ingredient={ingredient} onClick={vi.fn()} />);
     expect(screen.getByText('5 servings')).toBeInTheDocument();
   });
 
   it('displays serving size label', () => {
     const ingredient = createIngredient({ servingSize: 100, unit: 'g' });
-    render(<IngredientCard ingredient={ingredient} onClick={jest.fn()} />);
+    render(<IngredientCard ingredient={ingredient} onClick={vi.fn()} />);
     expect(screen.getByText('100 g')).toBeInTheDocument();
   });
 
   it('displays 0 servings when servingSize is 0', () => {
     const ingredient = createIngredient({ servingSize: 0 });
-    render(<IngredientCard ingredient={ingredient} onClick={jest.fn()} />);
+    render(<IngredientCard ingredient={ingredient} onClick={vi.fn()} />);
     expect(screen.getByText('0 servings')).toBeInTheDocument();
   });
 
   it('calls onClick when clicked', () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     const ingredient = createIngredient();
     render(<IngredientCard ingredient={ingredient} onClick={onClick} />);
 
@@ -63,7 +64,7 @@ describe('IngredientCard', () => {
   });
 
   it('calls onClick when Enter key is pressed', () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     const ingredient = createIngredient();
     render(<IngredientCard ingredient={ingredient} onClick={onClick} />);
 
@@ -74,7 +75,7 @@ describe('IngredientCard', () => {
 
   it('renders the ingredient image', () => {
     const ingredient = createIngredient({ imageUrl: 'https://example.com/img.jpg' });
-    render(<IngredientCard ingredient={ingredient} onClick={jest.fn()} />);
+    render(<IngredientCard ingredient={ingredient} onClick={vi.fn()} />);
     const img = screen.getByAltText('Chicken Breast');
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src', 'https://example.com/img.jpg');
@@ -82,7 +83,7 @@ describe('IngredientCard', () => {
 
   it('renders the type emoji', () => {
     const ingredient = createIngredient({ type: 'produce' });
-    render(<IngredientCard ingredient={ingredient} onClick={jest.fn()} />);
+    render(<IngredientCard ingredient={ingredient} onClick={vi.fn()} />);
     expect(screen.getByText('🥬')).toBeInTheDocument();
   });
 });

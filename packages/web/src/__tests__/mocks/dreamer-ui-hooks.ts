@@ -1,11 +1,13 @@
+import { vi } from 'vitest';
+
 export function useToast() {
-  return { toast: jest.fn() };
+  return { toast: vi.fn() };
 }
 
 export function useActionModal() {
-  return { showModal: jest.fn() };
+  return { showModal: vi.fn() };
 }
 
 export function useTheme() {
-  return { resolvedTheme: 'light', toggleTheme: jest.fn() };
+  return { resolvedTheme: 'light', toggleTheme: vi.fn() };
 }

@@ -1,23 +1,27 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { NotFound } from './NotFound';
 
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+const mockNavigate = vi.fn();
+const mockUseAuth = vi.fn();
+
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
 }));
 
-jest.mock('@hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: null,
-    logOut: jest.fn(),
-    loading: false,
-  }),
+vi.mock('@hooks/useAuth', () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 describe('NotFound', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: null,
+      logOut: vi.fn(),
+      loading: false,
+    });
   });
 
   it('renders 404 heading', () => {
@@ -49,13 +53,13 @@ describe('NotFound', () => {
 
 describe('NotFound (authenticated)', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('shows "Return to App" when user is authenticated', () => {
-    jest.spyOn(require('@hooks/useAuth'), 'useAuth').mockReturnValue({
+    mockUseAuth.mockReturnValue({
       user: { uid: 'test-user', email: 'test@test.com', emailVerified: true },
-      logOut: jest.fn(),
+      logOut: vi.fn(),
       loading: false,
     });
     render(<NotFound />);

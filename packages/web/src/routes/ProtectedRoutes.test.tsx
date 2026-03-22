@@ -1,8 +1,9 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 
-jest.mock('@hooks/useAuth', () => ({
-  useAuth: jest.fn(),
+vi.mock('@hooks/useAuth', () => ({
+  useAuth: vi.fn(),
 }));
 
 import { useAuth } from '@hooks/useAuth';

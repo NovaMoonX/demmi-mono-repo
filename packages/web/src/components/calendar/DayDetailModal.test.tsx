@@ -1,14 +1,15 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DayDetailModal, DayDetailModalProps } from './DayDetailModal';
 import type { PlannedRecipe } from '@lib/calendar';
 import type { Recipe } from '@lib/recipes';
 
-jest.mock('@/utils', () => ({
+vi.mock('@/utils', () => ({
   formatDateFull: () => 'Monday, January 15, 2024',
   getStartOfDay: (ts: number) => ts,
 }));
 
-jest.mock('@/lib/calendar/calendar.utils', () => ({
+vi.mock('@/lib/calendar/calendar.utils', () => ({
   calculateTotals: () => ({
     calories: 400,
     protein: 25,
@@ -57,15 +58,15 @@ function defaultProps(overrides: Partial<DayDetailModalProps> = {}): DayDetailMo
     plannedRecipes: [],
     recipes: [createRecipe()],
     ingredients: [],
-    onClose: jest.fn(),
-    onEdit: jest.fn(),
-    onDelete: jest.fn(),
+    onClose: vi.fn(),
+    onEdit: vi.fn(),
+    onDelete: vi.fn(),
     ...overrides,
   };
 }
 
 describe('DayDetailModal', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('returns null when day is null', () => {
     const { container } = render(<DayDetailModal {...defaultProps({ day: null })} />);
@@ -114,8 +115,8 @@ describe('DayDetailModal', () => {
   });
 
   it('calls onEdit and onClose when edit button is clicked', () => {
-    const onEdit = jest.fn();
-    const onClose = jest.fn();
+    const onEdit = vi.fn();
+    const onClose = vi.fn();
     const planned = [createPlannedRecipe()];
     render(<DayDetailModal {...defaultProps({ plannedRecipes: planned, onEdit, onClose })} />);
     fireEvent.click(screen.getByLabelText('Edit'));
@@ -124,7 +125,7 @@ describe('DayDetailModal', () => {
   });
 
   it('calls onDelete when remove button is clicked', () => {
-    const onDelete = jest.fn();
+    const onDelete = vi.fn();
     const planned = [createPlannedRecipe()];
     render(<DayDetailModal {...defaultProps({ plannedRecipes: planned, onDelete })} />);
     fireEvent.click(screen.getByLabelText('Remove'));

@@ -1,18 +1,25 @@
-jest.mock('ollama/browser', () => {
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+vi.mock('ollama/browser', () => {
   const mockClient = {
-    chat: jest.fn(),
-    generate: jest.fn(),
-    list: jest.fn(),
-    pull: jest.fn(),
+    chat: vi.fn(),
+    generate: vi.fn(),
+    list: vi.fn(),
+    pull: vi.fn(),
   };
-  return { Ollama: jest.fn(() => mockClient) };
+  class MockOllama {
+    chat = mockClient.chat;
+    generate = mockClient.generate;
+    list = mockClient.list;
+    pull = mockClient.pull;
+  }
+  return { Ollama: MockOllama };
 });
 
-jest.mock('../prompts', () => ({
+vi.mock('../prompts', () => ({
   GENERAL_PROMPT: 'You are a cooking assistant.',
 }));
 
-jest.mock('../schemas', () => ({
+vi.mock('../schemas', () => ({
   GENERAL_SCHEMA: {},
 }));
 
@@ -21,7 +28,7 @@ import { ollamaClient } from '../ollama.service';
 
 describe('generalAction', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('has correct type and description', () => {
@@ -46,12 +53,12 @@ describe('generalAction', () => {
           },
         };
       },
-      abort: jest.fn(),
+      abort: vi.fn(),
     };
 
     (ollamaClient.chat as jest.Mock).mockResolvedValue(asyncIterator);
 
-    const onProgress = jest.fn();
+    const onProgress = vi.fn();
     const result = await generalAction.execute(
       'mistral',
       { messages: [{ id: '1', role: 'user' as const, content: 'Hi', rawContent: null, timestamp: 1, model: null, agentAction: null, summary: null, iterationInvalid: null }] },

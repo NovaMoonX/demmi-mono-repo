@@ -1,14 +1,21 @@
-jest.mock('ollama/browser', () => {
+import { describe, it, expect, vi } from 'vitest';
+vi.mock('ollama/browser', () => {
   const mockClient = {
-    chat: jest.fn(),
-    generate: jest.fn(),
-    list: jest.fn(),
-    pull: jest.fn(),
+    chat: vi.fn(),
+    generate: vi.fn(),
+    list: vi.fn(),
+    pull: vi.fn(),
   };
-  return { Ollama: jest.fn(() => mockClient) };
+  class MockOllama {
+    chat = mockClient.chat;
+    generate = mockClient.generate;
+    list = mockClient.list;
+    pull = mockClient.pull;
+  }
+  return { Ollama: MockOllama };
 });
 
-jest.mock('../prompts/recipe.prompts', () => ({
+vi.mock('../prompts/recipe.prompts', () => ({
   RECIPE_NAME_PROMPT: 'name prompt',
   RECIPE_INFO_PROMPT: 'info prompt',
   RECIPE_DESCRIPTION_PROMPT: 'desc prompt',
@@ -16,7 +23,7 @@ jest.mock('../prompts/recipe.prompts', () => ({
   RECIPE_INSTRUCTIONS_PROMPT: 'inst prompt',
 }));
 
-jest.mock('../schemas/recipe.schemas', () => ({
+vi.mock('../schemas/recipe.schemas', () => ({
   RECIPE_NAME_SCHEMA: {},
   RECIPE_INFO_SCHEMA: {},
   RECIPE_DESCRIPTION_SCHEMA: {},
@@ -24,7 +31,7 @@ jest.mock('../schemas/recipe.schemas', () => ({
   RECIPE_INSTRUCTIONS_SCHEMA: {},
 }));
 
-jest.mock('@store/index', () => ({
+vi.mock('@store/index', () => ({
   store: { getState: () => ({ ingredients: { items: [] } }) },
 }));
 

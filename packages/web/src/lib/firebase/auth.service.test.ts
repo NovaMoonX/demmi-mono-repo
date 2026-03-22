@@ -1,10 +1,11 @@
-jest.mock('firebase/auth', () => ({
-  GoogleAuthProvider: jest.fn(),
-  signInWithPopup: jest.fn(),
-  createUserWithEmailAndPassword: jest.fn(),
-  signInWithEmailAndPassword: jest.fn(),
-  signOut: jest.fn(),
-  sendEmailVerification: jest.fn(),
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+vi.mock('firebase/auth', () => ({
+  GoogleAuthProvider: vi.fn(),
+  signInWithPopup: vi.fn(),
+  createUserWithEmailAndPassword: vi.fn(),
+  signInWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+  sendEmailVerification: vi.fn(),
 }));
 
 import {
@@ -31,7 +32,7 @@ const mockSendVerification = sendEmailVerification as jest.Mock;
 
 describe('auth.service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('signUp', () => {

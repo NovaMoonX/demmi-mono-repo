@@ -1,18 +1,19 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { VerifyEmail } from './VerifyEmail';
 
-const mockNavigate = jest.fn();
-const mockLogOut = jest.fn().mockResolvedValue(undefined);
-const mockResendVerificationEmail = jest.fn().mockResolvedValue({});
-const mockAddToast = jest.fn();
+const mockNavigate = vi.fn();
+const mockLogOut = vi.fn().mockResolvedValue(undefined);
+const mockResendVerificationEmail = vi.fn().mockResolvedValue({});
+const mockAddToast = vi.fn();
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
 }));
 
-jest.mock('@hooks/useAuth', () => ({
+vi.mock('@hooks/useAuth', () => ({
   useAuth: () => ({
     user: { uid: 'test-user', email: 'test@test.com', emailVerified: false },
     loading: false,
@@ -21,28 +22,28 @@ jest.mock('@hooks/useAuth', () => ({
   }),
 }));
 
-jest.mock('@moondreamsdev/dreamer-ui/hooks', () => ({
+vi.mock('@moondreamsdev/dreamer-ui/hooks', () => ({
   useToast: () => ({ addToast: mockAddToast }),
-  useActionModal: () => ({ confirm: jest.fn() }),
-  useTheme: () => ({ resolvedTheme: 'light', toggleTheme: jest.fn() }),
+  useActionModal: () => ({ confirm: vi.fn() }),
+  useTheme: () => ({ resolvedTheme: 'light', toggleTheme: vi.fn() }),
 }));
 
-jest.mock('@lib/firebase/firebase.config', () => ({
+vi.mock('@lib/firebase/firebase.config', () => ({
   auth: {
     currentUser: {
-      reload: jest.fn().mockResolvedValue(undefined),
+      reload: vi.fn().mockResolvedValue(undefined),
       emailVerified: false,
     },
   },
 }));
 
 beforeEach(() => {
-  jest.clearAllMocks();
-  jest.useFakeTimers();
+  vi.clearAllMocks();
+  vi.useFakeTimers();
 });
 
 afterEach(() => {
-  jest.useRealTimers();
+  vi.useRealTimers();
 });
 
 describe('VerifyEmail', () => {

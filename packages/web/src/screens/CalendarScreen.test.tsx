@@ -1,9 +1,10 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { CalendarScreen } from './CalendarScreen';
 
-jest.mock('@store/actions/calendarActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/calendarActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchPlannedRecipes: createAsyncThunk('calendar/fetch', async () => []),
     createPlannedRecipe: createAsyncThunk('calendar/create', async () => ({})),
@@ -12,7 +13,7 @@ jest.mock('@store/actions/calendarActions', () => {
   };
 });
 
-jest.mock('@components/calendar', () => ({
+vi.mock('@components/calendar', () => ({
   TotalsCard: () => <div data-testid="totals-card">TotalsCard</div>,
   DayCard: () => <div data-testid="day-card">DayCard</div>,
   DayDetailModal: () => <div data-testid="day-detail-modal">DayDetailModal</div>,

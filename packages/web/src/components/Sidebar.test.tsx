@@ -1,17 +1,18 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { Sidebar } from './Sidebar';
 
-const mockNavigate = jest.fn();
-const mockLogOut = jest.fn();
+const mockNavigate = vi.fn();
+const mockLogOut = vi.fn();
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
   useLocation: () => ({ pathname: '/recipes' }),
 }));
 
-jest.mock('@hooks/useAuth', () => ({
+vi.mock('@hooks/useAuth', () => ({
   useAuth: () => ({
     user: { uid: 'test-user', email: 'test@test.com', emailVerified: true },
     logOut: mockLogOut,
@@ -23,7 +24,7 @@ describe('Sidebar', () => {
   const demoOff = { preloadedState: { demo: { isActive: false, isHydrated: false } } };
   const demoOn = { preloadedState: { demo: { isActive: true, isHydrated: true } } };
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('renders all navigation tabs', () => {
     renderWithProviders(<Sidebar />, demoOff);

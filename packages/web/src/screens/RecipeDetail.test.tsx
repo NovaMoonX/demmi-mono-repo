@@ -1,21 +1,24 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { RecipeDetail } from './RecipeDetail';
 import type { Recipe } from '@lib/recipes';
 
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+const mockNavigate = vi.fn();
+const mockUseParams = vi.fn();
+
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
-  useParams: () => ({ id: 'new' }),
+  useParams: () => mockUseParams(),
   useLocation: () => ({ state: null, pathname: '/recipes/new' }),
   Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
     <a href={to} {...props}>{children}</a>
   ),
 }));
 
-jest.mock('@store/actions/recipeActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/recipeActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchRecipes: createAsyncThunk('recipes/fetch', async () => []),
     createRecipe: createAsyncThunk('recipes/create', async () => ({})),
@@ -24,8 +27,8 @@ jest.mock('@store/actions/recipeActions', () => {
   };
 });
 
-jest.mock('@store/actions/shareRecipeActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/shareRecipeActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     shareRecipe: createAsyncThunk('recipes/share', async () => ({})),
     unshareRecipe: createAsyncThunk('recipes/unshare', async () => ({})),
@@ -33,8 +36,8 @@ jest.mock('@store/actions/shareRecipeActions', () => {
   };
 });
 
-jest.mock('@store/actions/shoppingListActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/shoppingListActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchShoppingList: createAsyncThunk('shoppingList/fetch', async () => []),
     createShoppingListItem: createAsyncThunk('shoppingList/create', async () => ({})),
@@ -44,7 +47,7 @@ jest.mock('@store/actions/shoppingListActions', () => {
   };
 });
 
-jest.mock('@components/recipes/RecipeIngredientSelector', () => ({
+vi.mock('@components/recipes/RecipeIngredientSelector', () => ({
   RecipeIngredientSelector: () => (
     <div data-testid="recipe-ingredient-selector">RecipeIngredientSelector</div>
   ),
@@ -69,6 +72,10 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
 }
 
 describe('RecipeDetail - New Mode', () => {
+  beforeEach(() => {
+    mockUseParams.mockReturnValue({ id: 'new' });
+  });
+
   it('renders the form for a new recipe', () => {
     renderWithProviders(<RecipeDetail />);
     expect(screen.getByText('Create Recipe')).toBeInTheDocument();
@@ -83,8 +90,7 @@ describe('RecipeDetail - New Mode', () => {
 
 describe('RecipeDetail - View Mode', () => {
   beforeEach(() => {
-    const reactRouterDom = jest.requireMock('react-router-dom');
-    reactRouterDom.useParams = () => ({ id: 'rec-1' });
+    mockUseParams.mockReturnValue({ id: 'rec-1' });
   });
 
   it('renders the recipe title in view mode', () => {

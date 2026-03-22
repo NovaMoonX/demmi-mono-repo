@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ChatHistory } from './ChatHistory';
 import type { ChatConversation } from '@lib/chat';
@@ -30,13 +31,13 @@ describe('ChatHistory', () => {
   const defaultProps = {
     conversations: [] as ChatConversation[],
     currentChatId: null as string | null,
-    onSelectChat: jest.fn(),
-    onNewChat: jest.fn(),
-    onTogglePin: jest.fn(),
-    onDeleteChat: jest.fn(),
+    onSelectChat: vi.fn(),
+    onNewChat: vi.fn(),
+    onTogglePin: vi.fn(),
+    onDeleteChat: vi.fn(),
   };
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('renders "New Chat" button', () => {
     render(<ChatHistory {...defaultProps} />);

@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -12,21 +13,21 @@ import { openFoodFactsApi } from '@store/api/openFoodFactsApi';
 
 let authStateCallback: ((user: unknown) => void) | null = null;
 
-jest.mock('firebase/auth', () => ({
-  onAuthStateChanged: jest.fn((_auth: unknown, cb: (user: unknown) => void) => {
+vi.mock('firebase/auth', () => ({
+  onAuthStateChanged: vi.fn((_auth: unknown, cb: (user: unknown) => void) => {
     authStateCallback = cb;
     cb(null);
-    return jest.fn();
+    return vi.fn();
   }),
 }));
 
-jest.mock('@lib/firebase/auth.service', () => ({
-  signIn: jest.fn().mockResolvedValue({}),
-  signUp: jest.fn().mockResolvedValue({}),
-  signInWithGoogle: jest.fn().mockResolvedValue({}),
-  logOut: jest.fn().mockResolvedValue(undefined),
-  resendVerificationEmail: jest.fn().mockResolvedValue({}),
-  convertFirebaseUser: jest.fn((user: unknown) => {
+vi.mock('@lib/firebase/auth.service', () => ({
+  signIn: vi.fn().mockResolvedValue({}),
+  signUp: vi.fn().mockResolvedValue({}),
+  signInWithGoogle: vi.fn().mockResolvedValue({}),
+  logOut: vi.fn().mockResolvedValue(undefined),
+  resendVerificationEmail: vi.fn().mockResolvedValue({}),
+  convertFirebaseUser: vi.fn((user: unknown) => {
     if (!user) return null;
     const u = user as { uid: string; email: string; emailVerified: boolean };
     return { uid: u.uid, email: u.email, emailVerified: u.emailVerified };

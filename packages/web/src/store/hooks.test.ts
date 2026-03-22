@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { useAppDispatch, useAppSelector } from './hooks';
 
 describe('store hooks', () => {

@@ -1,18 +1,19 @@
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCookModeVoice } from './useCookModeVoice';
 
 const defaultOptions = {
   enabled: false,
-  onNextStep: jest.fn(),
-  onPrevStep: jest.fn(),
-  onGoToStep: jest.fn(),
-  onGoToLastStep: jest.fn(),
-  onSetServings: jest.fn(),
-  onOpenIngredients: jest.fn(),
-  onCloseIngredients: jest.fn(),
-  onIncreaseServings: jest.fn(),
-  onDecreaseServings: jest.fn(),
-  onExit: jest.fn(),
+  onNextStep: vi.fn(),
+  onPrevStep: vi.fn(),
+  onGoToStep: vi.fn(),
+  onGoToLastStep: vi.fn(),
+  onSetServings: vi.fn(),
+  onOpenIngredients: vi.fn(),
+  onCloseIngredients: vi.fn(),
+  onIncreaseServings: vi.fn(),
+  onDecreaseServings: vi.fn(),
+  onExit: vi.fn(),
 };
 
 describe('useCookModeVoice', () => {
@@ -23,8 +24,8 @@ describe('useCookModeVoice', () => {
 
   it('returns wake_word when SpeechRecognition is available', () => {
     const mockRecognition = {
-      start: jest.fn(),
-      abort: jest.fn(),
+      start: vi.fn(),
+      abort: vi.fn(),
       continuous: false,
       interimResults: false,
       lang: '',
@@ -33,7 +34,17 @@ describe('useCookModeVoice', () => {
       onerror: null,
       onend: null,
     };
-    const MockSpeechRecognition = jest.fn(() => mockRecognition);
+    class MockSpeechRecognition {
+      start = mockRecognition.start;
+      abort = mockRecognition.abort;
+      continuous = mockRecognition.continuous;
+      interimResults = mockRecognition.interimResults;
+      lang = mockRecognition.lang;
+      maxAlternatives = mockRecognition.maxAlternatives;
+      onresult = mockRecognition.onresult;
+      onerror = mockRecognition.onerror;
+      onend = mockRecognition.onend;
+    }
     Object.defineProperty(window, 'SpeechRecognition', {
       value: MockSpeechRecognition,
       writable: true,

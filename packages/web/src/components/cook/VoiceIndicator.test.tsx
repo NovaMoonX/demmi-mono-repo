@@ -1,9 +1,10 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { render } from '@testing-library/react';
 import { VoiceIndicator } from './VoiceIndicator';
 
 describe('VoiceIndicator', () => {
-  const onToggle = jest.fn();
+  const onToggle = vi.fn();
 
   it('returns null when unsupported', () => {
     const { container } = render(

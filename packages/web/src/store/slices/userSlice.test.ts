@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import reducer, { setUser, setLoading, clearUser } from './userSlice';
 
 describe('userSlice', () => {

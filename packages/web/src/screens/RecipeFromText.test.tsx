@@ -1,22 +1,23 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { RecipeFromText } from './RecipeFromText';
 
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
   Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
     <a href={to} {...props}>{children}</a>
   ),
 }));
 
-jest.mock('@components/chat/OllamaModelControl', () => ({
+vi.mock('@components/chat/OllamaModelControl', () => ({
   OllamaModelControl: () => <div data-testid="ollama-model-control">OllamaModelControl</div>,
 }));
 
-jest.mock('@store/actions/ingredientActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/ingredientActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchIngredients: createAsyncThunk('ingredients/fetch', async () => []),
     createIngredient: createAsyncThunk('ingredients/create', async () => ({})),
@@ -25,8 +26,8 @@ jest.mock('@store/actions/ingredientActions', () => {
   };
 });
 
-jest.mock('@store/actions/recipeActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/recipeActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchRecipes: createAsyncThunk('recipes/fetch', async () => []),
     createRecipe: createAsyncThunk('recipes/create', async () => ({})),
@@ -35,8 +36,8 @@ jest.mock('@store/actions/recipeActions', () => {
   };
 });
 
-jest.mock('@store/actions/shareRecipeActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/shareRecipeActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     shareRecipe: createAsyncThunk('recipes/share', async () => ({})),
     unshareRecipe: createAsyncThunk('recipes/unshare', async () => ({})),
@@ -44,8 +45,8 @@ jest.mock('@store/actions/shareRecipeActions', () => {
   };
 });
 
-jest.mock('@store/actions/shoppingListActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/shoppingListActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchShoppingList: createAsyncThunk('shoppingList/fetch', async () => []),
     createShoppingListItem: createAsyncThunk('shoppingList/create', async () => ({})),
@@ -55,9 +56,9 @@ jest.mock('@store/actions/shoppingListActions', () => {
   };
 });
 
-jest.mock('@lib/ollama/actions', () => ({
+vi.mock('@lib/ollama/actions', () => ({
   createRecipeAction: {
-    execute: jest.fn().mockResolvedValue({ cancelled: false, data: { proposal: null } }),
+    execute: vi.fn().mockResolvedValue({ cancelled: false, data: { proposal: null } }),
   },
 }));
 

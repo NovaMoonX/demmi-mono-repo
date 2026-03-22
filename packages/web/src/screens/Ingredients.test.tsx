@@ -1,9 +1,10 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { Ingredients } from './Ingredients';
 import type { Ingredient } from '@lib/ingredients';
 
-jest.mock('@components/ingredients', () => ({
+vi.mock('@components/ingredients', () => ({
   CreateIngredientModal: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="create-modal">Create Modal</div> : null,
   IngredientCard: ({ ingredient, onClick }: { ingredient: Ingredient; onClick: () => void }) => (

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import reducer, { enableDemo, disableDemo } from './demoSlice';
 
 describe('demoSlice', () => {

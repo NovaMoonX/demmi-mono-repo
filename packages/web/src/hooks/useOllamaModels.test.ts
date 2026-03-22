@@ -1,20 +1,21 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 
-const mockDispatch = jest.fn();
-jest.mock('@store/hooks', () => ({
+const mockDispatch = vi.fn();
+vi.mock('@store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
   useAppSelector: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({ chats: { selectedModel: null } }),
 }));
 
-const mockListLocalModels = jest.fn();
-const mockPullModelStream = jest.fn();
-jest.mock('@lib/ollama', () => ({
+const mockListLocalModels = vi.fn();
+const mockPullModelStream = vi.fn();
+vi.mock('@lib/ollama', () => ({
   listLocalModels: (...args: unknown[]) => mockListLocalModels(...args),
   pullModelStream: (...args: unknown[]) => mockPullModelStream(...args),
 }));
 
-jest.mock('@store/slices/chatsSlice', () => ({
+vi.mock('@store/slices/chatsSlice', () => ({
   setSelectedModel: (model: string) => ({ type: 'chats/setSelectedModel', payload: model }),
 }));
 
@@ -22,7 +23,7 @@ import { useOllamaModels } from './useOllamaModels';
 
 describe('useOllamaModels', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('loads models on mount', async () => {

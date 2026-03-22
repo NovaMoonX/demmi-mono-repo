@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { getPricePerServing } from './ingredients.utils';
 import type { Ingredient, Product } from './ingredients.types';
 

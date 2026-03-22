@@ -1,21 +1,24 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { IngredientDetail } from './IngredientDetail';
 import type { Ingredient } from '@lib/ingredients';
 
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+const mockNavigate = vi.fn();
+const mockUseParams = vi.fn();
+
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
-  useParams: () => ({ id: 'new' }),
+  useParams: () => mockUseParams(),
   useLocation: () => ({ state: null, pathname: '/ingredients/new' }),
   Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
     <a href={to} {...props}>{children}</a>
   ),
 }));
 
-jest.mock('@store/actions/ingredientActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/ingredientActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchIngredients: createAsyncThunk('ingredients/fetch', async () => []),
     createIngredient: createAsyncThunk('ingredients/create', async () => ({})),
@@ -52,6 +55,10 @@ function createIngredient(overrides: Partial<Ingredient> = {}): Ingredient {
 }
 
 describe('IngredientDetail - New Mode', () => {
+  beforeEach(() => {
+    mockUseParams.mockReturnValue({ id: 'new' });
+  });
+
   it('renders the page title for new ingredient', () => {
     renderWithProviders(<IngredientDetail />);
     expect(screen.getByText('← Back to Ingredients')).toBeInTheDocument();
@@ -72,8 +79,7 @@ describe('IngredientDetail - New Mode', () => {
 
 describe('IngredientDetail - View Mode', () => {
   beforeEach(() => {
-    const reactRouterDom = jest.requireMock('react-router-dom');
-    reactRouterDom.useParams = () => ({ id: 'ing-1' });
+    mockUseParams.mockReturnValue({ id: 'ing-1' });
   });
 
   it('renders the ingredient name in view mode', () => {

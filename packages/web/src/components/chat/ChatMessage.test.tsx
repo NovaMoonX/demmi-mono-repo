@@ -1,13 +1,14 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ChatMessage } from './ChatMessage';
 import type { ChatMessage as ChatMessageType } from '@lib/chat';
 
-jest.mock('react-markdown', () => ({
+vi.mock('react-markdown', () => ({
   __esModule: true,
   default: ({ children }: { children: string }) => <div data-testid="markdown">{children}</div>,
 }));
 
-jest.mock('./agent-action-cards/CreateRecipeAgentActionCard', () => ({
+vi.mock('./agent-action-cards/CreateRecipeAgentActionCard', () => ({
   CreateRecipeAgentActionCard: () => <div data-testid="agent-action-card" />,
 }));
 
@@ -27,7 +28,7 @@ function createMessage(overrides: Partial<ChatMessageType> = {}): ChatMessageTyp
 }
 
 describe('ChatMessage', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('renders user message content', () => {
     render(<ChatMessage message={createMessage()} />);
@@ -59,7 +60,7 @@ describe('ChatMessage', () => {
   });
 
   it('renders edit button for user messages', () => {
-    const onEdit = jest.fn();
+    const onEdit = vi.fn();
     render(<ChatMessage message={createMessage()} onEdit={onEdit} />);
     fireEvent.click(screen.getByText('edit'));
     expect(onEdit).toHaveBeenCalledTimes(1);

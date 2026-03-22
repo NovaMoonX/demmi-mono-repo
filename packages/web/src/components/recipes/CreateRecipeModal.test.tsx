@@ -1,17 +1,18 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CreateRecipeModal } from './CreateRecipeModal';
 
 describe('CreateRecipeModal', () => {
   const defaultProps = {
     isOpen: true,
-    onClose: jest.fn(),
-    onSelectManual: jest.fn(),
-    onSelectFromText: jest.fn(),
-    onSelectFromUrl: jest.fn(),
+    onClose: vi.fn(),
+    onSelectManual: vi.fn(),
+    onSelectFromText: vi.fn(),
+    onSelectFromUrl: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders the modal', () => {

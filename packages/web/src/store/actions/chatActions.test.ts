@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import demoReducer from '@store/slices/demoSlice';
 import userReducer from '@store/slices/userSlice';
@@ -11,21 +12,21 @@ import {
   fetchChatMessages,
 } from './chatActions';
 
-jest.mock('firebase/firestore', () => ({
-  collection: jest.fn(),
-  doc: jest.fn(),
-  getDocs: jest.fn(),
-  getDoc: jest.fn(),
-  query: jest.fn(),
-  where: jest.fn(),
-  setDoc: jest.fn(),
-  updateDoc: jest.fn(),
-  arrayUnion: jest.fn((val: unknown) => val),
-  runTransaction: jest.fn(),
+vi.mock('firebase/firestore', () => ({
+  collection: vi.fn(),
+  doc: vi.fn(),
+  getDocs: vi.fn(),
+  getDoc: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+  setDoc: vi.fn(),
+  updateDoc: vi.fn(),
+  arrayUnion: vi.fn((val: unknown) => val),
+  runTransaction: vi.fn(),
 }));
 
-jest.mock('@utils/generatedId', () => ({
-  generatedId: jest.fn(() => 'chat-id-123'),
+vi.mock('@utils/generatedId', () => ({
+  generatedId: vi.fn(() => 'chat-id-123'),
 }));
 
 function createTestStore(demoActive: boolean, userId: string | null = 'user1') {

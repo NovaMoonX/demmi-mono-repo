@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { router } from './AppRoutes';
 
 describe('AppRoutes', () => {

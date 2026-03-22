@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import demoReducer from '@store/slices/demoSlice';
 import userReducer from '@store/slices/userSlice';
@@ -9,20 +10,20 @@ import {
   fetchSharedRecipe,
 } from './shareRecipeActions';
 
-jest.mock('firebase/firestore', () => ({
-  doc: jest.fn(),
-  runTransaction: jest.fn(),
+vi.mock('firebase/firestore', () => ({
+  doc: vi.fn(),
+  runTransaction: vi.fn(),
 }));
 
-jest.mock('firebase/database', () => ({
-  ref: jest.fn(),
-  set: jest.fn(),
-  remove: jest.fn(),
-  get: jest.fn().mockResolvedValue({ exists: () => false, val: () => null }),
+vi.mock('firebase/database', () => ({
+  ref: vi.fn(),
+  set: vi.fn(),
+  remove: vi.fn(),
+  get: vi.fn().mockResolvedValue({ exists: () => false, val: () => null }),
 }));
 
-jest.mock('@utils/generatedId', () => ({
-  generatedId: jest.fn(() => 'share-id-123'),
+vi.mock('@utils/generatedId', () => ({
+  generatedId: vi.fn(() => 'share-id-123'),
 }));
 
 function createTestStore(demoActive: boolean) {

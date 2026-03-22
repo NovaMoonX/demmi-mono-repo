@@ -1,3 +1,4 @@
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useIsMobileDevice } from './useIsMobileDevice';
 
@@ -20,15 +21,15 @@ describe('useIsMobileDevice', () => {
 
   it('returns true when media query matches mobile width', () => {
     const matchMediaListeners: Array<() => void> = [];
-    window.matchMedia = jest.fn().mockImplementation((query: string) => ({
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
       matches: true,
       media: query,
       onchange: null,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-      addEventListener: jest.fn((_: string, cb: () => void) => matchMediaListeners.push(cb)),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn((_: string, cb: () => void) => matchMediaListeners.push(cb)),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     }));
 
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
@@ -41,15 +42,15 @@ describe('useIsMobileDevice', () => {
     const matchMediaListeners: Array<() => void> = [];
     let currentMatches = false;
 
-    window.matchMedia = jest.fn().mockImplementation((query: string) => ({
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
       get matches() { return currentMatches; },
       media: query,
       onchange: null,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-      addEventListener: jest.fn((_: string, cb: () => void) => matchMediaListeners.push(cb)),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn((_: string, cb: () => void) => matchMediaListeners.push(cb)),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     }));
 
     const { result } = renderHook(() => useIsMobileDevice());

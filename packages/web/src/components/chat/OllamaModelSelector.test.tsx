@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { OllamaModelSelector } from './OllamaModelSelector';
 
@@ -10,12 +11,12 @@ const baseProps = {
   isPulling: false,
   pullProgress: null,
   pullError: null,
-  onSelectModel: jest.fn(),
-  onPullMistral: jest.fn(),
+  onSelectModel: vi.fn(),
+  onPullMistral: vi.fn(),
 };
 
 describe('OllamaModelSelector', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('renders a select dropdown when models are available', () => {
     render(<OllamaModelSelector {...baseProps} />);

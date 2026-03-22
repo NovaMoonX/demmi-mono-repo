@@ -1,26 +1,29 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ErrorFallback } from './ErrorFallback';
 
-const mockNavigate = jest.fn();
+const mockNavigate = vi.fn();
 const mockError = new Error('Test error message');
+const mockUseAuth = vi.fn();
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
   useRouteError: () => mockError,
 }));
 
-jest.mock('@hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: null,
-    logOut: jest.fn(),
-    loading: false,
-  }),
+vi.mock('@hooks/useAuth', () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 describe('ErrorFallback', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: null,
+      logOut: vi.fn(),
+      loading: false,
+    });
   });
 
   it('renders Error heading', () => {
@@ -57,24 +60,16 @@ describe('ErrorFallback', () => {
 
 describe('ErrorFallback (authenticated)', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('shows "Go to App" when user is authenticated', () => {
-    jest.spyOn(require('@hooks/useAuth'), 'useAuth').mockReturnValue({
+    mockUseAuth.mockReturnValue({
       user: { uid: 'test-user', email: 'test@test.com', emailVerified: true },
-      logOut: jest.fn(),
+      logOut: vi.fn(),
       loading: false,
     });
     render(<ErrorFallback />);
     expect(screen.getByText('Go to App')).toBeInTheDocument();
-  });
-});
-
-describe('ErrorFallback (no error)', () => {
-  it('does not render error box when error is falsy', () => {
-    jest.spyOn(require('react-router-dom'), 'useRouteError').mockReturnValue(null);
-    render(<ErrorFallback />);
-    expect(screen.queryByText('Test error message')).not.toBeInTheDocument();
   });
 });

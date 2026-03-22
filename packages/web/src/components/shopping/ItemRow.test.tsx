@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ItemRow } from './ItemRow';
 import type { ShoppingListItem } from '@lib/shoppingList';
@@ -45,13 +46,13 @@ describe('ItemRow', () => {
   const defaultProps = {
     item: createItem(),
     ingredients: [] as Ingredient[],
-    onToggle: jest.fn(),
-    onEdit: jest.fn(),
-    onDelete: jest.fn(),
+    onToggle: vi.fn(),
+    onEdit: vi.fn(),
+    onDelete: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders the item name', () => {

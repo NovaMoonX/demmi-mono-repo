@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { openFoodFactsApi, useLazyGetProductByBarcodeQuery } from './openFoodFactsApi';
 
 describe('openFoodFactsApi', () => {

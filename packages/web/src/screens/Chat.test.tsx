@@ -1,52 +1,53 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { Chat } from './Chat';
 
-jest.mock('@components/chat/ChatHistoryToggleIcon', () => ({
+vi.mock('@components/chat/ChatHistoryToggleIcon', () => ({
   ChatHistoryToggleIcon: () => <span data-testid="chat-history-toggle-icon" />,
 }));
 
-jest.mock('@components/chat/ChatHistory', () => ({
+vi.mock('@components/chat/ChatHistory', () => ({
   ChatHistory: () => <div data-testid="chat-history">ChatHistory</div>,
 }));
 
-jest.mock('@components/chat/ChatMessage', () => ({
+vi.mock('@components/chat/ChatMessage', () => ({
   ChatMessage: ({ message }: { message: { content: string } }) => (
     <div data-testid="chat-message">{message.content}</div>
   ),
 }));
 
-jest.mock('@components/chat/OllamaModelControl', () => ({
+vi.mock('@components/chat/OllamaModelControl', () => ({
   OllamaModelControl: () => <div data-testid="ollama-model-control">OllamaModelControl</div>,
 }));
 
-jest.mock('@hooks/useIsMobileDevice', () => ({
+vi.mock('@hooks/useIsMobileDevice', () => ({
   useIsMobileDevice: () => false,
 }));
 
-jest.mock('@hooks/useOllamaModels', () => ({
+vi.mock('@hooks/useOllamaModels', () => ({
   useOllamaModels: () => ({
     availableModels: ['test-model'],
     selectedModel: 'test-model',
     isLoading: false,
     error: null,
-    selectModel: jest.fn(),
+    selectModel: vi.fn(),
     isPulling: false,
     pullProgress: null,
     pullError: null,
-    pullMistral: jest.fn(),
+    pullMistral: vi.fn(),
   }),
 }));
 
-jest.mock('@lib/ollama', () => ({
-  detectIntent: jest.fn(),
-  generateSummary: jest.fn(),
-  getActionHandler: jest.fn(),
-  iterateRecipeAction: jest.fn(),
+vi.mock('@lib/ollama', () => ({
+  detectIntent: vi.fn(),
+  generateSummary: vi.fn(),
+  getActionHandler: vi.fn(),
+  iterateRecipeAction: vi.fn(),
 }));
 
-jest.mock('@store/actions/ingredientActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/ingredientActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchIngredients: createAsyncThunk('ingredients/fetch', async () => []),
     createIngredient: createAsyncThunk('ingredients/create', async () => ({})),
@@ -55,8 +56,8 @@ jest.mock('@store/actions/ingredientActions', () => {
   };
 });
 
-jest.mock('@store/actions/recipeActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/recipeActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchRecipes: createAsyncThunk('recipes/fetch', async () => []),
     createRecipe: createAsyncThunk('recipes/create', async () => ({})),
@@ -65,8 +66,8 @@ jest.mock('@store/actions/recipeActions', () => {
   };
 });
 
-jest.mock('@store/actions/shareRecipeActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/shareRecipeActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     shareRecipe: createAsyncThunk('recipes/share', async () => ({})),
     unshareRecipe: createAsyncThunk('recipes/unshare', async () => ({})),
@@ -74,8 +75,8 @@ jest.mock('@store/actions/shareRecipeActions', () => {
   };
 });
 
-jest.mock('@store/actions/shoppingListActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/shoppingListActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchShoppingList: createAsyncThunk('shoppingList/fetch', async () => []),
     createShoppingListItem: createAsyncThunk('shoppingList/create', async () => ({})),
@@ -85,8 +86,8 @@ jest.mock('@store/actions/shoppingListActions', () => {
   };
 });
 
-jest.mock('@store/actions/chatActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/chatActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     fetchChats: createAsyncThunk('chats/fetch', async () => []),
     createChat: createAsyncThunk('chats/create', async () => ({})),

@@ -1,9 +1,10 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { Recipes } from './Recipes';
 import type { Recipe } from '@lib/recipes';
 
-jest.mock('@components/recipes/RecipeCard', () => ({
+vi.mock('@components/recipes/RecipeCard', () => ({
   RecipeCard: ({ recipe, onClick }: { recipe: Recipe; onClick: (r: Recipe) => void }) => (
     <div data-testid={`recipe-card-${recipe.id}`} onClick={() => onClick(recipe)}>
       {recipe.title}
@@ -11,7 +12,7 @@ jest.mock('@components/recipes/RecipeCard', () => ({
   ),
 }));
 
-jest.mock('@components/recipes/CreateRecipeModal', () => ({
+vi.mock('@components/recipes/CreateRecipeModal', () => ({
   CreateRecipeModal: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="create-modal">Create Modal</div> : null,
 }));

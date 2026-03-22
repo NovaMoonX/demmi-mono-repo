@@ -1,9 +1,10 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { ShoppingList } from './ShoppingList';
 import type { ShoppingListItem } from '@lib/shoppingList';
 
-jest.mock('@components/shopping', () => ({
+vi.mock('@components/shopping', () => ({
   ItemRow: ({ item, onToggle, onEdit, onDelete }: {
     item: ShoppingListItem;
     onToggle: () => void;
@@ -30,8 +31,8 @@ jest.mock('@components/shopping', () => ({
   }),
 }));
 
-jest.mock('@store/actions/shoppingListActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/shoppingListActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   const fetchShoppingList = createAsyncThunk('shoppingList/fetch', async () => []);
   const createShoppingListItem = createAsyncThunk('shoppingList/create', async (item: unknown) => item);
   const updateShoppingListItem = createAsyncThunk('shoppingList/update', async (item: unknown) => item);

@@ -1,24 +1,25 @@
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import App from './App';
 
-jest.mock('@routes/AppRoutes', () => ({
+vi.mock('@routes/AppRoutes', () => ({
   router: 'mock-router',
 }));
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   RouterProvider: () => <div data-testid="router-provider">Router</div>,
 }));
 
-jest.mock('@contexts/AuthContext', () => ({
+vi.mock('@contexts/AuthContext', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="auth-provider">{children}</div>
   ),
 }));
 
-jest.mock('@store/index', () => {
-  const { configureStore } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/index', async () => {
+  const { configureStore } = await vi.importActual('@reduxjs/toolkit');
   return {
     store: configureStore({
       reducer: { stub: (s = {}) => s },

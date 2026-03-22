@@ -1,31 +1,32 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { Auth } from './Auth';
 
-const mockNavigate = jest.fn();
-const mockSignIn = jest.fn().mockResolvedValue({});
-const mockSignUp = jest.fn().mockResolvedValue({});
-const mockSignInWithGoogle = jest.fn().mockResolvedValue({});
+const mockNavigate = vi.fn();
+const mockSignIn = vi.fn().mockResolvedValue({});
+const mockSignUp = vi.fn().mockResolvedValue({});
+const mockSignInWithGoogle = vi.fn().mockResolvedValue({});
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
 }));
 
-jest.mock('@hooks/useAuth', () => ({
+vi.mock('@hooks/useAuth', () => ({
   useAuth: () => ({
     user: null,
     loading: false,
     signIn: mockSignIn,
     signUp: mockSignUp,
     signInWithGoogle: mockSignInWithGoogle,
-    logOut: jest.fn(),
-    resendVerificationEmail: jest.fn(),
+    logOut: vi.fn(),
+    resendVerificationEmail: vi.fn(),
   }),
 }));
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 describe('Auth', () => {

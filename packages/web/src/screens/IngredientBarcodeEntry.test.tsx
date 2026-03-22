@@ -1,10 +1,11 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { IngredientBarcodeEntry } from './IngredientBarcodeEntry';
 
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
   useLocation: () => ({ state: null, pathname: '/ingredients/new/barcode-entry' }),
   Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
@@ -12,14 +13,14 @@ jest.mock('react-router-dom', () => ({
   ),
 }));
 
-const mockTriggerLookup = jest.fn();
-jest.mock('@store/api/openFoodFactsApi', () => ({
+const mockTriggerLookup = vi.fn();
+vi.mock('@store/api/openFoodFactsApi', () => ({
   openFoodFactsApi: {
     reducerPath: 'openFoodFactsApi',
     reducer: (s = {}) => s,
     middleware: () => (n: Function) => (a: unknown) => n(a),
   },
-  useGetProductByBarcodeQuery: jest.fn().mockReturnValue({
+  useGetProductByBarcodeQuery: vi.fn().mockReturnValue({
     data: null,
     isLoading: false,
     error: null,
@@ -30,8 +31,8 @@ jest.mock('@store/api/openFoodFactsApi', () => ({
   ],
 }));
 
-jest.mock('@/utils', () => ({
-  getBarcodePrefillOptions: jest.fn().mockReturnValue({
+vi.mock('@/utils', () => ({
+  getBarcodePrefillOptions: vi.fn().mockReturnValue({
     options: [],
     defaultOptionId: null,
     hasMultipleOptions: false,
@@ -39,7 +40,7 @@ jest.mock('@/utils', () => ({
 }));
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 describe('IngredientBarcodeEntry', () => {

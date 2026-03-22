@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import demoReducer from '@store/slices/demoSlice';
 import userReducer from '@store/slices/userSlice';
@@ -10,19 +11,19 @@ import {
   clearCheckedShoppingListItems,
 } from './shoppingListActions';
 
-jest.mock('firebase/firestore', () => ({
-  collection: jest.fn(),
-  doc: jest.fn(),
-  getDocs: jest.fn(),
-  query: jest.fn(),
-  where: jest.fn(),
-  setDoc: jest.fn(),
-  runTransaction: jest.fn(),
-  writeBatch: jest.fn(() => ({ delete: jest.fn(), commit: jest.fn().mockResolvedValue(undefined) })),
+vi.mock('firebase/firestore', () => ({
+  collection: vi.fn(),
+  doc: vi.fn(),
+  getDocs: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+  setDoc: vi.fn(),
+  runTransaction: vi.fn(),
+  writeBatch: vi.fn(() => ({ delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) })),
 }));
 
-jest.mock('@utils/generatedId', () => ({
-  generatedId: jest.fn(() => 'sl-id-123'),
+vi.mock('@utils/generatedId', () => ({
+  generatedId: vi.fn(() => 'sl-id-123'),
 }));
 
 function createTestStore(demoActive: boolean, items: unknown[] = []) {

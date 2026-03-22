@@ -1,15 +1,16 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import Layout from './Layout';
 
-jest.mock('@components/Sidebar', () => ({
+vi.mock('@components/Sidebar', () => ({
   Sidebar: () => <div data-testid="sidebar">Sidebar</div>,
 }));
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   Outlet: () => <div data-testid="outlet">Outlet Content</div>,
-  useNavigate: () => jest.fn(),
+  useNavigate: () => vi.fn(),
 }));
 
 describe('Layout', () => {

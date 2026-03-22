@@ -1,18 +1,19 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { CreateRecipeAgentActionCard } from './CreateRecipeAgentActionCard';
 
-jest.mock('../GeneratingIndicator', () => ({
+vi.mock('../GeneratingIndicator', () => ({
   GeneratingIndicator: () => <div data-testid="generating-indicator" />,
 }));
 
 const baseProps = {
-  onConfirmIntent: jest.fn(),
-  onRejectIntent: jest.fn(),
-  onApprove: jest.fn(),
-  onReject: jest.fn(),
-  onAddToShoppingList: jest.fn().mockResolvedValue(3),
-  onSkipShoppingList: jest.fn(),
+  onConfirmIntent: vi.fn(),
+  onRejectIntent: vi.fn(),
+  onApprove: vi.fn(),
+  onReject: vi.fn(),
+  onAddToShoppingList: vi.fn().mockResolvedValue(3),
+  onSkipShoppingList: vi.fn(),
 };
 
 const mockProposal = {

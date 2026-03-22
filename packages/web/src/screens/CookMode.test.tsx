@@ -1,20 +1,21 @@
+import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { CookMode } from './CookMode';
 import type { Recipe } from '@lib/recipes';
 
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
   useParams: () => ({ id: 'recipe-1' }),
 }));
 
-jest.mock('@components/cook', () => ({
+vi.mock('@components/cook', () => ({
   VoiceIndicator: () => <div data-testid="voice-indicator">VoiceIndicator</div>,
 }));
 
-jest.mock('@hooks/useCookModeVoice', () => ({
+vi.mock('@hooks/useCookModeVoice', () => ({
   useCookModeVoice: () => ({
     voiceState: 'unsupported' as const,
   }),

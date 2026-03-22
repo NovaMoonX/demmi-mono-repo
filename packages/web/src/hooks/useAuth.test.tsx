@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { AuthContext, useAuth, AuthContextType } from './useAuth';
 
@@ -12,11 +13,11 @@ describe('useAuth', () => {
     const mockValue: AuthContextType = {
       user: { uid: 'u1', email: 'a@b.com', emailVerified: true },
       loading: false,
-      signIn: jest.fn(),
-      signUp: jest.fn(),
-      signInWithGoogle: jest.fn(),
-      logOut: jest.fn(),
-      resendVerificationEmail: jest.fn(),
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signInWithGoogle: vi.fn(),
+      logOut: vi.fn(),
+      resendVerificationEmail: vi.fn(),
     };
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (

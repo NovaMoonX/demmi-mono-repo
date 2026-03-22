@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { emptyForm, itemToForm } from './shoppingUtils';
 import type { ShoppingListItem } from '@lib/shoppingList';
 

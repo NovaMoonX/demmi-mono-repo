@@ -1,6 +1,9 @@
 import { test, expect, _electron as electron } from '@playwright/test';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const MAIN_PATH = path.join(__dirname, '..', 'dist', 'main.js');
 
 test.describe('Electron App', () => {

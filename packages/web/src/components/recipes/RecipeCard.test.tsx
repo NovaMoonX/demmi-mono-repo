@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RecipeCard } from './RecipeCard';
 import type { Recipe } from '@lib/recipes';
@@ -24,7 +25,7 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
 }
 
 describe('RecipeCard', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('renders the recipe title', () => {
     render(<RecipeCard recipe={createRecipe()} />);
@@ -94,7 +95,7 @@ describe('RecipeCard', () => {
   });
 
   it('calls onClick when the card is clicked', () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     const recipe = createRecipe();
     render(<RecipeCard recipe={recipe} onClick={onClick} />);
     fireEvent.click(screen.getByText('Spaghetti Carbonara'));

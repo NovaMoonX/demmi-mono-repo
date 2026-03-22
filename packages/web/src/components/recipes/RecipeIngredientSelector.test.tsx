@@ -1,8 +1,9 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { RecipeIngredientSelector } from './RecipeIngredientSelector';
 
-jest.mock('@components/ingredients', () => ({
+vi.mock('@components/ingredients', () => ({
   CreateIngredientModal: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="create-ingredient-modal" /> : null,
 }));
@@ -23,10 +24,10 @@ const mockIngredients = [
 ];
 
 describe('RecipeIngredientSelector', () => {
-  const onChange = jest.fn();
+  const onChange = vi.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('shows empty message when no ingredients selected', () => {

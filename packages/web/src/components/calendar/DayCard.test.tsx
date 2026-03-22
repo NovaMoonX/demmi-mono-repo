@@ -1,15 +1,16 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DayCard, DayCardProps } from './DayCard';
 import type { PlannedRecipe } from '@lib/calendar';
 import type { Recipe } from '@lib/recipes';
 import type { Ingredient } from '@lib/ingredients';
 
-jest.mock('@/utils', () => ({
+vi.mock('@/utils', () => ({
   formatDateShort: (ts: number) => 'Jan 15',
   formatDayShort: (ts: number) => 'Mon',
 }));
 
-jest.mock('@/lib/calendar/calendar.utils', () => ({
+vi.mock('@/lib/calendar/calendar.utils', () => ({
   calculateTotals: () => ({
     calories: 500,
     protein: 30,
@@ -61,16 +62,16 @@ function defaultProps(overrides: Partial<DayCardProps> = {}): DayCardProps {
     recipes,
     ingredients,
     compact: false,
-    onAdd: jest.fn(),
-    onEdit: jest.fn(),
-    onViewDetail: jest.fn(),
-    onGoToDay: jest.fn(),
+    onAdd: vi.fn(),
+    onEdit: vi.fn(),
+    onViewDetail: vi.fn(),
+    onGoToDay: vi.fn(),
     ...overrides,
   };
 }
 
 describe('DayCard', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('renders "No recipes planned." when there are no planned recipes', () => {
     render(<DayCard {...defaultProps()} />);
@@ -83,7 +84,7 @@ describe('DayCard', () => {
   });
 
   it('calls onAdd when + Add button is clicked', () => {
-    const onAdd = jest.fn();
+    const onAdd = vi.fn();
     render(<DayCard {...defaultProps({ onAdd })} />);
     fireEvent.click(screen.getByText('+ Add'));
     expect(onAdd).toHaveBeenCalledWith(day);
@@ -102,7 +103,7 @@ describe('DayCard', () => {
   });
 
   it('calls onEdit when a recipe row is clicked', () => {
-    const onEdit = jest.fn();
+    const onEdit = vi.fn();
     const planned = [createPlannedRecipe()];
     render(<DayCard {...defaultProps({ plannedRecipes: planned, onEdit })} />);
     fireEvent.click(screen.getByText('Pancakes'));
@@ -123,7 +124,7 @@ describe('DayCard', () => {
   });
 
   it('calls onGoToDay when compact date is clicked', () => {
-    const onGoToDay = jest.fn();
+    const onGoToDay = vi.fn();
     render(<DayCard {...defaultProps({ compact: true, onGoToDay })} />);
     fireEvent.click(screen.getByText('Jan 15'));
     expect(onGoToDay).toHaveBeenCalledWith(day);
@@ -136,7 +137,7 @@ describe('DayCard', () => {
   });
 
   it('calls onViewDetail when detail button is clicked', () => {
-    const onViewDetail = jest.fn();
+    const onViewDetail = vi.fn();
     const planned = [createPlannedRecipe()];
     render(<DayCard {...defaultProps({ compact: true, plannedRecipes: planned, onViewDetail })} />);
     fireEvent.click(screen.getByLabelText('View day details'));

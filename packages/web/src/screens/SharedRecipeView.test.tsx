@@ -1,13 +1,14 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { SharedRecipeView } from './SharedRecipeView';
 import type { SharedRecipe } from '@lib/recipes/sharedRecipe.types';
 
-const mockNavigate = jest.fn();
+const mockNavigate = vi.fn();
 let mockShareId = 'share-123';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
   useNavigate: () => mockNavigate,
   useParams: () => ({ shareId: mockShareId }),
   Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
@@ -15,10 +16,10 @@ jest.mock('react-router-dom', () => ({
   ),
 }));
 
-const mockFetchSharedRecipe = jest.fn();
+const mockFetchSharedRecipe = vi.fn();
 
-jest.mock('@store/actions/shareRecipeActions', () => {
-  const { createAsyncThunk } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('@store/actions/shareRecipeActions', async () => {
+  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
   return {
     shareRecipe: createAsyncThunk('recipes/share', async () => ({})),
     unshareRecipe: createAsyncThunk('recipes/unshare', async () => ({})),
@@ -44,7 +45,7 @@ const mockSharedRecipe: SharedRecipe = {
 };
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   mockShareId = 'share-123';
 });
 

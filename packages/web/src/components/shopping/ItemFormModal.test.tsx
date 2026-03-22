@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ItemFormModal, ItemFormModalProps, ItemFormState } from './ItemFormModal';
 
@@ -28,15 +29,15 @@ function defaultProps(overrides: Partial<ItemFormModalProps> = {}): ItemFormModa
       { value: 'other', text: 'Other' },
       { value: 'produce', text: 'Produce' },
     ],
-    onFormChange: jest.fn(),
-    onSubmit: jest.fn(),
-    onClose: jest.fn(),
+    onFormChange: vi.fn(),
+    onSubmit: vi.fn(),
+    onClose: vi.fn(),
     ...overrides,
   };
 }
 
 describe('ItemFormModal', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('renders the modal', () => {
     render(<ItemFormModal {...defaultProps()} />);
@@ -55,14 +56,14 @@ describe('ItemFormModal', () => {
   });
 
   it('calls onFormChange when simple text toggle is clicked', () => {
-    const onFormChange = jest.fn();
+    const onFormChange = vi.fn();
     render(<ItemFormModal {...defaultProps({ onFormChange, form: defaultForm({ ingredientId: 'ing-1' }) })} />);
     fireEvent.click(screen.getByText(/Simple text/));
     expect(onFormChange).toHaveBeenCalledWith({ ingredientId: null, productId: null });
   });
 
   it('calls onFormChange when ingredient toggle is clicked', () => {
-    const onFormChange = jest.fn();
+    const onFormChange = vi.fn();
     render(<ItemFormModal {...defaultProps({ onFormChange })} />);
     fireEvent.click(screen.getByText(/Ingredient/));
     expect(onFormChange).toHaveBeenCalledWith({ ingredientId: '' });
@@ -104,7 +105,7 @@ describe('ItemFormModal', () => {
   });
 
   it('calls onSubmit when submit button is clicked', () => {
-    const onSubmit = jest.fn();
+    const onSubmit = vi.fn();
     const form = defaultForm({ name: 'Milk' });
     render(<ItemFormModal {...defaultProps({ form, onSubmit })} />);
     fireEvent.click(screen.getByText('Add Item'));
@@ -112,7 +113,7 @@ describe('ItemFormModal', () => {
   });
 
   it('calls onClose when Cancel is clicked', () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     render(<ItemFormModal {...defaultProps({ onClose })} />);
     fireEvent.click(screen.getByText('Cancel'));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -124,7 +125,7 @@ describe('ItemFormModal', () => {
   });
 
   it('calls onFormChange when name input changes', () => {
-    const onFormChange = jest.fn();
+    const onFormChange = vi.fn();
     render(<ItemFormModal {...defaultProps({ onFormChange })} />);
     fireEvent.change(screen.getByPlaceholderText('e.g. Dish soap'), { target: { value: 'Soap' } });
     expect(onFormChange).toHaveBeenCalledWith({ name: 'Soap' });

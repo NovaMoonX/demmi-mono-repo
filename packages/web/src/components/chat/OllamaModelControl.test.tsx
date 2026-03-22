@@ -1,10 +1,11 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { OllamaModelControl } from './OllamaModelControl';
 
-const mockSelectModel = jest.fn();
-const mockPullMistral = jest.fn();
+const mockSelectModel = vi.fn();
+const mockPullMistral = vi.fn();
 
-jest.mock('@hooks/useOllamaModels', () => ({
+vi.mock('@hooks/useOllamaModels', () => ({
   useOllamaModels: () => ({
     availableModels: ['mistral', 'llama3'],
     selectedModel: 'mistral',
@@ -18,14 +19,14 @@ jest.mock('@hooks/useOllamaModels', () => ({
   }),
 }));
 
-jest.mock('./OllamaModelSelector', () => ({
+vi.mock('./OllamaModelSelector', () => ({
   OllamaModelSelector: (props: Record<string, unknown>) => (
     <div data-testid="model-selector" data-models={JSON.stringify(props.models)} data-selected={props.selectedModel as string} />
   ),
 }));
 
 describe('OllamaModelControl', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('renders the OllamaModelSelector', () => {
     render(<OllamaModelControl />);
