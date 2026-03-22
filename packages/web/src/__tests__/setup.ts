@@ -20,7 +20,7 @@ class MockIntersectionObserver implements IntersectionObserver {
   readonly thresholds: ReadonlyArray<number> = [];
 
   constructor(
-    private callback: IntersectionObserverCallback,
+    private _callback: IntersectionObserverCallback,
     _options?: IntersectionObserverInit,
   ) {}
 

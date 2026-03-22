@@ -13,21 +13,18 @@
     "build": "npm run build:web && npm run copy:web && tsc --project tsconfig.json",
     "start": "npm run build && electron dist/main.js",
     "package": "npm run build && electron-builder",
-    "test": "node ../../node_modules/jest/bin/jest.js"
+    "test": "npx playwright test"
   },
   "dependencies": {
     "electron-devtools-installer": "^4.0.0",
     "electron-is-dev": "^3.0.1"
   },
   "devDependencies": {
-    "@swc/jest": "^0.2.39",
-    "@types/jest": "^30.0.0",
+    "@playwright/test": "^1.58.2",
     "@types/node": "^24.10.1",
     "concurrently": "^9.1.2",
     "electron": "^36.3.1",
     "electron-builder": "^26.0.12",
-    "jest": "^30.3.0",
-    "ts-jest": "^29.4.6",
     "typescript": "~5.9.3"
   },
   "build": {

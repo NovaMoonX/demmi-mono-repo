@@ -1,6 +1,5 @@
-import type { Config } from 'jest';
-
-const config: Config = {
+/** @type {import('jest').Config} */
+const config = {
   testEnvironment: 'jest-environment-jsdom',
   roots: ['<rootDir>/src'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
@@ -29,6 +28,7 @@ const config: Config = {
     '^@moondreamsdev/dreamer-ui/components$': '<rootDir>/src/__tests__/mocks/dreamer-ui-components.tsx',
     '^@moondreamsdev/dreamer-ui/utils$': '<rootDir>/src/__tests__/mocks/dreamer-ui-utils.ts',
     '^@moondreamsdev/dreamer-ui/hooks$': '<rootDir>/src/__tests__/mocks/dreamer-ui-hooks.ts',
+    '^@moondreamsdev/dreamer-ui/providers$': '<rootDir>/src/__tests__/mocks/dreamer-ui-providers.ts',
     '^@lib/firebase/firebase\\.config$': '<rootDir>/src/__tests__/mocks/firebase.config.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
@@ -48,4 +48,4 @@ const config: Config = {
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
 };
 
-export default config;
+module.exports = config;
