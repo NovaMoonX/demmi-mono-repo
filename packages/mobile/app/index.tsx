@@ -12,7 +12,7 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* <StatusBar style="auto" /> */}
+      <StatusBar style="auto" />
       <WebView
         ref={webViewRef}
         source={{ uri: WEB_APP_URL }}
@@ -30,7 +30,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    // backgroundColor: '#000000',
   },
   webView: {
     flex: 1,
