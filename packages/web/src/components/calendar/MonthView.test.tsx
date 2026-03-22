@@ -4,7 +4,7 @@ import type { PlannedRecipe } from '@lib/calendar';
 
 jest.mock('@moondreamsdev/dreamer-ui/components', () => ({
   Calendar: ({ onDateSelect, renderCell }: {
-    onDateSelect: (date: number) => void;
+    onDateSelect: (date: Date) => void;
     renderCell: (date: Date, isSelected: boolean, isDisabled: boolean, isToday: boolean) => React.ReactNode;
   }) => (
     <div data-testid="calendar">
@@ -13,7 +13,7 @@ jest.mock('@moondreamsdev/dreamer-ui/components', () => ({
       </div>
       <button
         data-testid="select-date"
-        onClick={() => onDateSelect(new Date(2024, 0, 15).getTime())}
+        onClick={() => onDateSelect(new Date(2024, 0, 15))}
       >
         Select
       </button>

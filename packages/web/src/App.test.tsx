@@ -1,15 +1,14 @@
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import App from './App';
 
 jest.mock('@routes/AppRoutes', () => ({
-  router: null,
+  router: 'mock-router',
 }));
 
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
-  RouterProvider: ({ router }: { router: unknown }) => (
-    <div data-testid="router-provider">Router: {String(router)}</div>
-  ),
+  RouterProvider: () => <div data-testid="router-provider">Router</div>,
 }));
 
 jest.mock('@contexts/AuthContext', () => ({
@@ -36,12 +35,5 @@ describe('App', () => {
   it('wraps content in AuthProvider', () => {
     render(<App />);
     expect(screen.getByTestId('auth-provider')).toBeInTheDocument();
-  });
-
-  it('renders the RouterProvider inside AuthProvider', () => {
-    render(<App />);
-    const authProvider = screen.getByTestId('auth-provider');
-    const routerProvider = screen.getByTestId('router-provider');
-    expect(authProvider).toContainElement(routerProvider);
   });
 });

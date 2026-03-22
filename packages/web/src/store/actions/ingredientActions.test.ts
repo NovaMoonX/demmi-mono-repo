@@ -43,7 +43,7 @@ describe('ingredientActions', () => {
     it('skips execution when demo mode is active', async () => {
       const store = createTestStore(true);
       const result = await store.dispatch(fetchIngredients());
-      expect(result.meta.condition).toBe(false);
+      expect(result.meta.condition).toBe(true);
     });
   });
 

@@ -17,13 +17,13 @@ describe('ChatHistoryToggleIcon', () => {
   it('applies default size class', () => {
     const { container } = render(<ChatHistoryToggleIcon />);
     const svg = container.querySelector('svg');
-    expect(svg?.className).toContain('size-4');
+    expect(svg).toHaveClass('size-4');
   });
 
   it('applies custom className', () => {
     const { container } = render(<ChatHistoryToggleIcon className="custom-class" />);
     const svg = container.querySelector('svg');
-    expect(svg?.className).toContain('custom-class');
+    expect(svg).toHaveClass('custom-class');
   });
 
   it('renders the expected SVG shapes', () => {

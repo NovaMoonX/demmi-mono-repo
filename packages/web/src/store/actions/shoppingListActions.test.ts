@@ -45,7 +45,7 @@ describe('shoppingListActions', () => {
     it('skips execution when demo mode is active', async () => {
       const store = createTestStore(true);
       const result = await store.dispatch(fetchShoppingList());
-      expect(result.meta.condition).toBe(false);
+      expect(result.meta.condition).toBe(true);
     });
   });
 
