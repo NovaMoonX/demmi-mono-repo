@@ -1,14 +1,14 @@
-import type { MealCategory } from '@lib/meals';
+import type { RecipeCategory } from '@lib/recipes';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 
 /**
  * Status types are organized per action type for long-term maintainability.
  * When adding a new action, define its own status type and union it into AgentActionStatus.
  *
- * create_meal lifecycle:
+ * create_recipe lifecycle:
  *  pending_confirmation  → user confirms intent (Yes/No)
  *       ↓ Yes
- *  generating_name       → Step 1: generating meal name
+ *  generating_name       → Step 1: generating recipe name
  *  generating_info       → Step 2: generating basic info (category, servings, time)
  *  generating_description→ Step 3: generating description
  *  generating_ingredients→ Step 4: generating ingredients
@@ -24,7 +24,7 @@ import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
  *       ↓
  *  approved / rejected / cancelled → terminal states
  */
-export type CreateMealAgentActionStatus =
+export type CreateRecipeAgentActionStatus =
   | 'pending_confirmation'
   | 'generating_name'
   | 'generating_info'
@@ -40,8 +40,8 @@ export type CreateMealAgentActionStatus =
 
 export type RecipeStep = 'name' | 'info' | 'description' | 'ingredients' | 'instructions';
 
-/** Fields of a meal proposal that can be selectively regenerated during iteration. */
-export type MealIterableField = 'name' | 'info' | 'description' | 'ingredients' | 'instructions';
+/** Fields of a recipe proposal that can be selectively regenerated during iteration. */
+export type RecipeIterableField = 'name' | 'info' | 'description' | 'ingredients' | 'instructions';
 
 export interface AgentIngredientProposal {
   name: string;
@@ -52,10 +52,10 @@ export interface AgentIngredientProposal {
   existingIngredientId: string | null;
 }
 
-export interface AgentMealProposal {
+export interface AgentRecipeProposal {
   title: string;
   description: string;
-  category: MealCategory;
+  category: RecipeCategory;
   prepTime: number;
   cookTime: number;
   servingSize: number;
@@ -74,15 +74,15 @@ export interface AgentPartialRecipe {
   instructions: string[] | null;
 }
 
-export interface AgentCreateMealAction {
-  type: 'create_meal';
-  status: CreateMealAgentActionStatus;
+export interface AgentCreateRecipeAction {
+  type: 'create_recipe';
+  status: CreateRecipeAgentActionStatus;
   proposedName: string;
-  meals: AgentMealProposal[];
+  recipes: AgentRecipeProposal[];
   recipe: AgentPartialRecipe | null;
   completedSteps: RecipeStep[] | null;
   /** Fields being regenerated during an iteration pass. Null when not iterating. */
-  updatingFields: MealIterableField[] | null;
+  updatingFields: RecipeIterableField[] | null;
   /** Persisted decision for the shopping list prompt. Null = not yet decided (prompt visible).
    *  'added' = user confirmed; 'skipped' = user declined. */
   shoppingListDecision: 'added' | 'skipped' | null;

@@ -1,7 +1,7 @@
 import {
-  AgentCreateMealAction,
-  CreateMealAgentActionStatus,
-} from './createMealAction.types';
+  AgentCreateRecipeAction,
+  CreateRecipeAgentActionStatus,
+} from './createRecipeAction.types';
 
-export type AgentActionStatus = CreateMealAgentActionStatus;
-export type AgentAction = AgentCreateMealAction;
+export type AgentActionStatus = CreateRecipeAgentActionStatus;
+export type AgentAction = AgentCreateRecipeAction;

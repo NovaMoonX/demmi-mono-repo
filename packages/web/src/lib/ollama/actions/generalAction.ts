@@ -16,7 +16,7 @@ interface GeneralResult extends Record<string, unknown> {
 
 export const generalAction = {
   type: 'general',
-  description: 'General conversational response about cooking, nutrition, and meal planning',
+  description: 'General conversational response about cooking, nutrition, and recipe planning',
   isMultiStep: false,
 
   async execute(model: string, context: ActionContext<GeneralResult>, runtime: ActionRuntime): Promise<ActionResult<GeneralResult>> {

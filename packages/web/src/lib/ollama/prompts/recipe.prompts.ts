@@ -1,9 +1,9 @@
 import { INGREDIENT_TYPES, MEASUREMENT_UNITS } from '@/lib/ingredients';
-import { MEAL_CATEGORIES } from '@/lib/meals';
+import { RECIPE_CATEGORIES } from '@/lib/recipes';
 
-export const MEAL_NAME_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
+export const RECIPE_NAME_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 
-Extract the exact meal name from the conversation.
+Extract the exact recipe name from the conversation.
 
 STRICT RULES (follow every one, no exceptions):
 - Maximum 3 words. Never exceed this.
@@ -13,22 +13,22 @@ STRICT RULES (follow every one, no exceptions):
 - If the user said "turkey burger", output "Turkey Burger" — nothing else.
 - Never embellish: forbidden patterns include "with X and Y", "Healthy ...", "Classic ...", "Easy ...", parenthetical notes, etc.
 
-Respond with JSON: { "name": "Meal Name" }`;
+Respond with JSON: { "name": "Recipe Name" }`;
 
-export const MEAL_INFO_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
+export const RECIPE_INFO_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 
-Given the meal name, provide basic recipe metadata.
+Given the recipe name, provide basic recipe metadata.
 
 Rules:
-- category: one of ${MEAL_CATEGORIES.join(' | ')}
+- category: one of ${RECIPE_CATEGORIES.join(' | ')}
 - servings: realistic serving count (integer, 1-12)
 - totalTime: total cooking + prep time in minutes (integer)
 
 Respond with JSON: { "category": "dinner", "servings": 4, "totalTime": 35 }`;
 
-export const MEAL_DESCRIPTION_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
+export const RECIPE_DESCRIPTION_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 
-Write a short, appetizing description for the meal.
+Write a short, appetizing description for the recipe.
 
 Rules:
 - 1-2 sentences only
@@ -39,9 +39,9 @@ Rules:
 
 Respond with JSON: { "description": "A rich and creamy pasta..." }`;
 
-export const MEAL_INGREDIENTS_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
+export const RECIPE_INGREDIENTS_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 
-List all ingredients needed for the meal based on the name and servings.
+List all ingredients needed for the recipe based on the name and servings.
 
 Rules:
 - Include every ingredient with a realistic amount (e.g. "2 cloves", "200g", "1 cup")
@@ -55,9 +55,9 @@ Rules:
 
 Respond with JSON: { "ingredients": [{ "name": "...", "type": "...", "unit": "...", "servings": 1.0 }] }`;
 
-export const MEAL_INSTRUCTIONS_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
+export const RECIPE_INSTRUCTIONS_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 
-Write clear, step-by-step cooking instructions for the meal.
+Write clear, step-by-step cooking instructions for the recipe.
 
 Rules:
 - Each step is a single, actionable sentence
@@ -66,9 +66,9 @@ Rules:
 
 Respond with JSON: { "steps": ["Step 1...", "Step 2...", "Step 3..."] }`;
 
-export const MEAL_ITERATION_VALIDATION_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
+export const RECIPE_ITERATION_VALIDATION_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 
-Determine whether the user's latest message is asking to refine or modify the current meal recipe shown below.
+Determine whether the user's latest message is asking to refine or modify the current recipe recipe shown below.
 
 A message IS about refining the recipe if it:
 - Asks to change, add, remove, or substitute ingredients
@@ -103,7 +103,7 @@ In your reason, if updating: specify what the title should no longer include and
 
 Consider:
 - Has the user asked to scale portions (e.g. "make it for 8 instead of 4")?
-- Is the cooking method or meal type changing (e.g. "make it a snack", "change to lunch")?
+- Is the cooking method or recipe type changing (e.g. "make it a snack", "change to lunch")?
 - Will a significant dietary change meaningfully alter total prep/cook time?
 
 In your reason, if updating: specify which values are changing and what the new values should be (e.g. "Serving size should increase from 4 to 8").`,
@@ -139,7 +139,7 @@ Consider:
 In your reason, if updating: specify which steps or techniques would be affected and why.`,
 };
 
-export const MEAL_ITERATION_SUMMARY_PROMPT = `You are a recipe assistant.
+export const RECIPE_ITERATION_SUMMARY_PROMPT = `You are a recipe assistant.
 
 Based on the changes listed by the user, write exactly one friendly sentence (max 20 words) telling the user what was updated. Use natural, conversational language.
 

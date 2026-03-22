@@ -59,8 +59,8 @@ function SampleBarcode() {
 export function IngredientBarcodeEntry() {
   const navigate = useNavigate();
   const location = useLocation();
-  const fromMealPath =
-    (location.state as { fromMealPath?: string } | null)?.fromMealPath ?? null;
+  const fromRecipePath =
+    (location.state as { fromRecipePath?: string } | null)?.fromRecipePath ?? null;
 
   const [barcodeInput, setBarcodeInput] = useState('');
   const [submittedBarcode, setSubmittedBarcode] = useState<string | null>(null);
@@ -88,7 +88,7 @@ export function IngredientBarcodeEntry() {
 
     navigate('/ingredients/new', {
       state: {
-        fromMealPath,
+        fromRecipePath,
         fromBarcodeEntry: true,
         barcodePrefill: selectedPrefill,
       },
@@ -98,7 +98,7 @@ export function IngredientBarcodeEntry() {
   const handleSkip = () => {
     navigate('/ingredients/new', {
       state: {
-        fromMealPath,
+        fromRecipePath,
         fromBarcodeEntry: true,
         barcodePrefill: { barcode: barcodeInput.replace(/\s/g, '').trim() || null },
       },
@@ -130,11 +130,11 @@ export function IngredientBarcodeEntry() {
     <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
       <div className='mb-6'>
         <Link
-          to={fromMealPath ?? '/ingredients'}
-          state={fromMealPath ? { fromMealPath } : undefined}
+          to={fromRecipePath ?? '/ingredients'}
+          state={fromRecipePath ? { fromRecipePath } : undefined}
           className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
         >
-          {fromMealPath ? '← Back to Meal' : '← Back to Ingredients'}
+          {fromRecipePath ? '← Back to Recipe' : '← Back to Ingredients'}
         </Link>
         <h1 className='text-foreground mb-2 text-4xl font-bold'>
           Enter Barcode

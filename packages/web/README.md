@@ -85,7 +85,7 @@ src/
 │   ├── chat/           # ChatHistory, ChatMessage, OllamaModelControl, agent-action-cards/
 │   ├── cook/           # VoiceIndicator
 │   ├── ingredients/    # CreateIngredientModal
-│   ├── meals/          # MealCard, CreateMealModal, MealIngredientSelector
+│   ├── recipes/          # RecipeCard, CreateRecipeModal, RecipeIngredientSelector
 │   ├── shopping/       # ItemRow, ItemFormModal, shoppingUtils
 │   └── Sidebar.tsx
 ├── contexts/           # React context providers (AuthContext)
@@ -96,7 +96,7 @@ src/
 │   ├── chat/           # Chat types, mock data
 │   ├── firebase/       # Firebase config and auth service
 │   ├── ingredients/    # Ingredient types, constants, utils, mock data
-│   ├── meals/          # Meal types, constants, shared-meal types, mock data
+│   ├── recipes/          # Recipe types, constants, shared-recipe types, mock data
 │   ├── ollama/         # Ollama service, action types, prompts, schemas
 │   └── shoppingList/   # Shopping list types, mock data
 ├── routes/             # Router config (AppRoutes, ProtectedRoutes)
@@ -104,19 +104,19 @@ src/
 │   ├── Auth.tsx, VerifyEmail.tsx        # Authentication
 │   ├── Chat.tsx                         # AI chat interface
 │   ├── Ingredients.tsx, IngredientDetail.tsx, IngredientBarcodeEntry.tsx
-│   ├── Meals.tsx, MealDetail.tsx, MealFromText.tsx, MealFromUrl.tsx
+│   ├── Recipes.tsx, RecipeDetail.tsx, RecipeFromText.tsx, RecipeFromUrl.tsx
 │   ├── CookMode.tsx                     # Step-by-step cooking
-│   ├── CalendarScreen.tsx               # Meal planner
+│   ├── CalendarScreen.tsx               # Recipe planner
 │   ├── ShoppingList.tsx                 # Shopping list
-│   ├── SharedMealView.tsx               # Public shared recipe view
+│   ├── SharedRecipeView.tsx               # Public shared recipe view
 │   ├── Home.tsx, About.tsx, Account.tsx
 │   └── NotFound.tsx, ErrorFallback.tsx
 ├── store/              # Redux Toolkit state management
 │   ├── index.ts        # Store configuration
 │   ├── hooks.ts        # Typed hooks (useAppDispatch, useAppSelector)
-│   ├── actions/        # Async Firestore thunks (calendar, chat, ingredient, meal, shoppingList, shareMeal)
+│   ├── actions/        # Async Firestore thunks (calendar, chat, ingredient, recipe, shoppingList, shareRecipe)
 │   ├── api/            # External API clients (Open Food Facts)
-│   └── slices/         # Redux slices (calendar, chats, demo, ingredients, meals, shoppingList, user)
+│   └── slices/         # Redux slices (calendar, chats, demo, ingredients, recipes, shoppingList, user)
 ├── ui/                 # Layout components (Layout, Loading)
 └── utils/              # Shared utilities (generatedId, capitalize, formatDate, barcodePrefill)
 ```
@@ -156,8 +156,8 @@ src/
 - Summary-based intent detection using last 10 message summaries for efficient context
 - Modular action registry — add new AI actions without touching the chat component
 
-### 🍽️ AI Meal & Ingredient Creation
-- Create meals via chat with intent confirmation and 5-step generation (name → info → description → ingredients → instructions)
+### 🍽️ AI Recipe & Ingredient Creation
+- Create recipes via chat with intent confirmation and 5-step generation (name → info → description → ingredients → instructions)
 - Preview cards show new vs. existing ingredients, duplicate detection, and post-save shopping list prompt
 - Decline, iterate, or approve — the AI never modifies your collection without explicit confirmation
 
@@ -171,15 +171,15 @@ src/
 - Comprehensive nutrition profile (calories, protein, carbs, fat, fiber, sugar, sodium per 100g/100ml)
 - 21 measurement units including custom units
 
-### 🍽️ Meals
+### 🍽️ Recipes
 - Card-based recipe browser with search, category/time filters
 - Full CRUD with image upload, dynamic ingredient list, and interactive instruction steps
 - **Cook Mode**: immersive step-by-step cooking with progress bar, ingredient drawer, voice navigation ("Hey Demi"), and responsive layout
 - Create from manual entry, pasted text (AI-parsed), or URL
 
-### 📅 Meal Planner
+### 📅 Recipe Planner
 - Day, week, and custom range views with date navigation
-- Plan meals by category with quick-add buttons and inline edit/remove
+- Plan recipes by category with quick-add buttons and inline edit/remove
 - Automatic nutrition and price totals across the selected period
 
 ### 🛒 Shopping List
@@ -268,10 +268,10 @@ interface Ingredient {
 }
 ```
 
-### Meal
+### Recipe
 
 ```typescript
-interface Meal {
+interface Recipe {
   id: string;
   userId: string;
   title: string;
@@ -282,20 +282,20 @@ interface Meal {
   servingSize: number;
   instructions: string[];
   imageUrl: string;
-  ingredients: MealIngredient[];
+  ingredients: RecipeIngredient[];
 }
 
-interface MealIngredient {
+interface RecipeIngredient {
   ingredientId: string;
   servings: number;
 }
 
-interface PlannedMeal {
+interface PlannedRecipe {
   id: string;
   userId: string;
-  mealId: string;
+  recipeId: string;
   date: number;
-  category: MealCategory;
+  category: RecipeCategory;
   notes: string | null;
 }
 ```
@@ -323,9 +323,9 @@ Redux Toolkit with typed hooks (`useAppDispatch`, `useAppSelector`). The store i
 | Slice | Purpose |
 |---|---|
 | `ingredientsSlice` | Ingredient inventory CRUD |
-| `mealsSlice` | Meal recipe collection CRUD |
+| `recipesSlice` | Recipe recipe collection CRUD |
 | `chatsSlice` | Chat conversations and messages |
-| `calendarSlice` | Planned meals / meal planner |
+| `calendarSlice` | Planned recipes / recipe planner |
 | `shoppingListSlice` | Shopping list items |
 | `userSlice` | Authentication state |
 | `demoSlice` | Demo mode session management |

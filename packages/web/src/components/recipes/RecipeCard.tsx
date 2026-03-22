@@ -1,17 +1,17 @@
 import { Card, Badge } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
-import { Meal, MEAL_CATEGORY_COLORS, MEAL_CATEGORY_EMOJIS, MEAL_PLACEHOLDER_IMAGE_URL } from '@lib/meals';
+import { Recipe, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RECIPE_PLACEHOLDER_IMAGE_URL } from '@lib/recipes';
 
-interface MealCardProps {
-  meal: Meal;
-  onClick?: (meal: Meal) => void;
+interface RecipeCardProps {
+  recipe: Recipe;
+  onClick?: (recipe: Recipe) => void;
 }
 
-export function MealCard({ meal, onClick }: MealCardProps) {
-  const totalTime = meal.prepTime + meal.cookTime;
+export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
+  const totalTime = recipe.prepTime + recipe.cookTime;
 
   const handleClick = () => {
-    onClick?.(meal);
+    onClick?.(recipe);
   };
 
   return (
@@ -20,8 +20,8 @@ export function MealCard({ meal, onClick }: MealCardProps) {
       {/* Cover Image */}
       <div className="w-full h-48 overflow-hidden bg-muted">
         <img
-          src={meal.imageUrl || MEAL_PLACEHOLDER_IMAGE_URL}
-          alt={meal.title}
+          src={recipe.imageUrl || RECIPE_PLACEHOLDER_IMAGE_URL}
+          alt={recipe.title}
           className="w-full h-full object-cover"
           onError={(e) => {
             e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="400"%3E%3Crect width="800" height="400" fill="%23e2e8f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" fill="%2394a3b8"%3EImage not available%3C/text%3E%3C/svg%3E';
@@ -34,42 +34,42 @@ export function MealCard({ meal, onClick }: MealCardProps) {
         <div className="mb-4">
           <div className="flex items-start justify-between gap-2 mb-2">
             <h3 className="text-xl font-semibold text-foreground">
-              {meal.title}
+              {recipe.title}
             </h3>
             <span className="text-2xl shrink-0">
-              {MEAL_CATEGORY_EMOJIS[meal.category]}
+              {RECIPE_CATEGORY_EMOJIS[recipe.category]}
             </span>
           </div>
-          <Badge variant="base" className={join('capitalize', MEAL_CATEGORY_COLORS[meal.category])}>
-            {meal.category}
+          <Badge variant="base" className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}>
+            {recipe.category}
           </Badge>
         </div>
 
         {/* Description */}
         <p className="text-sm text-muted-foreground mb-4">
-          {meal.description}
+          {recipe.description}
         </p>
 
         {/* Metadata */}
         <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
           <div className="text-center">
             <div className="font-semibold text-foreground">
-              {meal.prepTime}m
+              {recipe.prepTime}m
             </div>
             <div className="text-xs text-muted-foreground">Prep</div>
           </div>
           <div className="text-center">
             <div className="font-semibold text-foreground">
-              {meal.cookTime}m
+              {recipe.cookTime}m
             </div>
             <div className="text-xs text-muted-foreground">Cook</div>
           </div>
           <div className="text-center">
             <div className="font-semibold text-foreground">
-              {meal.servingSize}
+              {recipe.servingSize}
             </div>
             <div className="text-xs text-muted-foreground">
-              {meal.servingSize === 1 ? 'Serving' : 'Servings'}
+              {recipe.servingSize === 1 ? 'Serving' : 'Servings'}
             </div>
           </div>
         </div>
@@ -85,13 +85,13 @@ export function MealCard({ meal, onClick }: MealCardProps) {
           <div className="flex items-center justify-between text-sm mt-2">
             <span className="text-muted-foreground">Instructions</span>
             <span className="font-semibold text-foreground">
-              {meal.instructions.length}{meal.instructions.length === 1 ? ' step' : ' steps'}
+              {recipe.instructions.length}{recipe.instructions.length === 1 ? ' step' : ' steps'}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm mt-2">
             <span className="text-muted-foreground">Ingredients</span>
             <span className="font-semibold text-foreground">
-              {meal.ingredients.length}{meal.ingredients.length === 1 ? ' item' : ' items'}
+              {recipe.ingredients.length}{recipe.ingredients.length === 1 ? ' item' : ' items'}
             </span>
           </div>
         </div>

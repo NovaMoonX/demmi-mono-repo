@@ -1,17 +1,17 @@
-import type { MealCategory } from '@lib/meals';
+import type { RecipeCategory } from '@lib/recipes';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 import { store } from '@store/index';
 import { ollamaClient } from '../ollama.service';
 import {
-  MEAL_ITERATION_VALIDATION_PROMPT,
-  MEAL_ITERATION_SUMMARY_PROMPT,
+  RECIPE_ITERATION_VALIDATION_PROMPT,
+  RECIPE_ITERATION_SUMMARY_PROMPT,
   buildFieldDetectionPrompt,
-} from '../prompts/meal.prompts';
+} from '../prompts/recipe.prompts';
 import {
-  MEAL_FIELD_DETECTION_SCHEMA,
-  MEAL_ITERATION_VALIDATION_SCHEMA,
-  MEAL_ITERATION_SUMMARY_SCHEMA,
-} from '../schemas/meal.schemas';
+  RECIPE_FIELD_DETECTION_SCHEMA,
+  RECIPE_ITERATION_VALIDATION_SCHEMA,
+  RECIPE_ITERATION_SUMMARY_SCHEMA,
+} from '../schemas/recipe.schemas';
 import type {
   ActionHandler,
   ActionStep,
@@ -22,10 +22,10 @@ import type {
   StepResult,
 } from './types';
 import type {
-  AgentMealProposal,
+  AgentRecipeProposal,
   AgentIngredientProposal,
-  MealIterableField,
-} from '../action-types/createMealAction.types';
+  RecipeIterableField,
+} from '../action-types/createRecipeAction.types';
 import {
   proposeNameStep,
   generateBasicInfoStep,
@@ -33,8 +33,8 @@ import {
   generateIngredientsStep,
   generateInstructionsStep,
   formatContextMessages,
-} from './createMealAction';
-import type { MealResult, MealStepName } from './createMealAction';
+} from './createRecipeAction';
+import type { RecipeResult, RecipeStepName } from './createRecipeAction';
 
 /** Detection step names — one per iterable field, in evaluation order. */
 export type FieldDetectStepName =
@@ -44,21 +44,21 @@ export type FieldDetectStepName =
   | 'detectIngredientsUpdate'
   | 'detectInstructionsUpdate';
 
-export type MealIterationStepName =
+export type RecipeIterationStepName =
   | 'validateIterationRequest'
   | 'detectFieldsToUpdate'
   | 'summarizeIteration'
-  | MealStepName;
+  | RecipeStepName;
 
-export interface MealIterationResult extends Record<string, unknown> {
+export interface RecipeIterationResult extends Record<string, unknown> {
   iterationValid: boolean;
   agentMessage: string;
-  fieldsToUpdate: MealIterableField[];
+  fieldsToUpdate: RecipeIterableField[];
   /** Reasons why each field was selected for update — keyed by field name. */
-  fieldReasons: Partial<Record<MealIterableField, string>>;
-  existingProposal: AgentMealProposal;
+  fieldReasons: Partial<Record<RecipeIterableField, string>>;
+  existingProposal: AgentRecipeProposal;
   name: string;
-  category: MealCategory;
+  category: RecipeCategory;
   servings: number;
   totalTime: number;
   description: string;
@@ -69,14 +69,14 @@ export interface MealIterationResult extends Record<string, unknown> {
     servings: number;
   }>;
   instructions: string[];
-  proposal: AgentMealProposal;
+  proposal: AgentRecipeProposal;
   /** LLM-generated 1-sentence summary of what was changed, shown to the user and
    * stored as the message's summary field for inclusion in future iteration context. */
   iterationSummary: string;
 }
 
 /** Ordered list of fields to evaluate — order matters because later steps see earlier decisions. */
-const FIELD_DETECTION_ORDER: MealIterableField[] = [
+const FIELD_DETECTION_ORDER: RecipeIterableField[] = [
   'name',
   'info',
   'description',
@@ -90,13 +90,13 @@ const FIELD_DETECTION_ORDER: MealIterableField[] = [
  * - Steps for unchanged fields still receive the correct existing values as context.
  * - Steps for fields being updated start fresh (no stale value to short-circuit on).
  */
-function keepIfUnchanged<T>(field: MealIterableField, existing: T, fieldsToUpdate: MealIterableField[]): T | undefined {
+function keepIfUnchanged<T>(field: RecipeIterableField, existing: T, fieldsToUpdate: RecipeIterableField[]): T | undefined {
   return fieldsToUpdate.includes(field) ? undefined : existing;
 }
 
 const FIELD_TO_STEP: Array<{
-  field: MealIterableField;
-  step: ActionStep<MealResult, MealStepName>;
+  field: RecipeIterableField;
+  step: ActionStep<RecipeResult, RecipeStepName>;
 }> = [
   { field: 'name', step: proposeNameStep },
   { field: 'info', step: generateBasicInfoStep },
@@ -105,7 +105,7 @@ const FIELD_TO_STEP: Array<{
   { field: 'instructions', step: generateInstructionsStep },
 ];
 
-function formatProposalForPrompt(proposal: AgentMealProposal): string {
+function formatProposalForPrompt(proposal: AgentRecipeProposal): string {
   const ingredientsList = proposal.ingredients
     .map((i) => `  - ${i.name} (${i.servings} ${i.unit})`)
     .join('\n');
@@ -124,8 +124,8 @@ function formatProposalForPrompt(proposal: AgentMealProposal): string {
 }
 
 function formatFieldForPrompt(
-  proposal: AgentMealProposal,
-  field: MealIterableField,
+  proposal: AgentRecipeProposal,
+  field: RecipeIterableField,
 ): string {
   if (field === 'name') {
     return proposal.title;
@@ -165,7 +165,7 @@ function formatFieldForPrompt(
 
 function formatPriorDecisions(
   decisions: Array<{
-    field: MealIterableField;
+    field: RecipeIterableField;
     shouldUpdate: boolean;
     reason: string;
   }>,
@@ -184,19 +184,19 @@ function formatPriorDecisions(
  * enabling cascading reasoning (e.g. "ingredients changed → instructions must be re-checked").
  * Returns { fieldsToUpdate } — the subset of fields where shouldUpdate was true.
  *
- * Can be invoked in isolation via iterateMealAction.executeStep('detectFieldsToUpdate', ...).
+ * Can be invoked in isolation via iterateRecipeAction.executeStep('detectFieldsToUpdate', ...).
  */
 export const detectFieldsToUpdateStep: ActionStep<
-  MealIterationResult,
+  RecipeIterationResult,
   'detectFieldsToUpdate'
 > = {
   name: 'detectFieldsToUpdate',
 
   async execute(
     model: string,
-    context: ActionContext<MealIterationResult>,
+    context: ActionContext<RecipeIterationResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealIterationResult, 'detectFieldsToUpdate'>> {
+  ): Promise<StepResult<RecipeIterationResult, 'detectFieldsToUpdate'>> {
     const { abortSignal } = runtime;
     const existingProposal = context.previousResults?.existingProposal;
 
@@ -213,7 +213,7 @@ export const detectFieldsToUpdateStep: ActionStep<
     }
 
     const priorDecisions: Array<{
-      field: MealIterableField;
+      field: RecipeIterableField;
       shouldUpdate: boolean;
       reason: string;
     }> = [];
@@ -238,7 +238,7 @@ export const detectFieldsToUpdateStep: ActionStep<
           ...formatContextMessages(context.messages),
         ],
         stream: false,
-        format: MEAL_FIELD_DETECTION_SCHEMA,
+        format: RECIPE_FIELD_DETECTION_SCHEMA,
       });
 
       if (abortSignal?.aborted) {
@@ -256,11 +256,11 @@ export const detectFieldsToUpdateStep: ActionStep<
       priorDecisions.push({ field, shouldUpdate, reason });
     }
 
-    const fieldsToUpdate: MealIterableField[] = priorDecisions
+    const fieldsToUpdate: RecipeIterableField[] = priorDecisions
       .filter((d) => d.shouldUpdate)
       .map((d) => d.field);
 
-    const fieldReasons: Partial<Record<MealIterableField, string>> = {};
+    const fieldReasons: Partial<Record<RecipeIterableField, string>> = {};
     for (const { field, shouldUpdate, reason } of priorDecisions) {
       if (shouldUpdate) {
         fieldReasons[field] = reason;
@@ -272,16 +272,16 @@ export const detectFieldsToUpdateStep: ActionStep<
 };
 
 export const validateIterationRequestStep: ActionStep<
-  MealIterationResult,
+  RecipeIterationResult,
   'validateIterationRequest'
 > = {
   name: 'validateIterationRequest',
 
   async execute(
     model: string,
-    context: ActionContext<MealIterationResult>,
+    context: ActionContext<RecipeIterationResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealIterationResult, 'validateIterationRequest'>> {
+  ): Promise<StepResult<RecipeIterationResult, 'validateIterationRequest'>> {
     const { abortSignal } = runtime;
     const existingProposal = context.previousResults?.existingProposal;
 
@@ -318,12 +318,12 @@ export const validateIterationRequestStep: ActionStep<
       messages: [
         {
           role: 'system',
-          content: `${MEAL_ITERATION_VALIDATION_PROMPT}\n\nCurrent recipe:\n${proposalSummary}`,
+          content: `${RECIPE_ITERATION_VALIDATION_PROMPT}\n\nCurrent recipe:\n${proposalSummary}`,
         },
         { role: 'user', content: lastUserContent },
       ],
       stream: false,
-      format: MEAL_ITERATION_VALIDATION_SCHEMA,
+      format: RECIPE_ITERATION_VALIDATION_SCHEMA,
     });
 
     if (abortSignal?.aborted) {
@@ -350,21 +350,21 @@ export const validateIterationRequestStep: ActionStep<
  * The summary is shown to the user as the assistant message and also stored as the
  * message's `summary` field so it's included in future iteration context automatically.
  */
-export const summarizeIterationStep: ActionStep<MealIterationResult, 'summarizeIteration'> = {
+export const summarizeIterationStep: ActionStep<RecipeIterationResult, 'summarizeIteration'> = {
   name: 'summarizeIteration',
 
   async execute(
     model: string,
-    context: ActionContext<MealIterationResult>,
+    context: ActionContext<RecipeIterationResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealIterationResult, 'summarizeIteration'>> {
+  ): Promise<StepResult<RecipeIterationResult, 'summarizeIteration'>> {
     const { abortSignal } = runtime;
 
-    const fieldsToUpdate = (context.previousResults?.fieldsToUpdate as MealIterableField[]) ?? [];
-    const fieldReasons = (context.previousResults?.fieldReasons as Partial<Record<MealIterableField, string>>) ?? {};
-    const existingProposal = context.previousResults?.existingProposal as AgentMealProposal | undefined;
+    const fieldsToUpdate = (context.previousResults?.fieldsToUpdate as RecipeIterableField[]) ?? [];
+    const fieldReasons = (context.previousResults?.fieldReasons as Partial<Record<RecipeIterableField, string>>) ?? {};
+    const existingProposal = context.previousResults?.existingProposal as AgentRecipeProposal | undefined;
     const updatedName = context.previousResults?.name as string | undefined;
-    const mealName = updatedName ?? existingProposal?.title;
+    const recipeName = updatedName ?? existingProposal?.title;
 
     if (abortSignal?.aborted) {
       return { stepName: 'summarizeIteration', data: { iterationSummary: '' }, cancelled: true };
@@ -377,18 +377,18 @@ export const summarizeIterationStep: ActionStep<MealIterationResult, 'summarizeI
       })
       .join('\n');
 
-    const userContent = mealName
-      ? `Recipe: "${mealName}"\nChanges made:\n${changeLines}`
+    const userContent = recipeName
+      ? `Recipe: "${recipeName}"\nChanges made:\n${changeLines}`
       : `Changes made:\n${changeLines}`;
 
     const response = await ollamaClient.chat({
       model,
       messages: [
-        { role: 'system', content: MEAL_ITERATION_SUMMARY_PROMPT },
+        { role: 'system', content: RECIPE_ITERATION_SUMMARY_PROMPT },
         { role: 'user', content: userContent },
       ],
       stream: false,
-      format: MEAL_ITERATION_SUMMARY_SCHEMA,
+      format: RECIPE_ITERATION_SUMMARY_SCHEMA,
     });
 
     if (abortSignal?.aborted) {
@@ -402,20 +402,20 @@ export const summarizeIterationStep: ActionStep<MealIterationResult, 'summarizeI
   },
 };
 
-export const iterateMealAction = {
-  type: 'iterateMeal' as const,
+export const iterateRecipeAction = {
+  type: 'iterateRecipe' as const,
   description:
-    'Refine an existing meal proposal by regenerating only the fields that need to change',
+    'Refine an existing recipe proposal by regenerating only the fields that need to change',
   isMultiStep: true,
 
   steps: [validateIterationRequestStep, detectFieldsToUpdateStep, summarizeIterationStep],
 
   async executeStep(
     model: string,
-    stepName: MealIterationStepName,
-    context: ActionContext<MealIterationResult>,
+    stepName: RecipeIterationStepName,
+    context: ActionContext<RecipeIterationResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealIterationResult, MealIterationStepName>> {
+  ): Promise<StepResult<RecipeIterationResult, RecipeIterationStepName>> {
     if (stepName === 'validateIterationRequest') {
       return validateIterationRequestStep.execute(model, context, runtime);
     }
@@ -431,20 +431,20 @@ export const iterateMealAction = {
     }
     const result = await entry.step.execute(
       model,
-      context as unknown as ActionContext<MealResult>,
+      context as unknown as ActionContext<RecipeResult>,
       runtime,
     );
-    return result as StepResult<MealIterationResult, MealIterationStepName>;
+    return result as StepResult<RecipeIterationResult, RecipeIterationStepName>;
   },
 
   async execute(
     model: string,
-    context: ActionContext<MealIterationResult>,
+    context: ActionContext<RecipeIterationResult>,
     runtime: MultiStepActionRuntime,
   ): Promise<
-    MultiStepActionResult<MealIterationResult, MealIterationStepName>
+    MultiStepActionResult<RecipeIterationResult, RecipeIterationStepName>
   > {
-    const completedSteps: MealIterationStepName[] = [];
+    const completedSteps: RecipeIterationStepName[] = [];
     const existingProposal = context.previousResults?.existingProposal;
 
     if (!existingProposal) {
@@ -496,10 +496,10 @@ export const iterateMealAction = {
       };
     }
 
-    const fieldsToUpdate: MealIterableField[] =
-      (fieldResult.data.fieldsToUpdate as MealIterableField[]) ?? [];
-    const fieldReasons: Partial<Record<MealIterableField, string>> =
-      (fieldResult.data.fieldReasons as Partial<Record<MealIterableField, string>>) ?? {};
+    const fieldsToUpdate: RecipeIterableField[] =
+      (fieldResult.data.fieldsToUpdate as RecipeIterableField[]) ?? [];
+    const fieldReasons: Partial<Record<RecipeIterableField, string>> =
+      (fieldResult.data.fieldReasons as Partial<Record<RecipeIterableField, string>>) ?? {};
     completedSteps.push('detectFieldsToUpdate');
 
     // Notify consumer so it can show per-field loading skeletons.
@@ -523,7 +523,7 @@ export const iterateMealAction = {
     // being regenerated — do NOT pre-populate fields that are in fieldsToUpdate, otherwise
     // generation steps that have early-return guards (e.g. proposeNameStep checks for an
     // existing name) would skip regeneration entirely.
-    const accumulatedResult: Partial<MealIterationResult> = {
+    const accumulatedResult: Partial<RecipeIterationResult> = {
       iterationValid,
       agentMessage,
       fieldsToUpdate,
@@ -556,10 +556,10 @@ export const iterateMealAction = {
 
       // Pass the field-specific detection reason as additionalContext so the LLM knows
       // precisely what to change, rather than relying solely on the conversation text.
-      const stepContext: ActionContext<MealResult> = {
+      const stepContext: ActionContext<RecipeResult> = {
         messages: context.messages,
         previousResults: {
-          ...(accumulatedResult as Partial<MealResult>),
+          ...(accumulatedResult as Partial<RecipeResult>),
           additionalContext: fieldReasons[field] ?? '',
         },
       };
@@ -569,7 +569,7 @@ export const iterateMealAction = {
       if (stepResult.cancelled) break;
 
       Object.assign(accumulatedResult, stepResult.data);
-      completedSteps.push(step.name as MealIterationStepName);
+      completedSteps.push(step.name as RecipeIterationStepName);
 
       // Notify consumer about the completed step so the UI can update only the changed field.
       if (runtime.onStepComplete) {
@@ -622,7 +622,7 @@ export const iterateMealAction = {
 
       const existingIngredients = store.getState().ingredients.items;
 
-      const proposal: AgentMealProposal = {
+      const proposal: AgentRecipeProposal = {
         title: accumulatedResult.name ?? existingProposal.title,
         description:
           accumulatedResult.description ?? existingProposal.description,
@@ -655,7 +655,7 @@ export const iterateMealAction = {
       // Step 3: Generate a concise LLM summary of what was changed.
       // This is shown to the user and stored as the message's summary so future
       // iterations know what was previously modified.
-      const summaryContext: ActionContext<MealIterationResult> = {
+      const summaryContext: ActionContext<RecipeIterationResult> = {
         messages: context.messages,
         previousResults: accumulatedResult,
       };
@@ -675,4 +675,4 @@ export const iterateMealAction = {
 
     return { data: accumulatedResult, completedSteps, cancelled };
   },
-} satisfies ActionHandler<MealIterationResult, MealIterationStepName>;
+} satisfies ActionHandler<RecipeIterationResult, RecipeIterationStepName>;

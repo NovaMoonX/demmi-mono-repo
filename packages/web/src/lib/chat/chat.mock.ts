@@ -34,10 +34,10 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: {
-          type: 'create_meal',
+          type: 'create_recipe',
           status: 'pending_approval',
           proposedName: 'Lemon Garlic Salmon Bowl',
-          meals: [
+          recipes: [
             {
               title: 'Lemon Garlic Salmon Bowl',
               description: 'A balanced dinner bowl with baked salmon, fluffy rice, and roasted broccoli finished with a bright lemon garlic drizzle.',
@@ -101,7 +101,7 @@ export const mockChatConversations: ChatConversation[] = [
           shoppingListDecision: null,
           shoppingListItemsAdded: null,
         },
-        summary: 'User asked for a lemon garlic salmon bowl recipe. Assistant generated a full create-meal proposal and is waiting for approval before saving it to meals.',
+        summary: 'User asked for a lemon garlic salmon bowl recipe. Assistant generated a full create-recipe proposal and is waiting for approval before saving it to recipes.',
         iterationInvalid: null,
       },
     ],
@@ -132,10 +132,10 @@ export const mockChatConversations: ChatConversation[] = [
         model: null,
         rawContent: null,
         agentAction: {
-          type: 'create_meal',
+          type: 'create_recipe',
           status: 'pending_confirmation',
           proposedName: 'Creamy Tomato Pasta',
-          meals: [
+          recipes: [
             {
               title: 'Creamy Tomato Pasta',
               description: '',
@@ -154,7 +154,7 @@ export const mockChatConversations: ChatConversation[] = [
           shoppingListDecision: null,
           shoppingListItemsAdded: null,
         },
-        summary: 'User asked the assistant to create a creamy tomato pasta recipe for dinner. Assistant detected a create-meal intent and is waiting for user confirmation before generating the recipe.',
+        summary: 'User asked the assistant to create a creamy tomato pasta recipe for dinner. Assistant detected a create-recipe intent and is waiting for user confirmation before generating the recipe.',
         iterationInvalid: null,
       },
     ],
@@ -192,7 +192,7 @@ export const mockChatConversations: ChatConversation[] = [
   },
   {
     id: 'chat-002',
-    title: 'Meal Prep for the Week',
+    title: 'Recipe Prep for the Week',
     isPinned: true,
     lastUpdated: oneDayAgo,
     userId: 'demo',
@@ -200,7 +200,7 @@ export const mockChatConversations: ChatConversation[] = [
       {
         id: 'msg-003',
         role: 'user',
-        content: 'How can I meal prep for a busy work week?',
+        content: 'How can I recipe prep for a busy work week?',
         timestamp: oneDayAgo - 15000,
         model: null,
         rawContent: null,
@@ -211,18 +211,18 @@ export const mockChatConversations: ChatConversation[] = [
       {
         id: 'msg-004',
         role: 'assistant',
-        content: 'Great question! Here\'s a simple meal prep strategy:\n\n**Sunday Prep:**\n- Cook a large batch of grains (rice, quinoa)\n- Roast vegetables (broccoli, sweet potatoes, peppers)\n- Grill or bake proteins (chicken, tofu, fish)\n- Prepare 2-4 sauces or dressings\n\n**Storage Tips:**\n- Use glass containers for better reheating\n- Store proteins separately from veggies to maintain freshness\n- Label everything with dates\n\n**Mix & Match:**\nCombine different proteins, grains, and veggies throughout the week for variety!',
+        content: 'Great question! Here\'s a simple recipe prep strategy:\n\n**Sunday Prep:**\n- Cook a large batch of grains (rice, quinoa)\n- Roast vegetables (broccoli, sweet potatoes, peppers)\n- Grill or bake proteins (chicken, tofu, fish)\n- Prepare 2-4 sauces or dressings\n\n**Storage Tips:**\n- Use glass containers for better reheating\n- Store proteins separately from veggies to maintain freshness\n- Label everything with dates\n\n**Mix & Match:**\nCombine different proteins, grains, and veggies throughout the week for variety!',
         timestamp: oneDayAgo,
         model: null,
         rawContent: null,
         agentAction: null,
-        summary: 'User asked about meal prep strategies for a busy work week. Assistant provided a comprehensive Sunday prep plan including batch cooking grains, roasting vegetables, preparing proteins, and storage tips using glass containers with proper labeling.',
+        summary: 'User asked about recipe prep strategies for a busy work week. Assistant provided a comprehensive Sunday prep plan including batch cooking grains, roasting vegetables, preparing proteins, and storage tips using glass containers with proper labeling.',
         iterationInvalid: null,
       },
       {
         id: 'msg-005',
         role: 'user',
-        content: 'How long will these meals stay fresh?',
+        content: 'How long will these recipes stay fresh?',
         timestamp: oneDayAgo - 5000,
         model: null,
         rawContent: null,
@@ -233,12 +233,12 @@ export const mockChatConversations: ChatConversation[] = [
       {
         id: 'msg-006',
         role: 'assistant',
-        content: 'Most meal prep foods will stay fresh for 3-4 days in the refrigerator. Here are some guidelines:\n\n- **Cooked grains**: 4-5 days\n- **Cooked chicken**: 3-4 days\n- **Roasted vegetables**: 3-4 days\n- **Raw cut vegetables**: 2-4 days\n- **Cooked fish**: 2-4 days\n\nFor longer storage, freeze portions in individual containers for up to 3 months!',
+        content: 'Most recipe prep foods will stay fresh for 3-4 days in the refrigerator. Here are some guidelines:\n\n- **Cooked grains**: 4-5 days\n- **Cooked chicken**: 3-4 days\n- **Roasted vegetables**: 3-4 days\n- **Raw cut vegetables**: 2-4 days\n- **Cooked fish**: 2-4 days\n\nFor longer storage, freeze portions in individual containers for up to 3 months!',
         timestamp: oneDayAgo,
         model: null,
         rawContent: null,
         agentAction: null,
-        summary: 'User inquired about meal prep food freshness duration. Assistant provided specific storage timelines for different food types (3-5 days refrigerated depending on item) and suggested freezing portions for up to 3 months for longer storage.',
+        summary: 'User inquired about recipe prep food freshness duration. Assistant provided specific storage timelines for different food types (3-5 days refrigerated depending on item) and suggested freezing portions for up to 3 months for longer storage.',
         iterationInvalid: null,
       },
     ],
@@ -321,15 +321,15 @@ export function generateMockResponse(userMessage: string): string {
   
   // Add some context-aware mock responses
   if (userMessage.toLowerCase().includes('recipe')) {
-    return "I'd love to help you find the perfect recipe! While I'm still learning, I can suggest checking out our Meals section where you'll find various recipes organized by category. Is there a specific type of meal you're looking for?";
+    return "I'd love to help you find the perfect recipe! While I'm still learning, I can suggest checking out our Recipes section where you'll find various recipes organized by category. Is there a specific type of recipe you're looking for?";
   }
   
   if (userMessage.toLowerCase().includes('ingredient')) {
     return "For ingredient-related questions, I recommend checking out our Ingredients section. You can manage your ingredients there and I'll help you find recipes that match what you have available!";
   }
   
-  if (userMessage.toLowerCase().includes('meal prep') || userMessage.toLowerCase().includes('planning')) {
-    return "Meal planning is a great way to stay organized! I can help you plan your meals for the week. You might want to check out our Calendar feature to schedule your cooking sessions. What's your main goal with meal planning?";
+  if (userMessage.toLowerCase().includes('recipe prep') || userMessage.toLowerCase().includes('planning')) {
+    return "Recipe planning is a great way to stay organized! I can help you plan your recipes for the week. You might want to check out our Calendar feature to schedule your cooking sessions. What's your main goal with recipe planning?";
   }
   
   return randomResponse + " What specific aspect would you like to know more about?";

@@ -4,7 +4,7 @@ import {
 } from '../ollama.constants';
 
 export const INTENT_DETECTION_PROMPT = `
-You are Demmi's AI assistant, specialized in cooking, recipes, meal planning, and nutrition.
+You are Demmi's AI assistant, specialized in cooking, recipes, recipe planning, and nutrition.
 
 Your task: Classify the user's CURRENT message intent.
 
@@ -16,8 +16,8 @@ IMPORTANT CLASSIFICATION RULES:
 - Focus ONLY on the user's CURRENT request, ignoring previous conversation context
 
 TRANSITION EXAMPLES (users can switch at any time):
-- Previous: "What's a good protein for breakfast?" (general) → Current: "Create an egg benedict recipe" (createMeal)
-- Previous: "Make me a pasta dish" (createMeal) → Current: "What's the difference between penne and rigatoni?" (general)
+- Previous: "What's a good protein for breakfast?" (general) → Current: "Create an egg benedict recipe" (createRecipe)
+- Previous: "Make me a pasta dish" (createRecipe) → Current: "What's the difference between penne and rigatoni?" (general)
 
 Each message is independent — classify based on what the user wants NOW.
 `;

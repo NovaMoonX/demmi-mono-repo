@@ -1,14 +1,14 @@
 import { Modal } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 
-interface CreateMealOption {
+interface CreateRecipeOption {
   icon: string;
   title: string;
   description: string;
   onClick: () => void;
 }
 
-interface CreateMealModalProps {
+interface CreateRecipeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectManual: () => void;
@@ -16,14 +16,14 @@ interface CreateMealModalProps {
   onSelectFromUrl: () => void;
 }
 
-export function CreateMealModal({
+export function CreateRecipeModal({
   isOpen,
   onClose,
   onSelectManual,
   onSelectFromText,
   onSelectFromUrl,
-}: CreateMealModalProps) {
-  const options: CreateMealOption[] = [
+}: CreateRecipeModalProps) {
+  const options: CreateRecipeOption[] = [
     {
       icon: '✍️',
       title: 'Manual Entry',
@@ -45,7 +45,7 @@ export function CreateMealModal({
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title='How would you like to add this meal?'>
+    <Modal isOpen={isOpen} onClose={onClose} title='How would you like to add this recipe?'>
       <div className='flex flex-col gap-3 pt-2'>
         {options.map((option) => (
           <button

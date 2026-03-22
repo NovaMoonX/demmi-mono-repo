@@ -2,7 +2,7 @@ import { ChatMessage as ChatMessageType } from '@lib/chat';
 import { CopyButton } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import ReactMarkdown from 'react-markdown';
-import { CreateMealAgentActionCard } from './agent-action-cards/CreateMealAgentActionCard';
+import { CreateRecipeAgentActionCard } from './agent-action-cards/CreateRecipeAgentActionCard';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -88,12 +88,12 @@ export function ChatMessage({
           </div>
         )}
 
-        {message.agentAction?.type === 'create_meal' &&
+        {message.agentAction?.type === 'create_recipe' &&
           onConfirmIntent &&
           onRejectIntent &&
           onApproveAction &&
           onRejectAction && (
-            <CreateMealAgentActionCard
+            <CreateRecipeAgentActionCard
               action={message.agentAction}
               onConfirmIntent={() => onConfirmIntent(message.id)}
               onRejectIntent={() => onRejectIntent(message.id)}

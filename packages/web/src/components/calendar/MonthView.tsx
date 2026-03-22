@@ -1,21 +1,21 @@
 import { Calendar } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
-import { PlannedMeal } from '@lib/calendar';
+import { PlannedRecipe } from '@lib/calendar';
 import { getStartOfDay } from '@/utils';
 
 export interface MonthViewProps {
-  plannedMeals: PlannedMeal[];
+  plannedRecipes: PlannedRecipe[];
   onDateSelect: (date: number) => void;
 }
 
-export function MonthView({ plannedMeals, onDateSelect }: MonthViewProps) {
+export function MonthView({ plannedRecipes, onDateSelect }: MonthViewProps) {
   const renderCell = (date: Date, isSelected: boolean, _isDisabled: boolean, isToday: boolean) => {
     const dayTs = getStartOfDay(date.getTime());
-    const dayMeals = plannedMeals.filter((pm) => getStartOfDay(pm.date) === dayTs);
+    const dayRecipes = plannedRecipes.filter((pm) => getStartOfDay(pm.date) === dayTs);
 
-    const hasBreakfast = dayMeals.some((pm) => pm.category === 'breakfast');
-    const hasLunch = dayMeals.some((pm) => pm.category === 'lunch');
-    const hasDinner = dayMeals.some((pm) => pm.category === 'dinner');
+    const hasBreakfast = dayRecipes.some((pm) => pm.category === 'breakfast');
+    const hasLunch = dayRecipes.some((pm) => pm.category === 'lunch');
+    const hasDinner = dayRecipes.some((pm) => pm.category === 'dinner');
 
     return (
       <div className="flex flex-col items-center w-full">

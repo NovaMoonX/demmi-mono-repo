@@ -1,21 +1,21 @@
-import type { MealCategory } from '@lib/meals';
+import type { RecipeCategory } from '@lib/recipes';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 import { store } from '@store/index';
 import { ollamaClient } from '../ollama.service';
 import {
-  MEAL_NAME_PROMPT,
-  MEAL_INFO_PROMPT,
-  MEAL_DESCRIPTION_PROMPT,
-  MEAL_INGREDIENTS_PROMPT,
-  MEAL_INSTRUCTIONS_PROMPT,
-} from '../prompts/meal.prompts';
+  RECIPE_NAME_PROMPT,
+  RECIPE_INFO_PROMPT,
+  RECIPE_DESCRIPTION_PROMPT,
+  RECIPE_INGREDIENTS_PROMPT,
+  RECIPE_INSTRUCTIONS_PROMPT,
+} from '../prompts/recipe.prompts';
 import {
-  MEAL_NAME_SCHEMA,
-  MEAL_INFO_SCHEMA,
-  MEAL_DESCRIPTION_SCHEMA,
-  MEAL_INGREDIENTS_SCHEMA,
-  MEAL_INSTRUCTIONS_SCHEMA,
-} from '../schemas/meal.schemas';
+  RECIPE_NAME_SCHEMA,
+  RECIPE_INFO_SCHEMA,
+  RECIPE_DESCRIPTION_SCHEMA,
+  RECIPE_INGREDIENTS_SCHEMA,
+  RECIPE_INSTRUCTIONS_SCHEMA,
+} from '../schemas/recipe.schemas';
 import type {
   ActionHandler,
   ActionStep,
@@ -25,7 +25,7 @@ import type {
   MultiStepActionRuntime,
   StepResult,
 } from './types';
-import type { AgentMealProposal, RecipeStep } from '../action-types/createMealAction.types';
+import type { AgentRecipeProposal, RecipeStep } from '../action-types/createRecipeAction.types';
 import type { ChatMessage } from '@lib/chat';
 
 const MAX_CONTEXT_MESSAGES = 3;
@@ -40,39 +40,39 @@ export function formatContextMessages(messages: ChatMessage[], limit = MAX_CONTE
 
 /**
  * Appends `additionalContext` (the field-specific reason from detectFieldsToUpdateStep)
- * to the base user content string. When iterating on a meal, each generation step
+ * to the base user content string. When iterating on a recipe, each generation step
  * receives the reason why its field needs updating, giving the LLM precise guidance.
  */
 function withContext(baseContent: string, additionalContext?: string): string {
   return additionalContext ? `${baseContent}\nChange context: ${additionalContext}` : baseContent;
 }
 
-export interface MealResult extends Record<string, unknown> {
+export interface RecipeResult extends Record<string, unknown> {
   name: string;
-  category: MealCategory;
+  category: RecipeCategory;
   servings: number;
   totalTime: number;
   description: string;
   ingredients: Array<{ name: string; type: IngredientType; unit: MeasurementUnit; servings: number }>;
   instructions: string[];
   // Built after all steps complete — the final proposal ready for the consumer to save.
-  proposal: AgentMealProposal;
+  proposal: AgentRecipeProposal;
   /** Optional guidance passed by the iterate flow — a reason from detectFieldsToUpdateStep
    * describing exactly what to change for this field. When set, generation steps append it
    * to the user content so the LLM knows precisely what to regenerate. */
   additionalContext: string;
 }
 
-export type MealStepName =
+export type RecipeStepName =
   | 'proposeName'
   | 'generateBasicInfo'
   | 'generateDescription'
   | 'generateIngredients'
   | 'generateInstructions';
 
-// Maps each MealStepName to the RecipeStep key used by the consumer for state updates.
-// Typed as `Record<MealStepName, RecipeStep>` so the values are validated at compile time.
-const STEP_RECIPE_KEY: Record<MealStepName, RecipeStep> = {
+// Maps each RecipeStepName to the RecipeStep key used by the consumer for state updates.
+// Typed as `Record<RecipeStepName, RecipeStep>` so the values are validated at compile time.
+const STEP_RECIPE_KEY: Record<RecipeStepName, RecipeStep> = {
   proposeName: 'name',
   generateBasicInfo: 'info',
   generateDescription: 'description',
@@ -82,14 +82,14 @@ const STEP_RECIPE_KEY: Record<MealStepName, RecipeStep> = {
 
 // Each step is exported so it can also be invoked independently outside the pipeline.
 
-export const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
+export const proposeNameStep: ActionStep<RecipeResult, 'proposeName'> = {
   name: 'proposeName',
 
   async execute(
     model: string,
-    context: ActionContext<MealResult>,
+    context: ActionContext<RecipeResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealResult, 'proposeName'>> {
+  ): Promise<StepResult<RecipeResult, 'proposeName'>> {
     const { messages } = context;
     const { abortSignal } = runtime;
 
@@ -107,7 +107,7 @@ export const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
     const response = await ollamaClient.chat({
       model,
       messages: [
-        { role: 'system', content: MEAL_NAME_PROMPT },
+        { role: 'system', content: RECIPE_NAME_PROMPT },
         ...messages.slice(-MAX_CONTEXT_MESSAGES).map((m) => ({
           role: m.role as 'user' | 'assistant',
           content: m.rawContent ?? m.content,
@@ -117,7 +117,7 @@ export const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
           : []),
       ],
       stream: false,
-      format: MEAL_NAME_SCHEMA,
+      format: RECIPE_NAME_SCHEMA,
     });
 
     if (abortSignal?.aborted) {
@@ -131,14 +131,14 @@ export const proposeNameStep: ActionStep<MealResult, 'proposeName'> = {
   },
 };
 
-export const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> = {
+export const generateBasicInfoStep: ActionStep<RecipeResult, 'generateBasicInfo'> = {
   name: 'generateBasicInfo',
 
   async execute(
     model: string,
-    context: ActionContext<MealResult>,
+    context: ActionContext<RecipeResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealResult, 'generateBasicInfo'>> {
+  ): Promise<StepResult<RecipeResult, 'generateBasicInfo'>> {
     const { abortSignal } = runtime;
     const name = context.previousResults?.name ?? '';
 
@@ -149,15 +149,15 @@ export const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> 
     const response = await ollamaClient.chat({
       model,
       messages: [
-        { role: 'system', content: MEAL_INFO_PROMPT },
+        { role: 'system', content: RECIPE_INFO_PROMPT },
         {
           role: 'user',
-          content: withContext(`Meal name: ${name}`, context.previousResults?.additionalContext as string | undefined),
+          content: withContext(`Recipe name: ${name}`, context.previousResults?.additionalContext as string | undefined),
         },
         ...formatContextMessages(context.messages),
       ],
       stream: false,
-      format: MEAL_INFO_SCHEMA,
+      format: RECIPE_INFO_SCHEMA,
     });
 
     if (abortSignal?.aborted) {
@@ -166,7 +166,7 @@ export const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> 
 
     const parsed = JSON.parse(response.message.content);
     const result = {
-      category: (parsed.category ?? 'dinner') as MealCategory,
+      category: (parsed.category ?? 'dinner') as RecipeCategory,
       servings: Number(parsed.servings) || 4,
       totalTime: Number(parsed.totalTime) || 30,
     };
@@ -175,14 +175,14 @@ export const generateBasicInfoStep: ActionStep<MealResult, 'generateBasicInfo'> 
   },
 };
 
-export const generateDescriptionStep: ActionStep<MealResult, 'generateDescription'> = {
+export const generateDescriptionStep: ActionStep<RecipeResult, 'generateDescription'> = {
   name: 'generateDescription',
 
   async execute(
     model: string,
-    context: ActionContext<MealResult>,
+    context: ActionContext<RecipeResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealResult, 'generateDescription'>> {
+  ): Promise<StepResult<RecipeResult, 'generateDescription'>> {
     const { abortSignal } = runtime;
     const name = context.previousResults?.name ?? '';
 
@@ -193,15 +193,15 @@ export const generateDescriptionStep: ActionStep<MealResult, 'generateDescriptio
     const response = await ollamaClient.chat({
       model,
       messages: [
-        { role: 'system', content: MEAL_DESCRIPTION_PROMPT },
+        { role: 'system', content: RECIPE_DESCRIPTION_PROMPT },
         {
           role: 'user',
-          content: withContext(`Meal name: ${name}`, context.previousResults?.additionalContext as string | undefined),
+          content: withContext(`Recipe name: ${name}`, context.previousResults?.additionalContext as string | undefined),
         },
         ...formatContextMessages(context.messages),
       ],
       stream: false,
-      format: MEAL_DESCRIPTION_SCHEMA,
+      format: RECIPE_DESCRIPTION_SCHEMA,
     });
 
     if (abortSignal?.aborted) {
@@ -215,14 +215,14 @@ export const generateDescriptionStep: ActionStep<MealResult, 'generateDescriptio
   },
 };
 
-export const generateIngredientsStep: ActionStep<MealResult, 'generateIngredients'> = {
+export const generateIngredientsStep: ActionStep<RecipeResult, 'generateIngredients'> = {
   name: 'generateIngredients',
 
   async execute(
     model: string,
-    context: ActionContext<MealResult>,
+    context: ActionContext<RecipeResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealResult, 'generateIngredients'>> {
+  ): Promise<StepResult<RecipeResult, 'generateIngredients'>> {
     const { abortSignal } = runtime;
     const name = context.previousResults?.name ?? '';
     const servings = context.previousResults?.servings ?? 4;
@@ -234,15 +234,15 @@ export const generateIngredientsStep: ActionStep<MealResult, 'generateIngredient
     const response = await ollamaClient.chat({
       model,
       messages: [
-        { role: 'system', content: MEAL_INGREDIENTS_PROMPT },
+        { role: 'system', content: RECIPE_INGREDIENTS_PROMPT },
         {
           role: 'user',
-          content: withContext(`Meal name: ${name}\nServings: ${servings}`, context.previousResults?.additionalContext as string | undefined),
+          content: withContext(`Recipe name: ${name}\nServings: ${servings}`, context.previousResults?.additionalContext as string | undefined),
         },
         ...formatContextMessages(context.messages),
       ],
       stream: false,
-      format: MEAL_INGREDIENTS_SCHEMA,
+      format: RECIPE_INGREDIENTS_SCHEMA,
     });
 
     if (abortSignal?.aborted) {
@@ -256,14 +256,14 @@ export const generateIngredientsStep: ActionStep<MealResult, 'generateIngredient
   },
 };
 
-export const generateInstructionsStep: ActionStep<MealResult, 'generateInstructions'> = {
+export const generateInstructionsStep: ActionStep<RecipeResult, 'generateInstructions'> = {
   name: 'generateInstructions',
 
   async execute(
     model: string,
-    context: ActionContext<MealResult>,
+    context: ActionContext<RecipeResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealResult, 'generateInstructions'>> {
+  ): Promise<StepResult<RecipeResult, 'generateInstructions'>> {
     const { abortSignal } = runtime;
     const name = context.previousResults?.name ?? '';
     const ingredients = context.previousResults?.ingredients ?? [];
@@ -278,15 +278,15 @@ export const generateInstructionsStep: ActionStep<MealResult, 'generateInstructi
     const response = await ollamaClient.chat({
       model,
       messages: [
-        { role: 'system', content: MEAL_INSTRUCTIONS_PROMPT },
+        { role: 'system', content: RECIPE_INSTRUCTIONS_PROMPT },
         {
           role: 'user',
-          content: withContext(`Meal name: ${name}\nIngredients: ${ingredientNames}`, context.previousResults?.additionalContext as string | undefined),
+          content: withContext(`Recipe name: ${name}\nIngredients: ${ingredientNames}`, context.previousResults?.additionalContext as string | undefined),
         },
         ...formatContextMessages(context.messages),
       ],
       stream: false,
-      format: MEAL_INSTRUCTIONS_SCHEMA,
+      format: RECIPE_INSTRUCTIONS_SCHEMA,
     });
 
     if (abortSignal?.aborted) {
@@ -308,27 +308,27 @@ const steps = [
   generateInstructionsStep,
 ];
 
-export const createMealAction = {
-  type: 'createMeal',
-  description: 'Create a new meal recipe with ingredients and instructions',
+export const createRecipeAction = {
+  type: 'createRecipe',
+  description: 'Create a new recipe recipe with ingredients and instructions',
   isMultiStep: true,
 
   steps,
 
   async executeStep(
     model: string,
-    stepName: MealStepName,
-    context: ActionContext<MealResult>,
+    stepName: RecipeStepName,
+    context: ActionContext<RecipeResult>,
     runtime: ActionRuntime,
-  ): Promise<StepResult<MealResult, MealStepName>> {
+  ): Promise<StepResult<RecipeResult, RecipeStepName>> {
     const step = steps.find((candidateStep) => candidateStep.name === stepName);
 
     if (!step) {
-      throw new Error(`Unknown meal action step: ${stepName}`);
+      throw new Error(`Unknown recipe action step: ${stepName}`);
     }
 
     const stepResult = await step.execute(model, context, runtime);
-    const result: StepResult<MealResult, MealStepName> = {
+    const result: StepResult<RecipeResult, RecipeStepName> = {
       stepName: stepResult.stepName,
       data: stepResult.data,
       cancelled: stepResult.cancelled,
@@ -339,16 +339,16 @@ export const createMealAction = {
 
   async execute(
     model: string,
-    context: ActionContext<MealResult>,
+    context: ActionContext<RecipeResult>,
     runtime: MultiStepActionRuntime,
-  ): Promise<MultiStepActionResult<MealResult, MealStepName>> {
-    const completedSteps: MealStepName[] = [];
-    const accumulatedResult: Partial<MealResult> = {};
+  ): Promise<MultiStepActionResult<RecipeResult, RecipeStepName>> {
+    const completedSteps: RecipeStepName[] = [];
+    const accumulatedResult: Partial<RecipeResult> = {};
 
     for (const step of steps) {
       if (runtime.abortSignal?.aborted) break;
 
-      const stepContext: ActionContext<MealResult> = {
+      const stepContext: ActionContext<RecipeResult> = {
         ...context,
         previousResults: accumulatedResult,
       };
@@ -358,11 +358,11 @@ export const createMealAction = {
       if (stepResult.cancelled) break;
 
       Object.assign(accumulatedResult, stepResult.data);
-      completedSteps.push(step.name as MealStepName);
+      completedSteps.push(step.name as RecipeStepName);
 
       // Notify the consumer with the recipe step key and display-ready data.
       // The consumer is responsible for updating state (e.g. dispatching updateRecipeStep).
-      const recipeKey = STEP_RECIPE_KEY[step.name as MealStepName];
+      const recipeKey = STEP_RECIPE_KEY[step.name as RecipeStepName];
       if (recipeKey && runtime.onStepComplete) {
         if (step.name === 'generateIngredients' && Array.isArray(stepResult.data.ingredients)) {
           // Transform raw LLM ingredient format into the display format.
@@ -386,7 +386,7 @@ export const createMealAction = {
 
       const existingIngredients = store.getState().ingredients.items;
 
-      const proposal: AgentMealProposal = {
+      const proposal: AgentRecipeProposal = {
         title: accumulatedResult.name ?? '',
         description: accumulatedResult.description ?? '',
         category: accumulatedResult.category ?? 'dinner',
@@ -416,9 +416,9 @@ export const createMealAction = {
     return { data: accumulatedResult, completedSteps, cancelled };
   },
 
-  getUpdatedMessageContentFromResult(result: Partial<MealResult>) {
+  getUpdatedMessageContentFromResult(result: Partial<RecipeResult>) {
     const name = result.name ?? 'your recipe';
     const content = `I've generated a recipe for **${name}**. Review it below and save it to your collection!`;
     return { content };
   },
-} satisfies ActionHandler<MealResult, MealStepName>;
+} satisfies ActionHandler<RecipeResult, RecipeStepName>;

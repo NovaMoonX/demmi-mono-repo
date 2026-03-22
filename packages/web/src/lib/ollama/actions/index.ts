@@ -10,8 +10,8 @@ export type {
   MultiStepActionResult,
 } from './types';
 export { generalAction } from './generalAction';
-export { createMealAction } from './createMealAction';
-export type { MealResult, MealStepName } from './createMealAction';
-export { iterateMealAction } from './iterateMealAction';
-export type { MealIterationResult, MealIterationStepName } from './iterateMealAction';
+export { createRecipeAction } from './createRecipeAction';
+export type { RecipeResult, RecipeStepName } from './createRecipeAction';
+export { iterateRecipeAction } from './iterateRecipeAction';
+export type { RecipeIterationResult, RecipeIterationStepName } from './iterateRecipeAction';
 export { getActionHandler } from './registry';

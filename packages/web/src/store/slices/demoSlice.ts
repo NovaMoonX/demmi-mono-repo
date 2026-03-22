@@ -1,14 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { AppDispatch, RootState } from '@store/index';
-import { addPlannedMeal, resetCalendar } from './calendarSlice';
+import { addPlannedRecipe, resetCalendar } from './calendarSlice';
 import { setConversations, resetChats } from './chatsSlice';
-import { setMeals, resetMeals } from './mealsSlice';
+import { setRecipes, resetRecipes } from './recipesSlice';
 import { setIngredients, resetIngredients } from './ingredientsSlice';
 import { setShoppingList, resetShoppingList } from './shoppingListSlice';
 import { clearUserData } from './userSlice';
 import { generateDemoCalendarData } from '@lib/calendar';
 import { mockChatConversations } from '@lib/chat';
-import { mockMeals } from '@lib/meals';
+import { mockRecipes } from '@lib/recipes';
 import { mockIngredients } from '@lib/ingredients';
 import { mockShoppingList } from '@lib/shoppingList';
 
@@ -54,15 +54,15 @@ export const loadDemoData = createAsyncThunk<void, void, { dispatch: AppDispatch
   'demo/loadDemoData',
   async (_, { dispatch }) => {
     dispatch(setConversations(mockChatConversations));
-    dispatch(setMeals(mockMeals));
+    dispatch(setRecipes(mockRecipes));
     dispatch(setIngredients(
       mockIngredients.map((ing) => ({ ...ing, otherUnit: null, defaultProductId: null }))
     ));
     dispatch(setShoppingList(mockShoppingList));
     dispatch(resetCalendar());
     const calendarData = generateDemoCalendarData();
-    calendarData.forEach((plannedMeal) => {
-      dispatch(addPlannedMeal(plannedMeal));
+    calendarData.forEach((plannedRecipe) => {
+      dispatch(addPlannedRecipe(plannedRecipe));
     });
   }
 );
@@ -71,7 +71,7 @@ export const clearDemoData = createAsyncThunk<void, void, { dispatch: AppDispatc
   'demo/clearDemoData',
   async (_, { dispatch }) => {
     dispatch(resetChats());
-    dispatch(resetMeals());
+    dispatch(resetRecipes());
     dispatch(resetIngredients());
     dispatch(resetCalendar());
     dispatch(resetShoppingList());

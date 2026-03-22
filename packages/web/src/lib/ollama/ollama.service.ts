@@ -13,7 +13,7 @@ const MAX_RECENT_SUMMARIES = 10;
  * Intent detection — classifies the user's current message into a supported action type.
  */
 const INTENT_DETECTION_PROMPT = `
-You are Demmi's AI assistant, specialized in cooking, recipes, meal planning, and nutrition.
+You are Demmi's AI assistant, specialized in cooking, recipes, recipe planning, and nutrition.
 
 Your task: Classify the user's CURRENT message intent.
 
@@ -25,8 +25,8 @@ IMPORTANT CLASSIFICATION RULES:
 - Focus ONLY on the user's CURRENT request, ignoring previous conversation context
 
 TRANSITION EXAMPLES (users can switch at any time):
-- Previous: "What's a good protein for breakfast?" (general) → Current: "Create an egg benedict recipe" (createMeal)
-- Previous: "Make me a pasta dish" (createMeal) → Current: "What's the difference between penne and rigatoni?" (general)
+- Previous: "What's a good protein for breakfast?" (general) → Current: "Create an egg benedict recipe" (createRecipe)
+- Previous: "Make me a pasta dish" (createRecipe) → Current: "What's the difference between penne and rigatoni?" (general)
 
 Each message is independent — classify based on what the user wants NOW.
 `;
@@ -91,7 +91,7 @@ export async function generateSummary(
 /**
  * Detect the user's action type using summaries for context when available.
  * Uses generate() API for classification. Falls back to full messages if no summaries exist.
- * Returns the ActionType: 'general' | 'createMeal'.
+ * Returns the ActionType: 'general' | 'createRecipe'.
  */
 export async function detectIntent(
   model: string,
@@ -139,7 +139,7 @@ Classify the current message intent.`;
     const parsed = JSON.parse(response.response);
     const action = parsed?.action;
 
-    if (action === 'general' || action === 'createMeal') {
+    if (action === 'general' || action === 'createRecipe') {
       return action;
     }
 

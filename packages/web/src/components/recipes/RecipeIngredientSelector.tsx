@@ -7,25 +7,25 @@ import {
   INGREDIENT_TYPE_EMOJIS,
   INGREDIENT_TYPE_COLORS,
 } from '@lib/ingredients';
-import { MealIngredient } from '@lib/meals';
+import { RecipeIngredient } from '@lib/recipes';
 import { capitalize } from '@utils/capitalize';
 import { CreateIngredientModal } from '@components/ingredients';
 
 const MIN_SERVINGS = 0.1;
 
-interface MealIngredientSelectorProps {
+interface RecipeIngredientSelectorProps {
   ingredients: Ingredient[];
-  selectedIngredients: MealIngredient[];
-  onChange: (ingredients: MealIngredient[]) => void;
-  fromMealPath: string;
+  selectedIngredients: RecipeIngredient[];
+  onChange: (ingredients: RecipeIngredient[]) => void;
+  fromRecipePath: string;
 }
 
-export function MealIngredientSelector({
+export function RecipeIngredientSelector({
   ingredients,
   selectedIngredients,
   onChange,
-  fromMealPath,
-}: MealIngredientSelectorProps) {
+  fromRecipePath,
+}: RecipeIngredientSelectorProps) {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateIngredientModalOpen, setIsCreateIngredientModalOpen] = useState(false);
@@ -290,15 +290,15 @@ export function MealIngredientSelector({
         onClose={() => setIsCreateIngredientModalOpen(false)}
         onSelectManual={() => {
           setIsCreateIngredientModalOpen(false);
-          navigate('/ingredients/new', { state: { fromMealPath } });
+          navigate('/ingredients/new', { state: { fromRecipePath } });
         }}
         onSelectBarcode={() => {
           setIsCreateIngredientModalOpen(false);
-          navigate('/ingredients/new/barcode', { state: { fromMealPath } });
+          navigate('/ingredients/new/barcode', { state: { fromRecipePath } });
         }}
         onSelectBarcodeEntry={() => {
           setIsCreateIngredientModalOpen(false);
-          navigate('/ingredients/new/barcode-entry', { state: { fromMealPath } });
+          navigate('/ingredients/new/barcode-entry', { state: { fromRecipePath } });
         }}
       />
     </div>

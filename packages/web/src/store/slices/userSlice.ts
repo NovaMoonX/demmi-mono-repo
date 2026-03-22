@@ -2,12 +2,12 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AuthUser } from '@lib/firebase/auth.service';
 import type { AppDispatch } from '@store/index';
 import { fetchIngredients } from '@store/actions/ingredientActions';
-import { fetchMeals } from '@store/actions/mealActions';
+import { fetchRecipes } from '@store/actions/recipeActions';
 import { fetchChats } from '@store/actions/chatActions';
-import { fetchPlannedMeals } from '@store/actions/calendarActions';
+import { fetchPlannedRecipes } from '@store/actions/calendarActions';
 import { fetchShoppingList } from '@store/actions/shoppingListActions';
 import { resetIngredients } from './ingredientsSlice';
-import { resetMeals } from './mealsSlice';
+import { resetRecipes } from './recipesSlice';
 import { resetChats } from './chatsSlice';
 import { resetCalendar } from './calendarSlice';
 import { resetShoppingList } from './shoppingListSlice';
@@ -45,9 +45,9 @@ const loadUserData = createAsyncThunk<void, void, { dispatch: AppDispatch }>(
   async (_, { dispatch }) => {
     await Promise.all([
       dispatch(fetchIngredients()).unwrap(),
-      dispatch(fetchMeals()).unwrap(),
+      dispatch(fetchRecipes()).unwrap(),
       dispatch(fetchChats()).unwrap(),
-      dispatch(fetchPlannedMeals()).unwrap(),
+      dispatch(fetchPlannedRecipes()).unwrap(),
       dispatch(fetchShoppingList()).unwrap(),
     ]);
   },
@@ -57,7 +57,7 @@ const clearUserData = createAsyncThunk<void, void, { dispatch: AppDispatch }>(
   'user/clearUserData',
   async (_, { dispatch }) => {
     dispatch(resetIngredients());
-    dispatch(resetMeals());
+    dispatch(resetRecipes());
     dispatch(resetChats());
     dispatch(resetCalendar());
     dispatch(resetShoppingList());

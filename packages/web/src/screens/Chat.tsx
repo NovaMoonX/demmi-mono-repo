@@ -25,23 +25,23 @@ import {
   updateRecipeStep,
   cancelRecipeGeneration,
   markMessageIterationInvalid,
-  setMealActionShoppingListDecision,
+  setRecipeActionShoppingListDecision,
   deleteConversation,
   togglePinConversation,
 } from '@store/slices/chatsSlice';
 import { createIngredient } from '@store/actions/ingredientActions';
-import { createMeal } from '@store/actions/mealActions';
+import { createRecipe } from '@store/actions/recipeActions';
 import { createShoppingListItem } from '@store/actions/shoppingListActions';
 import { ChatMessage as ChatMessageType } from '@lib/chat';
-import type { MealIngredient } from '@lib/meals';
+import type { RecipeIngredient } from '@lib/recipes';
 import {
   detectIntent,
   generateSummary,
   getActionHandler,
-  iterateMealAction,
+  iterateRecipeAction,
 } from '@lib/ollama';
-import type { MealIterableField } from '@lib/ollama/action-types/createMealAction.types';
-import type { RecipeStep } from '@lib/ollama/action-types/createMealAction.types';
+import type { RecipeIterableField } from '@lib/ollama/action-types/createRecipeAction.types';
+import type { RecipeStep } from '@lib/ollama/action-types/createRecipeAction.types';
 import { generatedId } from '@utils/generatedId';
 
 const SCROLL_DELAY_MS = 100;
@@ -63,7 +63,7 @@ function buildIterationContextMessages(
   for (let i = pendingIndex; i >= 0; i--) {
     const message = existingMessages[i];
     const isAssistantNonRecipeMessage =
-      message.role === 'assistant' && message.agentAction?.type !== 'create_meal';
+      message.role === 'assistant' && message.agentAction?.type !== 'create_recipe';
 
     if (isAssistantNonRecipeMessage) {
       threadStartIndex = i + 1;
@@ -218,7 +218,7 @@ export function Chat() {
     const action = message?.agentAction;
     if (
       !action ||
-      action.type !== 'create_meal' ||
+      action.type !== 'create_recipe' ||
       action.status !== 'pending_confirmation'
     )
       return;
@@ -233,7 +233,7 @@ export function Chat() {
 
     const allMessages = [...currentMessages];
 
-    const handler = getActionHandler('createMeal');
+    const handler = getActionHandler('createRecipe');
 
     try {
       // Set the initial generating state before the pipeline starts.
@@ -243,10 +243,10 @@ export function Chat() {
           messageId,
           content: '🍳 Generating recipe...',
           agentAction: {
-            type: 'create_meal',
+            type: 'create_recipe',
             status: 'generating_name',
             proposedName: action.proposedName,
-            meals: [],
+            recipes: [],
             recipe: null,
             completedSteps: null,
             updatingFields: null,
@@ -264,7 +264,7 @@ export function Chat() {
         {
           abortSignal: abortController.signal,
           // Each completed step notifies the consumer to update the partial recipe UI.
-          // The key is always a valid RecipeStep — guaranteed by STEP_RECIPE_KEY's type in createMealAction.
+          // The key is always a valid RecipeStep — guaranteed by STEP_RECIPE_KEY's type in createRecipeAction.
           onStepComplete: (key, data) => {
             dispatch(
               updateRecipeStep({
@@ -281,7 +281,7 @@ export function Chat() {
       if (result.cancelled) {
         dispatch(cancelRecipeGeneration({ chatId, messageId }));
       } else {
-        // Build the meal proposal and transition to pending_approval.
+        // Build the recipe proposal and transition to pending_approval.
         const proposal = result.data.proposal;
         if (proposal) {
           dispatch(
@@ -289,7 +289,7 @@ export function Chat() {
               chatId,
               messageId,
               status: 'pending_approval',
-              meals: [proposal],
+              recipes: [proposal],
             }),
           );
         }
@@ -384,7 +384,7 @@ export function Chat() {
     const action = message?.agentAction;
     if (
       !action ||
-      action.type !== 'create_meal' ||
+      action.type !== 'create_recipe' ||
       action.status !== 'pending_approval'
     )
       return;
@@ -393,15 +393,15 @@ export function Chat() {
       updateAgentActionStatus({ chatId, messageId, status: 'approved' }),
     );
 
-    let mealsCreated = 0;
+    let recipesCreated = 0;
 
     try {
-      for (const mealProposal of action.meals) {
-        const mealIngredients: MealIngredient[] = [];
+      for (const recipeProposal of action.recipes) {
+        const recipeIngredients: RecipeIngredient[] = [];
 
-        for (const ingredientProposal of mealProposal.ingredients) {
+        for (const ingredientProposal of recipeProposal.ingredients) {
           if (!ingredientProposal.isNew && ingredientProposal.existingIngredientId) {
-            mealIngredients.push({
+            recipeIngredients.push({
               ingredientId: ingredientProposal.existingIngredientId,
               servings: ingredientProposal.servings,
             });
@@ -430,7 +430,7 @@ export function Chat() {
               }),
             ).unwrap();
 
-            mealIngredients.push({
+            recipeIngredients.push({
               ingredientId: created.id,
               servings: ingredientProposal.servings,
             });
@@ -438,21 +438,21 @@ export function Chat() {
         }
 
         await dispatch(
-          createMeal({
-            title: mealProposal.title,
-            description: mealProposal.description,
-            category: mealProposal.category,
-            prepTime: mealProposal.prepTime,
-            cookTime: mealProposal.cookTime,
-            servingSize: mealProposal.servingSize,
-            instructions: mealProposal.instructions,
-            imageUrl: mealProposal.imageUrl,
-            ingredients: mealIngredients,
+          createRecipe({
+            title: recipeProposal.title,
+            description: recipeProposal.description,
+            category: recipeProposal.category,
+            prepTime: recipeProposal.prepTime,
+            cookTime: recipeProposal.cookTime,
+            servingSize: recipeProposal.servingSize,
+            instructions: recipeProposal.instructions,
+            imageUrl: recipeProposal.imageUrl,
+            ingredients: recipeIngredients,
             share: null,
           }),
         ).unwrap();
 
-        mealsCreated++;
+        recipesCreated++;
       }
     } catch (err) {
       const errMsg =
@@ -472,10 +472,10 @@ export function Chat() {
       return;
     }
 
-    if (mealsCreated > 0) {
+    if (recipesCreated > 0) {
       addToast({
-        title: 'Meals saved!',
-        description: `${mealsCreated} ${mealsCreated === 1 ? 'meal' : 'meals'} added to your collection.`,
+        title: 'Recipes saved!',
+        description: `${recipesCreated} ${recipesCreated === 1 ? 'recipe' : 'recipes'} added to your collection.`,
         type: 'success',
       });
     }
@@ -487,11 +487,11 @@ export function Chat() {
 
     const message = currentMessages.find((m) => m.id === messageId);
     const action = message?.agentAction;
-    if (!action || action.type !== 'create_meal') return 0;
+    if (!action || action.type !== 'create_recipe') return 0;
 
     let itemsAdded = 0;
-    for (const mealProposal of action.meals) {
-      for (const ing of mealProposal.ingredients) {
+    for (const recipeProposal of action.recipes) {
+      for (const ing of recipeProposal.ingredients) {
         try {
           await dispatch(
             createShoppingListItem({
@@ -501,7 +501,7 @@ export function Chat() {
               amount: ing.servings,
               unit: ing.unit,
               category: ing.type,
-              note: `For ${mealProposal.title}`,
+              note: `For ${recipeProposal.title}`,
               checked: false,
             }),
           ).unwrap();
@@ -513,7 +513,7 @@ export function Chat() {
     }
 
     dispatch(
-      setMealActionShoppingListDecision({
+      setRecipeActionShoppingListDecision({
         chatId,
         messageId,
         decision: 'added',
@@ -529,7 +529,7 @@ export function Chat() {
     if (!chatId) return;
 
     dispatch(
-      setMealActionShoppingListDecision({
+      setRecipeActionShoppingListDecision({
         chatId,
         messageId,
         decision: 'skipped',
@@ -608,13 +608,13 @@ export function Chat() {
         .find(
           (m) =>
             m.role === 'assistant' &&
-            m.agentAction?.type === 'create_meal' &&
+            m.agentAction?.type === 'create_recipe' &&
             m.agentAction?.status === 'pending_approval',
         );
 
       if (
-        pendingApprovalMsg?.agentAction?.type === 'create_meal' &&
-        pendingApprovalMsg.agentAction.meals.length > 0
+        pendingApprovalMsg?.agentAction?.type === 'create_recipe' &&
+        pendingApprovalMsg.agentAction.recipes.length > 0
       ) {
         const allMessagesForIteration = buildIterationContextMessages(
           existingMessages,
@@ -641,10 +641,10 @@ export function Chat() {
           model: selectedModel,
           rawContent: null,
           agentAction: {
-            type: 'create_meal',
+            type: 'create_recipe',
             status: 'iterating',
             proposedName: pendingApprovalMsg.agentAction.proposedName,
-            meals: [...pendingApprovalMsg.agentAction.meals],
+            recipes: [...pendingApprovalMsg.agentAction.recipes],
             recipe: null,
             completedSteps: null,
             updatingFields: null,
@@ -666,10 +666,10 @@ export function Chat() {
         activeChatIdRef.current = currentChatId;
         activeMessageIdRef.current = iteratingMessageId;
 
-        const existingProposal = pendingApprovalMsg.agentAction.meals[0];
+        const existingProposal = pendingApprovalMsg.agentAction.recipes[0];
 
         try {
-          const result = await iterateMealAction.execute(
+          const result = await iterateRecipeAction.execute(
             selectedModel,
             {
               messages: allMessagesForIteration,
@@ -692,8 +692,8 @@ export function Chat() {
                   }
                 } else if (key === 'detectFieldsToUpdate') {
                   const rawFields = data.fieldsToUpdate;
-                  const fields: MealIterableField[] = Array.isArray(rawFields)
-                    ? (rawFields as MealIterableField[])
+                  const fields: RecipeIterableField[] = Array.isArray(rawFields)
+                    ? (rawFields as RecipeIterableField[])
                     : [];
                   if (fields.length > 0) {
                     dispatch(
@@ -731,7 +731,7 @@ export function Chat() {
             // Remove the iterating action card and restore the original pending_approval proposal.
             const invalidContent = result.data.agentMessage as string | undefined;
             if (!invalidContent) {
-              console.warn('[iterateMealAction] validation returned no agentMessage — using fallback');
+              console.warn('[iterateRecipeAction] validation returned no agentMessage — using fallback');
             }
             dispatch(
               updateMessageContent({
@@ -767,7 +767,7 @@ export function Chat() {
                 chatId: currentChatId,
                 messageId: iteratingMessageId,
                 status: 'pending_approval',
-                meals: [activeProposal],
+                recipes: [activeProposal],
                 updatingFields: null,
               }),
             );
@@ -936,10 +936,10 @@ export function Chat() {
               ? `I can help you create a recipe for **${proposedName}**! Shall I go ahead?`
               : "I'd like to help you create a recipe! I wasn't able to detect the dish name — could you confirm what you'd like me to make?",
             agentAction: {
-              type: 'create_meal',
+              type: 'create_recipe',
               status: 'pending_confirmation',
               proposedName: proposedName ?? '',
-              meals: [],
+              recipes: [],
               recipe: null,
               completedSteps: null,
               updatingFields: null,
@@ -1154,7 +1154,7 @@ export function Chat() {
                   Start a New Conversation
                 </h2>
                 <p className='text-muted-foreground'>
-                  Ask me anything about cooking, recipes, meal planning, or
+                  Ask me anything about cooking, recipes, recipe planning, or
                   ingredients!
                 </p>
               </div>
