@@ -20,7 +20,8 @@ describe('ProtectedRoutes', () => {
       },
     });
 
-    expect(document.querySelector('[data-testid="loading"]') ?? document.body.textContent).toBeDefined();
+    const container = document.body;
+    expect(container.innerHTML).not.toBe('');
   });
 
   it('redirects to /auth when not authenticated and not demo', () => {
