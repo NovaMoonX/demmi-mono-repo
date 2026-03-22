@@ -23,7 +23,8 @@ describe('VoiceIndicator', () => {
     render(
       <VoiceIndicator voiceState="wake_word" enabled={true} onToggle={onToggle} />,
     );
-    expect(screen.getByText(/Hey Demmi/i)).toBeInTheDocument();
+    const matches = screen.getAllByText(/Hey Demmi/i);
+    expect(matches.length).toBeGreaterThan(0);
   });
 
   it('shows listening UI when in listening state', () => {

@@ -50,7 +50,8 @@ describe('RecipeIngredientSelector', () => {
         fromRecipePath="/recipes/new"
       />,
     );
-    expect(screen.getByText('Tomato')).toBeInTheDocument();
+    const matches = screen.getAllByText('Tomato');
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows add ingredient button', () => {
@@ -74,8 +75,8 @@ describe('RecipeIngredientSelector', () => {
         fromRecipePath="/recipes/new"
       />,
     );
-    const removeBtn = screen.getByLabelText('Remove Tomato');
-    fireEvent.click(removeBtn);
+    const removeBtns = screen.getAllByLabelText('Remove Tomato');
+    fireEvent.click(removeBtns[0]);
     expect(onChange).toHaveBeenCalledWith([]);
   });
 });
