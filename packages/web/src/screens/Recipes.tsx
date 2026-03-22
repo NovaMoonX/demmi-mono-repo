@@ -95,7 +95,7 @@ export function Recipes() {
           </Button>
         </div>
         <p className="text-muted-foreground mb-6">
-          Browse your recipe recipes
+          Browse your recipes
         </p>
         
         {/* Search and Filters */}

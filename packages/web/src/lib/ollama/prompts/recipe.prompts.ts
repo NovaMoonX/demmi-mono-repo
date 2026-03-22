@@ -68,7 +68,7 @@ Respond with JSON: { "steps": ["Step 1...", "Step 2...", "Step 3..."] }`;
 
 export const RECIPE_ITERATION_VALIDATION_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 
-Determine whether the user's latest message is asking to refine or modify the current recipe recipe shown below.
+Determine whether the user's latest message is asking to refine or modify the current recipe shown below.
 
 A message IS about refining the recipe if it:
 - Asks to change, add, remove, or substitute ingredients

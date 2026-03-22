@@ -310,7 +310,7 @@ const steps = [
 
 export const createRecipeAction = {
   type: 'createRecipe',
-  description: 'Create a new recipe recipe with ingredients and instructions',
+  description: 'Create a new recipe with ingredients and instructions',
   isMultiStep: true,
 
   steps,

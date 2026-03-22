@@ -720,7 +720,7 @@ const generateBasicInfoStep: ActionStep<RecipeResult, 'generateBasicInfo'> = {
 // Export the complete action handler
 export const createRecipeAction = {
   type: 'createRecipe',
-  description: 'Create a new recipe recipe with ingredients and instructions',
+  description: 'Create a new recipe with ingredients and instructions',
   isMultiStep: true,
   
   // Type-safe step array

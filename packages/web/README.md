@@ -323,7 +323,7 @@ Redux Toolkit with typed hooks (`useAppDispatch`, `useAppSelector`). The store i
 | Slice | Purpose |
 |---|---|
 | `ingredientsSlice` | Ingredient inventory CRUD |
-| `recipesSlice` | Recipe recipe collection CRUD |
+| `recipesSlice` | Recipe collection CRUD |
 | `chatsSlice` | Chat conversations and messages |
 | `calendarSlice` | Planned recipes / recipe planner |
 | `shoppingListSlice` | Shopping list items |

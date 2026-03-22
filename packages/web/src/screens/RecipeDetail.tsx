@@ -561,7 +561,7 @@ export function RecipeDetail() {
         </h1>
         <p className='text-muted-foreground'>
           {isEditing
-            ? 'Update the details of your recipe recipe'
+            ? 'Update the details of your recipe'
             : 'Add a new recipe to your collection'}
         </p>
       </div>
