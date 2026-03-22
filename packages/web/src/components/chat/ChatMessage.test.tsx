@@ -92,7 +92,7 @@ describe('ChatMessage', () => {
 
   it('does not render actions for empty content', () => {
     const msg = createMessage({ content: '' });
-    const { container } = render(<ChatMessage message={msg} />);
+    render(<ChatMessage message={msg} />);
     expect(screen.queryByTestId('copy-button')).not.toBeInTheDocument();
   });
 });

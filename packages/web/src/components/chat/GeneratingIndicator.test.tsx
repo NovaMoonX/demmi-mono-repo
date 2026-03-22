@@ -12,9 +12,9 @@ describe('GeneratingIndicator', () => {
   it('applies animate-bounce class to dots', () => {
     render(<GeneratingIndicator />);
     const dots = screen.getAllByText('●');
-    dots.forEach((dot) => {
+    for (const dot of dots) {
       expect(dot.className).toContain('animate-bounce');
-    });
+    }
   });
 
   it('applies custom className to container', () => {
@@ -26,8 +26,8 @@ describe('GeneratingIndicator', () => {
   it('applies custom dotClassName to each dot', () => {
     render(<GeneratingIndicator dotClassName="dot-custom" />);
     const dots = screen.getAllByText('●');
-    dots.forEach((dot) => {
+    for (const dot of dots) {
       expect(dot.className).toContain('dot-custom');
-    });
+    }
   });
 });

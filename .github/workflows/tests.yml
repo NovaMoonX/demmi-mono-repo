@@ -43,7 +43,7 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ''
           VITE_FIREBASE_APP_ID: ''
       - run: npm run build --workspace=@demmi/electron
-      - run: npm run test:electron
+      - run: xvfb-run npm run test:electron
 
   test-mobile:
     name: Mobile Tests

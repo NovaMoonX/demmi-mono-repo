@@ -26,9 +26,12 @@ class MockIntersectionObserver implements IntersectionObserver {
   readonly thresholds: ReadonlyArray<number> = [];
 
   constructor(
-    private _callback: IntersectionObserverCallback,
+    _callback: IntersectionObserverCallback,
     _options?: IntersectionObserverInit,
-  ) {}
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+  ) {
+    void _callback;
+  }
 
   observe = vi.fn();
   unobserve = vi.fn();

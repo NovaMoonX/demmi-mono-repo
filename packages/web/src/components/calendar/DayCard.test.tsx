@@ -6,8 +6,8 @@ import type { Recipe } from '@lib/recipes';
 import type { Ingredient } from '@lib/ingredients';
 
 vi.mock('@/utils', () => ({
-  formatDateShort: (ts: number) => 'Jan 15',
-  formatDayShort: (ts: number) => 'Mon',
+  formatDateShort: (_ts: number) => 'Jan 15',
+  formatDayShort: (_ts: number) => 'Mon',
 }));
 
 vi.mock('@/lib/calendar/calendar.utils', () => ({

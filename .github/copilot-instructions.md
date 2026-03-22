@@ -396,18 +396,22 @@ npm run test:mobile
 **⚠️ MANDATORY: Before completing any task, run all affected test scripts and ensure they pass:**
 ```bash
 # After changes in packages/web/
-npm run test:web
+npm run test --workspace=@demmi/web
+npm run build --workspace=@demmi/web
 
 # After changes in packages/electron/
-npm run test:electron
+npm run test --workspace=@demmi/electron
 
 # After changes in packages/mobile/
-npm run test:mobile
+npm run test --workspace=@demmi/mobile
 
-# Always verify the build still works
+# Or use root-level shorthand scripts
+npm run test:web
+npm run test:electron
+npm run test:mobile
 npm run build:web
 ```
-Never submit changes without confirming the relevant tests pass. If tests fail, fix them before completing the task.
+**This is non-negotiable.** Never submit changes without confirming the relevant tests AND build pass. If tests fail, fix them before completing the task. Re-run tests iteratively until all pass. This applies to all agentic work — automated agents must run these scripts and verify success before marking work as complete.
 
 **Test Infrastructure (Web):**
 - **Framework**: Vitest (with `globals: false` — imports from `'vitest'` required in every test)
