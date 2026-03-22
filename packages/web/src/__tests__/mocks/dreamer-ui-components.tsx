@@ -87,3 +87,26 @@ export function Avatar(props: Record<string, unknown>) {
 export function CopyButton(props: Record<string, unknown>) {
   return React.createElement('button', { 'data-testid': 'copy-button', ...props }, 'Copy');
 }
+
+export function ScrollArea({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) {
+  return React.createElement('div', { 'data-testid': 'scroll-area', ...props }, children);
+}
+
+export function DynamicList({ items, ...props }: { items?: Array<{ id: string; content: unknown }> } & Record<string, unknown>) {
+  return React.createElement('div', { 'data-testid': 'dynamic-list', ...props },
+    items?.map((item) => React.createElement('div', { key: item.id }, typeof item.content === 'string' ? item.content : '')),
+  );
+}
+
+export function Drawer({ children, isOpen, ...props }: React.PropsWithChildren<{ isOpen?: boolean } & Record<string, unknown>>) {
+  if (!isOpen) return null;
+  return React.createElement('div', { 'data-testid': 'drawer', ...props }, children);
+}
+
+export function TabsContent({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) {
+  return React.createElement('div', { 'data-testid': 'tabs-content', ...props }, children);
+}
+
+export function AuthForm(props: Record<string, unknown>) {
+  return React.createElement('div', { 'data-testid': 'auth-form', ...props });
+}
