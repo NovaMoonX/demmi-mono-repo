@@ -92,7 +92,7 @@ In a single sentence:
 | **Meal Planner Calendar** | Converts one-off recipe browsing into a weekly cooking habit |
 | **Shopping List** | Closes the loop from planning to purchasing |
 | **Demo Mode** | Critical for zero-friction first impressions; reduces sign-up friction |
-| **AI Recipe Creation (chat)** | Differentiates from a static recipe app — feels alive and personalised |
+| **AI Recipe Creation (chat)** | Differentiates from a static recipe app — feels alive and personalized |
 | **Recipe from Text / URL** | Practical utility — captures recipes the user already has elsewhere |
 | **Cook Mode** | Elevates from storage to active use; voice navigation is a premium-feel touch |
 | **Recipe Sharing** | Viral growth lever — lets users share without requiring recipient sign-up |
@@ -103,12 +103,12 @@ In a single sentence:
 | Feature | Current State | Gap |
 |---|---|---|
 | **Ollama ↔ Electron IPC** | Ollama calls go via direct HTTP from the renderer process | Needs to route through Electron main process via IPC; direct `localhost` calls fail in some Electron security contexts and break in packaged builds |
-| **Barcode Entry** | Manual barcode number input only | No camera/scanner integration — on mobile and desktop there is hardware available to scan; typed barcodes are a poor UX |
+| **Barcode Entry** | Manual barcode number input only | No camera/scanner integration — on mobile and desktop there is hardware available to scan; typing a barcode is a poor UX |
 | **Chat on Mobile** | Ollama requires a local server; React Native WebView can't reach `localhost:11434` | Chat is silently broken or missing on mobile — needs a graceful disabled state with a clear explanation, or an optional cloud API fallback |
 | **AI Recipe Creation** | Works in chat but intent detection relies on keyword matching | No dedicated "Create Recipe" entry point; new users won't discover this flow without exploring the chat |
 | **Nutrition in Meal Planner** | Totals display exists | Filtering by nutrition goals (e.g. "keep me under 2000 kcal today") isn't wired — data is there but not actionable |
 | **Shopping List ↔ Pantry** | Shopping list exists; pantry (ingredients) exists | No "deduct purchased items from pantry" or "auto-populate list from what's missing for this recipe" |
-| **Account / Profile Screen** | Screen exists | No dietary preferences, cuisine preferences, or user profile stored — critical for onboarding personalisation |
+| **Account / Profile Screen** | Screen exists | No dietary preferences, cuisine preferences, or user profile stored — critical for onboarding personalization |
 
 ### 3.3 Features That Add Noise Without Serving the Core Goal ❌
 
@@ -148,7 +148,7 @@ In a single sentence:
 
 ### 4.3 Barcode Scanning
 
-**Problem:** The `IngredientBarcodeEntry` screen only accepts manually typed barcodes. The majority of phones have cameras that can scan barcodes natively.
+**Problem:** The `IngredientBarcodeEntry` screen only accepts manually typing a barcode. The majority of phones have cameras that can scan a barcode natively.
 
 **Solution:**
 - Mobile: Use `expo-camera` + `expo-barcode-scanner` in the Expo WebView host to expose a native barcode scanning bridge back to the web layer via `postMessage`
@@ -157,9 +157,15 @@ In a single sentence:
 
 ### 4.4 User Profile & Preferences Storage
 
-**Required for onboarding personalisation (see Section 6):**
+**Required for onboarding personalization (see Section 6):**
 
-Add a `UserProfile` document to Firestore (keyed by `userId`):
+Add a `UserProfile` document to Firestore (keyed by `userId`). Key updates:
+
+- Let users choose predefined dietary restrictions *and* provide freeform custom restrictions ("other"). Capture both so the AI can respect explicit constraints.
+- Capture explicit `avoidIngredients` (things the user never wants) to allow precise filtering and prioritization.
+- Add cooking goals for tracking macros/micros and support goal-specific follow-up questions during onboarding (e.g., macro targets, weekly grocery budget).
+
+Illustrative TypeScript shape (for implementers):
 
 ```typescript
 type DietaryRestriction =
@@ -169,7 +175,8 @@ type DietaryRestriction =
   | 'dairy-free'
   | 'halal'
   | 'kosher'
-  | 'nut-free';
+  | 'nut-free'
+  | (string & {}); // loose string union
 
 type CuisineType =
   | 'italian'
@@ -179,35 +186,53 @@ type CuisineType =
   | 'indian'
   | 'middle-eastern'
   | 'american'
-  | 'other';
+  | (string & {}); // loose string union
 
 type CookingGoal =
   | 'eat-healthier'
+  | 'track-macros'
   | 'save-money'
-  | 'reduce-waste'
-  | 'learn-cooking'
-  | 'meal-prep';
+  | 'meal-prep'
+  | 'learn-cooking';
 
 type CookingSkillLevel = 'beginner' | 'intermediate' | 'advanced';
 
 interface UserProfile {
   userId: string;
-  displayName: string | null;
-  avatarId: string | null;
+  displayName?: string | null;
+  avatarId?: string | null;
   dietaryRestrictions: DietaryRestriction[];
-  cuisinePreferences: CuisineType[];
-  cookingGoals: CookingGoal[];
-  householdSize: number | null;
-  cookingSkillLevel: CookingSkillLevel | null;
-  weeklyMealPlanEnabled: boolean;
+  avoidIngredients?: string[] | null; // explicit excludes
+  cuisinePreferences?: CuisineType[];
+  cookingGoal?: CookingGoal | null;
+  cookingGoalDetails?: {
+    'eat-healthier'?: { focusAreas?: string[] | null } | null; // e.g., ['reduce-sugar','more-veg']
+    'track-macros'?: { protein?: number | null; carbs?: number | null; fat?: number | null; asPercent?: boolean | null } | null;
+    'save-money'?: { weeklyBudget?: number | null; preferredStores?: string[] | null } | null;
+    'meal-prep'?: { batchDays?: number | null; preferBatchRecipes?: boolean | null } | null;
+    'learn-cooking'?: { targetSkills?: string[] | null; targetRecipeCount?: number | null } | null;
+  } | null; // goal-specific params (e.g., macro targets, budget)
+  householdSize?: number | null;
+  cookingSkillLevel?: CookingSkillLevel | null;
+  weeklyMealPlanEnabled?: boolean;
+  /**
+   * Concise reason-based insights extracted from the user's "loved" / "didn't enjoy" examples.
+   * These are not raw nutrition or ingredient labels but short, human-readable reasons
+   * that explain *why* a meal was enjoyable or not (e.g. "prefers quick prep under 20m",
+   * "dislikes mushy textures", "prefers mild, not spicy").
+   * Store at most 5 facts to keep AI prompts compact. Facts are tagged with polarity
+   * ('positive' for likes, 'negative' for dislikes) and are editable by the user.
+   */
+  profileKeyFacts?: Array<{ text: string; polarity: 'positive' | 'negative' }> | null;
+
   onboardingCompletedAt: number | null;
 }
 ```
 
 This data should be:
 - Captured during onboarding
-- Used to personalise AI chat system prompts (dietary restrictions, cuisine preferences)
-- Reflected in recipe recommendations and calendar defaults
+- Used to personalize AI system prompts (dietary restrictions, cuisine preferences, avoid/required lists)
+- Reflected in recipe recommendations, calendar defaults, and recipe filtering logic
 
 ---
 
@@ -222,7 +247,7 @@ This is fine for technical early adopters, but will cause immediate drop-off for
 ### 5.2 Onboarding Design Principles
 
 1. **Make every step feel worth their time** — the user should feel like each question benefits them, not us
-2. **Show immediate value** — end the onboarding with something genuinely useful (personalised recipe suggestions, a pre-filled meal plan, or a populated shopping list)
+2. **Show immediate value** — end the onboarding with something genuinely useful (personalized recipe suggestions, a pre-filled meal plan, or a populated shopping list)
 3. **Keep it conversational, not form-like** — large text, single-choice cards, emoji, progress bar
 4. **Never hard-paywalled** — offer optional premium features, never block progress
 5. **Skippable but encouraged** — every step has a "Skip" option, but copy should make skipping feel like a loss
@@ -236,19 +261,25 @@ Step 1: Welcome
   → [Let's go] [Skip setup]
 
 Step 2: What brings you here?
-  (Single select — sets tone for the rest of the flow)
+  (Multi-select — pick up to 2 — sets tone and branching for the rest of the flow)
   🍽️ I want to plan my meals for the week
-  🤖 I want AI help finding recipes
+  🔍 I want help finding recipes
   🥦 I'm trying to eat healthier
-  🛒 I want to reduce grocery waste
-  📖 I want to organise my recipes
+  💸 I want to save money on groceries
+  📖 I want to organize my recipes
+
+Step 2b: Tell me more about <goal>
+  - Based on the goals the user chose in the previous step (described below)
 
 Step 3: Any dietary preferences?
-  (Multi-select chips)
+  (Multi-select chips; choose predefined items or select "Other (specify)")
   Vegetarian · Vegan · Gluten-Free · Dairy-Free
-  Halal · Kosher · Nut-Free · No restrictions
+  Halal · Kosher · Nut-Free · No restrictions · Other (specify)
 
-Step 4: Favourite cuisines?
+Step 3b: Anything you want to avoid?
+  (Optional; freeform chips) e.g. peanuts, shellfish, nightshades
+
+Step 4: Favorite cuisines?
   (Multi-select with emoji flags — pick up to 5)
   🍝 Italian · 🍜 Asian · 🌮 Mexican · 🥙 Mediterranean
   🍛 Indian · 🥘 Middle Eastern · 🍔 American · 🥗 Other
@@ -267,7 +298,20 @@ Step 8: (Optional) Add a few ingredients you usually have
   [+ Pasta]  [+ Chicken]  [+ Eggs]  ... (quick-add chips from common items)
   [Skip for now]
 
-Step 9: AI personalisation summary (value moment)
+Step 8a: Tell us about a meal you loved (optional)
+  (Microphone input or text): "Describe a meal you enjoyed that fits how you want to eat."
+  - Microphone input is transcribed locally, then the local LLM summarizes the experience and extracts up to five concise reason-based facts that explain *why* the meal was enjoyable (examples: "prefers quick prep under 20m", "likes crunchy textures", "enjoys mild lemon-herb seasoning").
+  - The AI will show a short reiteration and ask the user to confirm or edit the extracted facts.
+  - Confirmed facts are saved to `UserProfile.profileKeyFacts` (up to 5 entries, tagged positive) and used as high-importance signals when generating or filtering suggestions.
+  - This step is optional and skippable.
+
+Step 8b: Tell us about a meal you didn't enjoy (optional)
+  (Microphone input or text): "Describe a meal that aligned with your goals but you didn't like, and why."
+  - Microphone input is transcribed and the AI summarizes the main dislike *reasons* (e.g., "too spicy", "mushy texture", "sourdough gave a too-heavy mouthfeel").
+  - The user can confirm or edit the AI's summary. Confirmed dislike reasons are saved to `UserProfile.profileKeyFacts` (tagged as negative) and used to de-prioritize or filter future suggestions.
+  - This step is optional and skippable.
+
+Step 9: AI personalization summary (value moment)
   "Based on what you've told us, here are 3 recipes we think you'll love:"
   [Recipe Card] [Recipe Card] [Recipe Card]
   "Demmi will remember your preferences every time you ask for ideas."
@@ -283,9 +327,11 @@ Step 10: Setup complete 🎉
 
 | Data Captured | Where Used |
 |---|---|
-| Dietary restrictions | Injected into AI system prompt; used to filter recipe suggestions |
+| Dietary restrictions | Injected into AI system prompt; used to filter recipe suggestions. If user selects `other`, the freeform strings are used verbatim in prompts. |
+| `avoidIngredients` | Hard filters for recipe generation and suggestion; `avoidIngredients` are removed from candidate recipes. |
 | Cuisine preferences | AI uses to bias recipe creation; surfaces relevant categories first |
-| Cooking goal | Drives copy and CTAs in empty states throughout the app |
+| Cooking goal | Drives copy and CTAs in empty states and determines short branching questions (see 5.5) |
+| Cooking goal details | Stored in `cookingGoalDetails` and used to tune AI prompts (e.g., macro targets, micronutrient focus, or weekly budget constraints) |
 | Household size | Default serving size when creating recipes |
 | Skill level | AI adjusts recipe complexity and step-by-step detail accordingly |
 | Time preference | AI favours recipes within stated time range when suggesting |
@@ -300,6 +346,15 @@ Step 10: Setup complete 🎉
 - Progress bar at the top (e.g. "Step 3 of 8")
 - On "Save these recipes" (Step 9): dispatch `createRecipe` thunks for the suggested recipes in the background
 - Onboarding should be re-triggerable from Account settings ("Reset onboarding")
+
+Branching & goal-specific follow-ups:
+
+- If the user picks `track-macros` as their cooking goal, show an immediate follow-up step to capture targets (grams or percentages for protein/carbs/fat). Save these into `cookingGoalDetails`.
+- If the user picks `save-money`, show an immediate follow-up asking for a target weekly grocery budget (number) and any preferred stores or constraints; store under `cookingGoalDetails`.
+- If the user picks `meal-prep`, optionally ask how many days of meals they want to batch for.
+- When a user selects a standard dietary restriction (e.g., `nut-free`), auto-populate `avoidIngredients` with the inferred items (e.g., nuts, peanuts, tree-nuts). Allow the user to edit the inferred list.
+
+Implementation note: keep follow-ups optional and skippable — store any entered values in `cookingGoalDetails` so downstream AI prompts can use them.
 
 ---
 
@@ -322,7 +377,7 @@ Replace the current marketing-style Home screen (for authenticated users) with a
 - Today's planned meals (from calendar)
 - Upcoming ingredient shortages (low stock items)
 - Recent chats / quick "Ask Demi" input
-- Recipe of the day (personalised based on preferences and pantry)
+- Recipe of the day (personalized based on preferences and pantry)
 
 #### 6.2.3 Typography & Spacing
 - Increase heading sizes; the current UI feels visually flat at a glance
@@ -335,7 +390,7 @@ Replace the current marketing-style Home screen (for authenticated users) with a
 - Toast notifications for all async actions (already partially implemented — make consistent)
 
 #### 6.2.5 Recipe Cards
-- Recipes without images use a gradient placeholder — make these more visually interesting (category-colour background + emoji)
+- Recipes without images use a gradient placeholder — make these more visually interesting (category-color background + emoji)
 - Add a "Quick add to meal plan" button directly on the card (currently requires navigating into detail)
 
 #### 6.2.6 Chat UI
@@ -356,7 +411,7 @@ Replace the current marketing-style Home screen (for authenticated users) with a
 
 ### 7.1 Guiding Principle
 
-Demmi's core value proposition is **local-first and private**. Monetisation must not undermine this. The business model should reward users who want cloud-enhanced features while keeping the local experience fully free.
+Demmi's core value proposition is **local-first and private**. Monetization must not undermine this. The business model should reward users who want cloud-enhanced features while keeping the local experience fully free.
 
 ### 7.2 Tier Structure
 
@@ -495,7 +550,7 @@ Demmi becomes the operating system for a household's cooking life — the single
 |---|---|
 | **Referral program** | "Invite a friend, both get 1 month Pro free" |
 | **Recipe sharing virality** | Every shared recipe page has a "Try Demmi" CTA — organic acquisition from existing users |
-| **App Store / Google Play listing** | Once mobile is polished, Play Store and App Store listings with optimised screenshots |
+| **App Store / Google Play listing** | Once mobile is polished, Play Store and App Store listings with optimized screenshots |
 | **Comparison content** | "Demmi vs. Mealime", "Demmi vs. ChatGPT for cooking" — capture intent-driven search traffic |
 
 ---
@@ -520,7 +575,7 @@ Demmi becomes the operating system for a household's cooking life — the single
 | Recipe cards: category-coloured placeholder for missing images | 🟢 Low | Web |
 | "Quick add to meal plan" button on recipe cards | 🟢 Low | Web |
 
-### Week 2: Onboarding & Personalisation
+### Week 2: Onboarding & Personalization
 
 **Theme: Capture user intent up front, deliver value immediately**
 
@@ -530,14 +585,14 @@ Demmi becomes the operating system for a household's cooking life — the single
 | Implement `UserProfile` onboarding save thunk (Firestore) | 🔴 Critical | Web (store) |
 | Inject dietary restrictions and cuisine preferences into Ollama system prompt | 🔴 Critical | Web (ollama) |
 | Quick-add ingredient chips (Step 8 of onboarding) — pre-populate pantry | 🟡 Medium | Web |
-| AI recipe suggestions for Step 9 (3 personalised recipes from preferences) | 🟡 Medium | Web |
+| AI recipe suggestions for Step 9 (3 personalized recipes from preferences) | 🟡 Medium | Web |
 | "Re-run onboarding" option in Account settings | 🟢 Low | Web |
 | Update AI system prompt to reference household size and skill level | 🟡 Medium | Web (ollama) |
 | Suggested prompts in empty Chat state (based on user preferences) | 🟢 Low | Web |
 
 ### Week 3: Business Model, Notifications & Release Prep
 
-**Theme: Polish the release, establish the foundation for monetisation**
+**Theme: Polish the release, establish the foundation for monetization**
 
 | Task | Priority | Owner Area |
 |---|---|---|
