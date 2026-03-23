@@ -417,9 +417,9 @@ npm run build:web
 - **Framework**: Vitest (with `globals: false` — imports from `'vitest'` required in every test)
 - **Config**: `packages/web/vitest.config.ts`
 - **Component testing**: `@testing-library/react` + `@testing-library/jest-dom/vitest`
-- **Shared helpers**: `src/__tests__/helpers/renderWithProviders.tsx` — wraps components with Redux Provider + MemoryRouter
+- **Test wrapper**: `src/__tests__/generateTestWrapper.tsx` — provides Redux store + MemoryRouter via `{ wrapper, store }`
 - **Mocks**: `src/__tests__/mocks/` — Dreamer UI components/hooks/utils/providers/symbols, Firebase config
-- **Setup**: `src/__tests__/setup.ts` (vitest matchers, cleanup, matchMedia/IntersectionObserver mocks)
+- **Setup**: `src/__tests__/setup.ts` (vitest matchers, cleanup, matchMedia/IntersectionObserver mocks, Firebase SDK mocks)
 - **UI mode**: `npm run test:ui --workspace=@demmi/web` — opens Vitest UI in browser
 
 **Test Infrastructure (Electron):**
@@ -438,19 +438,54 @@ npm run build:web
 // Every test file must import what it uses from 'vitest'
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Use vi.fn() instead of jest.fn()
+// Use generateTestWrapper for all component/hook/screen tests
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
+import { render } from '@testing-library/react';
+
+// Basic usage — wraps with real Redux store + MemoryRouter
+const { wrapper } = generateTestWrapper();
+render(<MyComponent />, { wrapper });
+
+// With preloaded Redux state
+const { wrapper } = generateTestWrapper({
+  preloadedState: { recipes: { items: mockRecipes } },
+});
+
+// With route params — generateTestWrapper creates the MemoryRouter, useParams() returns real values
+const { wrapper } = generateTestWrapper({
+  route: '/recipes/rec-1',
+  path: '/recipes/:id',
+});
+
+// Access the store directly to assert state changes
+const { wrapper, store } = generateTestWrapper();
+render(<MyComponent />, { wrapper });
+fireEvent.click(screen.getByText('Save'));
+expect(store.getState().recipes.items).toHaveLength(1);
+
+// For hooks — use renderHook with the wrapper
+const { wrapper, store } = generateTestWrapper();
+const { result } = renderHook(() => useMyHook(), { wrapper });
+
+// vi.fn() for mocks
 const mockFn = vi.fn();
 
-// Use vi.mock() instead of jest.mock()
+// Mock specific service/library functions (OK)
 vi.mock('@hooks/useAuth', () => ({
-  useAuth: () => mockUseAuth(),
+  useAuth: () => ({ user: mockUser, loading: false }),
 }));
 
-// vi.importActual is async (unlike jest.requireActual)
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
-  useNavigate: () => mockNavigate,
+// Mock child components to isolate the component under test (OK)
+vi.mock('@components/recipes/RecipeCard', () => ({
+  RecipeCard: ({ recipe }: { recipe: Recipe }) => <div>{recipe.title}</div>,
 }));
+
+// Mock Firebase SDK methods for Firestore/RTDB (OK)
+// Note: firebase/firestore and firebase/database are mocked globally in setup.ts
+// Use vi.mocked() to customize per-test behavior:
+vi.mocked(get).mockResolvedValueOnce(
+  mock<DataSnapshot>({ val: () => mockData, exists: () => true }),
+);
 
 // Constructor mocks must use classes (vi.fn doesn't support `new`)
 vi.mock('ollama/browser', () => {
@@ -460,6 +495,40 @@ vi.mock('ollama/browser', () => {
   return { Ollama: MockOllama };
 });
 ```
+
+**Anti-patterns to AVOID:**
+```tsx
+// ❌ NEVER use renderWithProviders (deleted)
+renderWithProviders(<Component />, { preloadedState });
+
+// ❌ NEVER mock/spy on react-router-dom navigation hooks
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
+  useNavigate: () => mockNavigate,  // BAD
+  useParams: () => ({ id: 'rec-1' }),  // BAD
+  useLocation: () => ({ pathname: '/recipes' }),  // BAD
+}));
+
+// ❌ NEVER spy on the Redux store dispatch
+vi.spyOn(store, 'dispatch');
+
+// ❌ NEVER assert on mockNavigate calls (spy on routing)
+expect(mockNavigate).toHaveBeenCalledWith('/auth');
+
+// ✅ Instead — use route/path options in generateTestWrapper for useParams
+const { wrapper } = generateTestWrapper({ route: '/recipes/rec-1', path: '/recipes/:id' });
+
+// ✅ Instead — assert store state changes directly
+expect(store.getState().demo.isActive).toBe(false);
+
+// ✅ Instead — check DOM state after interactions, not navigation calls
+expect(screen.queryByText('Some content')).not.toBeInTheDocument();
+```
+
+**Exceptions (acceptable mocks):**
+- `useRouteError` from react-router-dom — only works in error boundaries, must be mocked
+- `RouterProvider` from react-router-dom — acceptable when testing App root component
+- `Outlet` from react-router-dom — acceptable in Layout tests (nested routes not set up in tests)
 
 **When adding new files:**
 - ✅ New utility function → add `<name>.test.ts` in the same directory
