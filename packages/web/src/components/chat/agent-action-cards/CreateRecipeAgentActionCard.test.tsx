@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen } from '@testing-library/react';
-import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
+import { render, screen } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { CreateRecipeAgentActionCard } from './CreateRecipeAgentActionCard';
 
 vi.mock('../GeneratingIndicator', () => ({
@@ -33,7 +33,8 @@ const mockProposal = {
 
 describe('CreateRecipeAgentActionCard', () => {
   it('renders confirmation UI for pending_confirmation status', () => {
-    renderWithProviders(
+    const { wrapper } = generateTestWrapper();
+    render(
       <CreateRecipeAgentActionCard
         {...baseProps}
         action={{
@@ -48,13 +49,15 @@ describe('CreateRecipeAgentActionCard', () => {
           shoppingListItemsAdded: null,
         }}
       />,
+      { wrapper },
     );
     expect(screen.getByText(/Yes, create it/)).toBeInTheDocument();
     expect(screen.getByText(/No, cancel/)).toBeInTheDocument();
   });
 
   it('renders generating UI for generating_name status', () => {
-    renderWithProviders(
+    const { wrapper } = generateTestWrapper();
+    render(
       <CreateRecipeAgentActionCard
         {...baseProps}
         action={{
@@ -69,12 +72,14 @@ describe('CreateRecipeAgentActionCard', () => {
           shoppingListItemsAdded: null,
         }}
       />,
+      { wrapper },
     );
     expect(screen.getByTestId('generating-indicator')).toBeInTheDocument();
   });
 
   it('renders recipe preview for pending_approval status', () => {
-    renderWithProviders(
+    const { wrapper } = generateTestWrapper();
+    render(
       <CreateRecipeAgentActionCard
         {...baseProps}
         action={{
@@ -89,6 +94,7 @@ describe('CreateRecipeAgentActionCard', () => {
           shoppingListItemsAdded: null,
         }}
       />,
+      { wrapper },
     );
     expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument();
   });

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
-import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import Layout from './Layout';
 
 vi.mock('@components/Sidebar', () => ({
@@ -10,45 +10,37 @@ vi.mock('@components/Sidebar', () => ({
 vi.mock('react-router-dom', async () => ({
   ...(await vi.importActual('react-router-dom')),
   Outlet: () => <div data-testid="outlet">Outlet Content</div>,
-  useNavigate: () => vi.fn(),
 }));
 
 describe('Layout', () => {
   it('renders the sidebar and outlet', () => {
-    renderWithProviders(<Layout />);
+    const { wrapper } = generateTestWrapper();
+    render(<Layout />, { wrapper });
     expect(screen.getByTestId('sidebar')).toBeInTheDocument();
     expect(screen.getByTestId('outlet')).toBeInTheDocument();
   });
 
   it('does not show demo banner when demo is inactive', () => {
-    renderWithProviders(<Layout />);
+    const { wrapper } = generateTestWrapper();
+    render(<Layout />, { wrapper });
     expect(screen.queryByText(/Demo Mode/)).not.toBeInTheDocument();
   });
 
   it('shows demo banner when demo is active', () => {
-    renderWithProviders(<Layout />, {
-      preloadedState: {
-        demo: { isActive: true },
-      } as never,
-    });
+    const { wrapper } = generateTestWrapper({ preloadedState: { demo: { isActive: true } } as never });
+    render(<Layout />, { wrapper });
     expect(screen.getByText(/Demo Mode/)).toBeInTheDocument();
   });
 
   it('renders an Exit Demo button when demo is active', () => {
-    renderWithProviders(<Layout />, {
-      preloadedState: {
-        demo: { isActive: true },
-      } as never,
-    });
+    const { wrapper } = generateTestWrapper({ preloadedState: { demo: { isActive: true } } as never });
+    render(<Layout />, { wrapper });
     expect(screen.getByText('Exit Demo')).toBeInTheDocument();
   });
 
   it('dispatches endDemoSession when Exit Demo is clicked', async () => {
-    const { store } = renderWithProviders(<Layout />, {
-      preloadedState: {
-        demo: { isActive: true },
-      } as never,
-    });
+    const { wrapper, store } = generateTestWrapper({ preloadedState: { demo: { isActive: true } } as never });
+    render(<Layout />, { wrapper });
     fireEvent.click(screen.getByText('Exit Demo'));
     await screen.findByText('Exit Demo');
     const demoState = store.getState().demo;

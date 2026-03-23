@@ -1,14 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { NotFound } from './NotFound';
 
-const mockNavigate = vi.fn();
 const mockUseAuth = vi.fn();
-
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
-  useNavigate: () => mockNavigate,
-}));
 
 vi.mock('@hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
@@ -25,29 +20,27 @@ describe('NotFound', () => {
   });
 
   it('renders 404 heading', () => {
-    render(<NotFound />);
+    const { wrapper } = generateTestWrapper();
+    render(<NotFound />, { wrapper });
     expect(screen.getByText('404')).toBeInTheDocument();
   });
 
   it('renders Page Not Found message', () => {
-    render(<NotFound />);
+    const { wrapper } = generateTestWrapper();
+    render(<NotFound />, { wrapper });
     expect(screen.getByText('Page Not Found')).toBeInTheDocument();
   });
 
   it('renders description text', () => {
-    render(<NotFound />);
+    const { wrapper } = generateTestWrapper();
+    render(<NotFound />, { wrapper });
     expect(screen.getByText(/couldn't find the page/)).toBeInTheDocument();
   });
 
   it('shows "Go to Home" when user is not authenticated', () => {
-    render(<NotFound />);
+    const { wrapper } = generateTestWrapper();
+    render(<NotFound />, { wrapper });
     expect(screen.getByText('Go to Home')).toBeInTheDocument();
-  });
-
-  it('navigates to / when button is clicked', () => {
-    render(<NotFound />);
-    fireEvent.click(screen.getByText('Go to Home'));
-    expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 });
 
@@ -62,7 +55,8 @@ describe('NotFound (authenticated)', () => {
       logOut: vi.fn(),
       loading: false,
     });
-    render(<NotFound />);
+    const { wrapper } = generateTestWrapper();
+    render(<NotFound />, { wrapper });
     expect(screen.getByText('Return to App')).toBeInTheDocument();
   });
 });

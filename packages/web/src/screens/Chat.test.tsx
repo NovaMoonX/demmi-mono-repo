@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen } from '@testing-library/react';
-import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
+import { render, screen } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { Chat } from './Chat';
 
 vi.mock('@components/chat/ChatHistoryToggleIcon', () => ({
@@ -48,43 +48,47 @@ vi.mock('@lib/ollama', () => ({
 
 describe('Chat', () => {
   it('renders the New Chat heading when no conversation selected', () => {
-    renderWithProviders(<Chat />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: {
         chats: { conversations: [], currentChatId: null, selectedModel: 'test-model' },
       },
     });
+    render(<Chat />, { wrapper });
     expect(screen.getByText('New Chat')).toBeInTheDocument();
   });
 
   it('renders the chat history panel', () => {
-    renderWithProviders(<Chat />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: {
         chats: { conversations: [], currentChatId: null, selectedModel: 'test-model' },
       },
     });
+    render(<Chat />, { wrapper });
     expect(screen.getByTestId('chat-history')).toBeInTheDocument();
   });
 
   it('renders the ollama model control', () => {
-    renderWithProviders(<Chat />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: {
         chats: { conversations: [], currentChatId: null, selectedModel: 'test-model' },
       },
     });
+    render(<Chat />, { wrapper });
     expect(screen.getByTestId('ollama-model-control')).toBeInTheDocument();
   });
 
   it('renders the message input textarea', () => {
-    renderWithProviders(<Chat />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: {
         chats: { conversations: [], currentChatId: null, selectedModel: 'test-model' },
       },
     });
+    render(<Chat />, { wrapper });
     expect(screen.getByTestId('textarea')).toBeInTheDocument();
   });
 
   it('displays the chat title when a conversation exists', () => {
-    renderWithProviders(<Chat />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: {
         chats: {
           conversations: [
@@ -102,6 +106,7 @@ describe('Chat', () => {
         },
       },
     });
+    render(<Chat />, { wrapper });
     expect(screen.getByText('My Test Chat')).toBeInTheDocument();
   });
 });

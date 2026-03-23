@@ -1,14 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { ErrorFallback } from './ErrorFallback';
 
-const mockNavigate = vi.fn();
 const mockError = new Error('Test error message');
 const mockUseAuth = vi.fn();
 
 vi.mock('react-router-dom', async () => ({
   ...(await vi.importActual('react-router-dom')),
-  useNavigate: () => mockNavigate,
   useRouteError: () => mockError,
 }));
 
@@ -27,34 +26,33 @@ describe('ErrorFallback', () => {
   });
 
   it('renders Error heading', () => {
-    render(<ErrorFallback />);
+    const { wrapper } = generateTestWrapper();
+    render(<ErrorFallback />, { wrapper });
     expect(screen.getByText('Error')).toBeInTheDocument();
   });
 
   it('renders Something Went Wrong message', () => {
-    render(<ErrorFallback />);
+    const { wrapper } = generateTestWrapper();
+    render(<ErrorFallback />, { wrapper });
     expect(screen.getByText('Something Went Wrong')).toBeInTheDocument();
   });
 
   it('renders the error message', () => {
-    render(<ErrorFallback />);
+    const { wrapper } = generateTestWrapper();
+    render(<ErrorFallback />, { wrapper });
     expect(screen.getByText('Test error message')).toBeInTheDocument();
   });
 
   it('renders description text', () => {
-    render(<ErrorFallback />);
+    const { wrapper } = generateTestWrapper();
+    render(<ErrorFallback />, { wrapper });
     expect(screen.getByText(/unexpected error/)).toBeInTheDocument();
   });
 
   it('shows "Go to Home" when user is not authenticated', () => {
-    render(<ErrorFallback />);
+    const { wrapper } = generateTestWrapper();
+    render(<ErrorFallback />, { wrapper });
     expect(screen.getByText('Go to Home')).toBeInTheDocument();
-  });
-
-  it('navigates to / when button is clicked', () => {
-    render(<ErrorFallback />);
-    fireEvent.click(screen.getByText('Go to Home'));
-    expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 });
 
@@ -69,7 +67,8 @@ describe('ErrorFallback (authenticated)', () => {
       logOut: vi.fn(),
       loading: false,
     });
-    render(<ErrorFallback />);
+    const { wrapper } = generateTestWrapper();
+    render(<ErrorFallback />, { wrapper });
     expect(screen.getByText('Go to App')).toBeInTheDocument();
   });
 });

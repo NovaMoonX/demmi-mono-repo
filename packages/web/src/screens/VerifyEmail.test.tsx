@@ -1,17 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
-import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { VerifyEmail } from './VerifyEmail';
 
-const mockNavigate = vi.fn();
 const mockLogOut = vi.fn().mockResolvedValue(undefined);
 const mockResendVerificationEmail = vi.fn().mockResolvedValue({});
 const mockAddToast = vi.fn();
-
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
-  useNavigate: () => mockNavigate,
-}));
 
 vi.mock('@hooks/useAuth', () => ({
   useAuth: () => ({
@@ -48,17 +42,20 @@ afterEach(() => {
 
 describe('VerifyEmail', () => {
   it('renders the verify email heading', () => {
-    renderWithProviders(<VerifyEmail />);
+    const { wrapper } = generateTestWrapper();
+    render(<VerifyEmail />, { wrapper });
     expect(screen.getByText('Verify Your Email')).toBeInTheDocument();
   });
 
   it('renders the user email', () => {
-    renderWithProviders(<VerifyEmail />);
+    const { wrapper } = generateTestWrapper();
+    render(<VerifyEmail />, { wrapper });
     expect(screen.getByText('test@test.com')).toBeInTheDocument();
   });
 
   it('renders instructions text', () => {
-    renderWithProviders(<VerifyEmail />);
+    const { wrapper } = generateTestWrapper();
+    render(<VerifyEmail />, { wrapper });
     expect(
       screen.getByText(
         'Please check your inbox and click the verification link to continue.',
@@ -67,23 +64,27 @@ describe('VerifyEmail', () => {
   });
 
   it('renders the resend button', () => {
-    renderWithProviders(<VerifyEmail />);
+    const { wrapper } = generateTestWrapper();
+    render(<VerifyEmail />, { wrapper });
     expect(screen.getByText('Resend Verification Email')).toBeInTheDocument();
   });
 
   it('renders the sign out button', () => {
-    renderWithProviders(<VerifyEmail />);
+    const { wrapper } = generateTestWrapper();
+    render(<VerifyEmail />, { wrapper });
     expect(screen.getByText('Sign Out')).toBeInTheDocument();
   });
 
   it('calls logOut when Sign Out is clicked', () => {
-    renderWithProviders(<VerifyEmail />);
+    const { wrapper } = generateTestWrapper();
+    render(<VerifyEmail />, { wrapper });
     fireEvent.click(screen.getByText('Sign Out'));
     expect(mockLogOut).toHaveBeenCalled();
   });
 
   it('calls resendVerificationEmail when resend is clicked', () => {
-    renderWithProviders(<VerifyEmail />);
+    const { wrapper } = generateTestWrapper();
+    render(<VerifyEmail />, { wrapper });
     fireEvent.click(screen.getByText('Resend Verification Email'));
     expect(mockResendVerificationEmail).toHaveBeenCalled();
   });

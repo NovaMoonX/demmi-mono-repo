@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
-import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { Recipes } from './Recipes';
 import type { Recipe } from '@lib/recipes';
 
@@ -43,25 +43,28 @@ const mockRecipes: Recipe[] = [
 
 describe('Recipes Screen', () => {
   it('renders the page title', () => {
-    renderWithProviders(<Recipes />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { recipes: { items: [] } },
     });
+    render(<Recipes />, { wrapper });
     expect(screen.getByText('Recipes')).toBeInTheDocument();
   });
 
   it('renders recipe cards for each recipe', () => {
-    renderWithProviders(<Recipes />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { recipes: { items: mockRecipes } },
     });
+    render(<Recipes />, { wrapper });
     expect(screen.getByTestId('recipe-card-rec-1')).toBeInTheDocument();
     expect(screen.getByTestId('recipe-card-rec-2')).toBeInTheDocument();
     expect(screen.getByTestId('recipe-card-rec-3')).toBeInTheDocument();
   });
 
   it('filters recipes by search query', () => {
-    renderWithProviders(<Recipes />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { recipes: { items: mockRecipes } },
     });
+    render(<Recipes />, { wrapper });
 
     const searchInput = screen.getByPlaceholderText('Search recipes by name or description...');
     fireEvent.change(searchInput, { target: { value: 'Pasta' } });
@@ -71,9 +74,10 @@ describe('Recipes Screen', () => {
   });
 
   it('shows empty message when no recipes match', () => {
-    renderWithProviders(<Recipes />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { recipes: { items: mockRecipes } },
     });
+    render(<Recipes />, { wrapper });
 
     const searchInput = screen.getByPlaceholderText('Search recipes by name or description...');
     fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
@@ -82,16 +86,18 @@ describe('Recipes Screen', () => {
   });
 
   it('renders Create Recipe button', () => {
-    renderWithProviders(<Recipes />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { recipes: { items: [] } },
     });
+    render(<Recipes />, { wrapper });
     expect(screen.getByText('Create Recipe')).toBeInTheDocument();
   });
 
   it('opens create modal when Create Recipe button is clicked', () => {
-    renderWithProviders(<Recipes />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { recipes: { items: [] } },
     });
+    render(<Recipes />, { wrapper });
 
     expect(screen.queryByTestId('create-modal')).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Create Recipe'));
@@ -99,9 +105,10 @@ describe('Recipes Screen', () => {
   });
 
   it('shows clear filters button when no results', () => {
-    renderWithProviders(<Recipes />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { recipes: { items: mockRecipes } },
     });
+    render(<Recipes />, { wrapper });
 
     const searchInput = screen.getByPlaceholderText('Search recipes by name or description...');
     fireEvent.change(searchInput, { target: { value: 'nonexistent' } });

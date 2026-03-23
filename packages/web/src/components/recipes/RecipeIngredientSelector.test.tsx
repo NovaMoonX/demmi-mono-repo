@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
-import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { RecipeIngredientSelector } from './RecipeIngredientSelector';
 
 vi.mock('@components/ingredients', () => ({
@@ -31,50 +31,58 @@ describe('RecipeIngredientSelector', () => {
   });
 
   it('shows empty message when no ingredients selected', () => {
-    renderWithProviders(
+    const { wrapper } = generateTestWrapper();
+    render(
       <RecipeIngredientSelector
         ingredients={mockIngredients}
         selectedIngredients={[]}
         onChange={onChange}
         fromRecipePath="/recipes/new"
       />,
+      { wrapper },
     );
     expect(screen.getByText('No ingredients added yet.')).toBeInTheDocument();
   });
 
   it('renders selected ingredients', () => {
-    renderWithProviders(
+    const { wrapper } = generateTestWrapper();
+    render(
       <RecipeIngredientSelector
         ingredients={mockIngredients}
         selectedIngredients={[{ ingredientId: 'i1', servings: 2 }]}
         onChange={onChange}
         fromRecipePath="/recipes/new"
       />,
+      { wrapper },
     );
     const matches = screen.getAllByText('Tomato');
     expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows add ingredient button', () => {
-    renderWithProviders(
+    const { wrapper } = generateTestWrapper();
+    render(
       <RecipeIngredientSelector
         ingredients={mockIngredients}
         selectedIngredients={[]}
         onChange={onChange}
         fromRecipePath="/recipes/new"
       />,
+      { wrapper },
     );
     expect(screen.getByText('+ Add Ingredient')).toBeInTheDocument();
   });
 
   it('calls onChange when removing ingredient', () => {
-    renderWithProviders(
+    const { wrapper } = generateTestWrapper();
+    render(
       <RecipeIngredientSelector
         ingredients={mockIngredients}
         selectedIngredients={[{ ingredientId: 'i1', servings: 2 }]}
         onChange={onChange}
         fromRecipePath="/recipes/new"
       />,
+      { wrapper },
     );
     const removeBtns = screen.getAllByLabelText('Remove Tomato');
     fireEvent.click(removeBtns[0]);

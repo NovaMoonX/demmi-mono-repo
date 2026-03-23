@@ -1,21 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { screen } from '@testing-library/react';
-import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { IngredientDetail } from './IngredientDetail';
 import type { Ingredient } from '@lib/ingredients';
-
-const mockNavigate = vi.fn();
-const mockUseParams = vi.fn();
-
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
-  useNavigate: () => mockNavigate,
-  useParams: () => mockUseParams(),
-  useLocation: () => ({ state: null, pathname: '/ingredients/new' }),
-  Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
-    <a href={to} {...props}>{children}</a>
-  ),
-}));
 
 function createIngredient(overrides: Partial<Ingredient> = {}): Ingredient {
   return {
@@ -45,46 +32,39 @@ function createIngredient(overrides: Partial<Ingredient> = {}): Ingredient {
 }
 
 describe('IngredientDetail - New Mode', () => {
-  beforeEach(() => {
-    mockUseParams.mockReturnValue({ id: 'new' });
-  });
-
   it('renders the page title for new ingredient', () => {
-    renderWithProviders(<IngredientDetail />);
+    const { wrapper } = generateTestWrapper({ route: '/ingredients/new', path: '/ingredients/:id' });
+    render(<IngredientDetail />, { wrapper });
     expect(screen.getByText('← Back to Ingredients')).toBeInTheDocument();
   });
 
   it('renders form fields', () => {
-    renderWithProviders(<IngredientDetail />);
+    const { wrapper } = generateTestWrapper({ route: '/ingredients/new', path: '/ingredients/:id' });
+    render(<IngredientDetail />, { wrapper });
     expect(screen.getByText('Name *')).toBeInTheDocument();
     expect(screen.getByText('Type *')).toBeInTheDocument();
   });
 
   it('renders save and cancel buttons', () => {
-    renderWithProviders(<IngredientDetail />);
+    const { wrapper } = generateTestWrapper({ route: '/ingredients/new', path: '/ingredients/:id' });
+    render(<IngredientDetail />, { wrapper });
     expect(screen.getByText('Create Ingredient')).toBeInTheDocument();
     expect(screen.getByText('Cancel')).toBeInTheDocument();
   });
 });
 
 describe('IngredientDetail - View Mode', () => {
-  beforeEach(() => {
-    mockUseParams.mockReturnValue({ id: 'ing-1' });
-  });
-
   it('renders the ingredient name in view mode', () => {
     const ingredient = createIngredient();
-    renderWithProviders(<IngredientDetail />, {
-      preloadedState: { ingredients: { items: [ingredient] } },
-    });
+    const { wrapper } = generateTestWrapper({ route: '/ingredients/ing-1', path: '/ingredients/:id', preloadedState: { ingredients: { items: [ingredient] } } });
+    render(<IngredientDetail />, { wrapper });
     expect(screen.getByText('Chicken Breast')).toBeInTheDocument();
   });
 
   it('renders Edit and Delete buttons in view mode', () => {
     const ingredient = createIngredient();
-    renderWithProviders(<IngredientDetail />, {
-      preloadedState: { ingredients: { items: [ingredient] } },
-    });
+    const { wrapper } = generateTestWrapper({ route: '/ingredients/ing-1', path: '/ingredients/:id', preloadedState: { ingredients: { items: [ingredient] } } });
+    render(<IngredientDetail />, { wrapper });
     expect(screen.getByText('Edit')).toBeInTheDocument();
     expect(screen.getByText('Delete')).toBeInTheDocument();
   });

@@ -1,14 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import About from './About';
 
 function renderAbout() {
-  return render(
-    <MemoryRouter>
-      <About />
-    </MemoryRouter>,
-  );
+  const { wrapper } = generateTestWrapper();
+  return render(<About />, { wrapper });
 }
 
 describe('About', () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
-import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { Ingredients } from './Ingredients';
 import type { Ingredient } from '@lib/ingredients';
 
@@ -41,25 +41,28 @@ const mockIngredients: Ingredient[] = [
 
 describe('Ingredients Screen', () => {
   it('renders the page title', () => {
-    renderWithProviders(<Ingredients />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { ingredients: { items: [] } },
     });
+    render(<Ingredients />, { wrapper });
     expect(screen.getByText('Ingredients')).toBeInTheDocument();
   });
 
   it('renders ingredient cards for each ingredient', () => {
-    renderWithProviders(<Ingredients />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { ingredients: { items: mockIngredients } },
     });
+    render(<Ingredients />, { wrapper });
     expect(screen.getByTestId('ingredient-card-ing-1')).toBeInTheDocument();
     expect(screen.getByTestId('ingredient-card-ing-2')).toBeInTheDocument();
     expect(screen.getByTestId('ingredient-card-ing-3')).toBeInTheDocument();
   });
 
   it('filters ingredients by search query', () => {
-    renderWithProviders(<Ingredients />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { ingredients: { items: mockIngredients } },
     });
+    render(<Ingredients />, { wrapper });
 
     const searchInput = screen.getByPlaceholderText('Search ingredients by name...');
     fireEvent.change(searchInput, { target: { value: 'Chicken' } });
@@ -70,9 +73,10 @@ describe('Ingredients Screen', () => {
   });
 
   it('shows empty message when no ingredients match', () => {
-    renderWithProviders(<Ingredients />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { ingredients: { items: mockIngredients } },
     });
+    render(<Ingredients />, { wrapper });
 
     const searchInput = screen.getByPlaceholderText('Search ingredients by name...');
     fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
@@ -81,16 +85,18 @@ describe('Ingredients Screen', () => {
   });
 
   it('renders Create Ingredient button', () => {
-    renderWithProviders(<Ingredients />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { ingredients: { items: [] } },
     });
+    render(<Ingredients />, { wrapper });
     expect(screen.getByText('Create Ingredient')).toBeInTheDocument();
   });
 
   it('opens create modal when Create Ingredient button is clicked', () => {
-    renderWithProviders(<Ingredients />, {
+    const { wrapper } = generateTestWrapper({
       preloadedState: { ingredients: { items: [] } },
     });
+    render(<Ingredients />, { wrapper });
 
     expect(screen.queryByTestId('create-modal')).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Create Ingredient'));
