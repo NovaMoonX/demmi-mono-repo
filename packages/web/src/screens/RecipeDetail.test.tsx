@@ -46,14 +46,22 @@ describe('RecipeDetail - New Mode', () => {
 describe('RecipeDetail - View Mode', () => {
   it('renders the recipe title in view mode', () => {
     const recipe = createRecipe();
-    const { wrapper } = generateTestWrapper({ route: '/recipes/rec-1', path: '/recipes/:id', preloadedState: { recipes: { items: [recipe] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
     render(<RecipeDetail />, { wrapper });
     expect(screen.getByText('Spaghetti Bolognese')).toBeInTheDocument();
   });
 
   it('renders Edit, Delete, and Cook buttons in view mode', () => {
     const recipe = createRecipe();
-    const { wrapper } = generateTestWrapper({ route: '/recipes/rec-1', path: '/recipes/:id', preloadedState: { recipes: { items: [recipe] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
     render(<RecipeDetail />, { wrapper });
     const editButtons = screen.getAllByText('Edit');
     expect(editButtons.length).toBeGreaterThan(0);
@@ -63,7 +71,11 @@ describe('RecipeDetail - View Mode', () => {
 
   it('renders prep time and cook time', () => {
     const recipe = createRecipe();
-    const { wrapper } = generateTestWrapper({ route: '/recipes/rec-1', path: '/recipes/:id', preloadedState: { recipes: { items: [recipe] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
     render(<RecipeDetail />, { wrapper });
     expect(screen.getByText('15m')).toBeInTheDocument();
     expect(screen.getByText('45m')).toBeInTheDocument();
@@ -71,7 +83,11 @@ describe('RecipeDetail - View Mode', () => {
 
   it('renders instructions', () => {
     const recipe = createRecipe();
-    const { wrapper } = generateTestWrapper({ route: '/recipes/rec-1', path: '/recipes/:id', preloadedState: { recipes: { items: [recipe] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
     render(<RecipeDetail />, { wrapper });
     expect(screen.getByText('Boil pasta')).toBeInTheDocument();
     expect(screen.getByText('Make sauce')).toBeInTheDocument();

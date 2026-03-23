@@ -56,14 +56,22 @@ describe('IngredientDetail - New Mode', () => {
 describe('IngredientDetail - View Mode', () => {
   it('renders the ingredient name in view mode', () => {
     const ingredient = createIngredient();
-    const { wrapper } = generateTestWrapper({ route: '/ingredients/ing-1', path: '/ingredients/:id', preloadedState: { ingredients: { items: [ingredient] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/ingredients/ing-1',
+      path: '/ingredients/:id',
+      preloadedState: { ingredients: { items: [ingredient] } },
+    });
     render(<IngredientDetail />, { wrapper });
     expect(screen.getByText('Chicken Breast')).toBeInTheDocument();
   });
 
   it('renders Edit and Delete buttons in view mode', () => {
     const ingredient = createIngredient();
-    const { wrapper } = generateTestWrapper({ route: '/ingredients/ing-1', path: '/ingredients/:id', preloadedState: { ingredients: { items: [ingredient] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/ingredients/ing-1',
+      path: '/ingredients/:id',
+      preloadedState: { ingredients: { items: [ingredient] } },
+    });
     render(<IngredientDetail />, { wrapper });
     expect(screen.getByText('Edit')).toBeInTheDocument();
     expect(screen.getByText('Delete')).toBeInTheDocument();

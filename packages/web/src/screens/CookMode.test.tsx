@@ -34,14 +34,22 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
 
 describe('CookMode', () => {
   it('shows "Recipe not found" when recipe does not exist', () => {
-    const { wrapper } = generateTestWrapper({ route: '/recipes/recipe-1', path: '/recipes/:id', preloadedState: { recipes: { items: [] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/recipe-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [] } },
+    });
     render(<CookMode />, { wrapper });
     expect(screen.getByText('Recipe not found.')).toBeInTheDocument();
   });
 
   it('shows "no instructions" message when recipe has no instructions', () => {
     const recipe = createRecipe({ instructions: [] });
-    const { wrapper } = generateTestWrapper({ route: '/recipes/recipe-1', path: '/recipes/:id', preloadedState: { recipes: { items: [recipe] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/recipe-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
     render(<CookMode />, { wrapper });
     expect(
       screen.getByText('This recipe has no instructions yet.'),
@@ -50,7 +58,11 @@ describe('CookMode', () => {
 
   it('renders the recipe title and first step', () => {
     const recipe = createRecipe();
-    const { wrapper } = generateTestWrapper({ route: '/recipes/recipe-1', path: '/recipes/:id', preloadedState: { recipes: { items: [recipe] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/recipe-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
     render(<CookMode />, { wrapper });
     const titles = screen.getAllByText('Test Recipe');
     expect(titles.length).toBeGreaterThan(0);
@@ -59,21 +71,33 @@ describe('CookMode', () => {
 
   it('renders step count', () => {
     const recipe = createRecipe();
-    const { wrapper } = generateTestWrapper({ route: '/recipes/recipe-1', path: '/recipes/:id', preloadedState: { recipes: { items: [recipe] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/recipe-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
     render(<CookMode />, { wrapper });
     expect(screen.getByText('of 3 steps')).toBeInTheDocument();
   });
 
   it('renders the voice indicator', () => {
     const recipe = createRecipe();
-    const { wrapper } = generateTestWrapper({ route: '/recipes/recipe-1', path: '/recipes/:id', preloadedState: { recipes: { items: [recipe] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/recipe-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
     render(<CookMode />, { wrapper });
     expect(screen.getByTestId('voice-indicator')).toBeInTheDocument();
   });
 
   it('renders navigation buttons', () => {
     const recipe = createRecipe();
-    const { wrapper } = generateTestWrapper({ route: '/recipes/recipe-1', path: '/recipes/:id', preloadedState: { recipes: { items: [recipe] } } });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/recipe-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
     render(<CookMode />, { wrapper });
     expect(screen.getByText('← Previous')).toBeInTheDocument();
     expect(screen.getByText('Next →')).toBeInTheDocument();
