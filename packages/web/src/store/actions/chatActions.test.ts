@@ -38,8 +38,18 @@ function createTestStore(demoActive: boolean, userId: string | null = 'user1') {
     },
     preloadedState: {
       demo: { isActive: demoActive, isHydrated: true } as never,
-      user: { user: userId ? { uid: userId, email: 'a@b.com', emailVerified: true } : null, loading: false } as never,
-      chats: { conversations: [], selectedModel: null, loading: false, error: null } as never,
+      user: {
+        user: userId
+          ? { uid: userId, email: 'a@b.com', emailVerified: true }
+          : null,
+        loading: false,
+      } as never,
+      chats: {
+        conversations: [],
+        selectedModel: null,
+        loading: false,
+        error: null,
+      } as never,
     },
   });
 }
@@ -49,7 +59,10 @@ describe('chatActions', () => {
     it('skips execution when demo mode is active', async () => {
       const store = createTestStore(true);
       const result = await store.dispatch(fetchChats());
-      expect(result.meta.condition).toBe(true);
+      expect(result.meta.requestStatus).toBe('rejected');
+      expect(
+        (result as ReturnType<typeof fetchChats.rejected>).meta.condition,
+      ).toBe(true);
     });
   });
 

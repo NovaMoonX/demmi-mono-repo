@@ -1,20 +1,20 @@
-import { render, RenderOptions } from '@testing-library/react';
 import { configureStore } from '@reduxjs/toolkit';
+import { RenderOptions } from '@testing-library/react';
+import { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { ReactElement } from 'react';
 
-import ingredientsReducer from '@store/slices/ingredientsSlice';
-import recipesReducer from '@store/slices/recipesSlice';
-import chatsReducer from '@store/slices/chatsSlice';
-import userReducer from '@store/slices/userSlice';
-import calendarReducer from '@store/slices/calendarSlice';
-import demoReducer from '@store/slices/demoSlice';
-import shoppingListReducer from '@store/slices/shoppingListSlice';
 import { openFoodFactsApi } from '@store/api/openFoodFactsApi';
 import type { RootState } from '@store/index';
+import calendarReducer from '@store/slices/calendarSlice';
+import chatsReducer from '@store/slices/chatsSlice';
+import demoReducer from '@store/slices/demoSlice';
+import ingredientsReducer from '@store/slices/ingredientsSlice';
+import recipesReducer from '@store/slices/recipesSlice';
+import shoppingListReducer from '@store/slices/shoppingListSlice';
+import userReducer from '@store/slices/userSlice';
 
-interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper'> {
+interface GenerateTestWrapperOptions extends Omit<RenderOptions, 'wrapper'> {
   /** The initial state for the Redux store */
   preloadedState?: Partial<RootState>;
   /** The initial route for the MemoryRouter */
@@ -25,17 +25,13 @@ interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper'> {
   withRouter?: boolean;
 }
 
-export function renderWithProviders(
-  ui: ReactElement,
-  options: RenderWithProvidersOptions = {},
-) {
+export function generateTestWrapper(options?: GenerateTestWrapperOptions) {
   const {
-    preloadedState,
+    preloadedState = {},
     route = '/',
     path,
     withRouter = true,
-    ...renderOptions
-  } = options;
+  } = options || {};
 
   const finalPreloadedState: Partial<RootState> = {
     user: {
@@ -61,14 +57,14 @@ export function renderWithProviders(
     preloadedState: finalPreloadedState as RootState,
   });
 
-  function Wrapper({ children }: { children: React.ReactNode }) {
+  const wrapper = ({ children }: { children: React.ReactNode }) => {
     if (withRouter) {
       return (
         <Provider store={store}>
           <MemoryRouter initialEntries={[route]}>
             {path ? (
               <Routes>
-                <Route path='/shared/:shareId' element={ui} />
+                <Route path={path} element={children as ReactElement} />
               </Routes>
             ) : (
               children
@@ -77,9 +73,9 @@ export function renderWithProviders(
         </Provider>
       );
     }
-    return <Provider store={store}>{children}</Provider>;
-  }
 
-  const result = render(ui, { wrapper: Wrapper, ...renderOptions });
-  return { ...result, store };
+    return <Provider store={store}>{children}</Provider>;
+  };
+
+  return { wrapper, store };
 }

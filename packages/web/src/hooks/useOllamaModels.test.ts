@@ -1,12 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-
-const mockDispatch = vi.fn();
-vi.mock('@store/hooks', () => ({
-  useAppDispatch: () => mockDispatch,
-  useAppSelector: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ chats: { selectedModel: null } }),
-}));
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useOllamaModels } from './useOllamaModels';
 
 const mockListLocalModels = vi.fn();
 const mockPullModelStream = vi.fn();
@@ -14,12 +9,6 @@ vi.mock('@lib/ollama', () => ({
   listLocalModels: (...args: unknown[]) => mockListLocalModels(...args),
   pullModelStream: (...args: unknown[]) => mockPullModelStream(...args),
 }));
-
-vi.mock('@store/slices/chatsSlice', () => ({
-  setSelectedModel: (model: string) => ({ type: 'chats/setSelectedModel', payload: model }),
-}));
-
-import { useOllamaModels } from './useOllamaModels';
 
 describe('useOllamaModels', () => {
   beforeEach(() => {
@@ -29,7 +18,8 @@ describe('useOllamaModels', () => {
   it('loads models on mount', async () => {
     mockListLocalModels.mockResolvedValue(['mistral', 'llama3']);
 
-    const { result } = renderHook(() => useOllamaModels());
+    const { wrapper } = generateTestWrapper();
+    const { result } = renderHook(() => useOllamaModels(), { wrapper });
 
     expect(result.current.isLoading).toBe(true);
 
@@ -44,7 +34,8 @@ describe('useOllamaModels', () => {
   it('sets error when listLocalModels fails', async () => {
     mockListLocalModels.mockRejectedValue(new Error('Connection refused'));
 
-    const { result } = renderHook(() => useOllamaModels());
+    const { wrapper } = generateTestWrapper();
+    const { result } = renderHook(() => useOllamaModels(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -57,14 +48,13 @@ describe('useOllamaModels', () => {
   it('selectModel dispatches setSelectedModel', () => {
     mockListLocalModels.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useOllamaModels());
+    const { wrapper, store } = generateTestWrapper();
+    const { result } = renderHook(() => useOllamaModels(), { wrapper });
 
     act(() => {
       result.current.selectModel('llama3');
     });
 
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'chats/setSelectedModel', payload: 'llama3' }),
-    );
+    expect(store.getState().chats.selectedModel).toBe('llama3');
   });
 });

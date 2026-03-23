@@ -24,10 +24,6 @@ vi.mock('../schemas/recipe.schemas', () => ({
   RECIPE_ITERATION_SUMMARY_SCHEMA: {},
 }));
 
-vi.mock('@store/index', () => ({
-  store: { getState: () => ({ ingredients: { items: [] } }) },
-}));
-
 import { iterateRecipeAction } from './iterateRecipeAction';
 
 describe('iterateRecipeAction', () => {

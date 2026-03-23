@@ -31,22 +31,6 @@ vi.mock('@components/shopping', () => ({
   }),
 }));
 
-vi.mock('@store/actions/shoppingListActions', async () => {
-  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
-  const fetchShoppingList = createAsyncThunk('shoppingList/fetch', async () => []);
-  const createShoppingListItem = createAsyncThunk('shoppingList/create', async (item: unknown) => item);
-  const updateShoppingListItem = createAsyncThunk('shoppingList/update', async (item: unknown) => item);
-  const deleteShoppingListItem = createAsyncThunk('shoppingList/delete', async (id: string) => id);
-  const clearCheckedShoppingListItems = createAsyncThunk('shoppingList/clearChecked', async () => []);
-  return {
-    fetchShoppingList,
-    createShoppingListItem,
-    updateShoppingListItem,
-    deleteShoppingListItem,
-    clearCheckedShoppingListItems,
-  };
-});
-
 function createItem(overrides: Partial<ShoppingListItem> = {}): ShoppingListItem {
   return {
     id: 'sl-1',

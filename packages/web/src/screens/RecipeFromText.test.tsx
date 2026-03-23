@@ -16,46 +16,6 @@ vi.mock('@components/chat/OllamaModelControl', () => ({
   OllamaModelControl: () => <div data-testid="ollama-model-control">OllamaModelControl</div>,
 }));
 
-vi.mock('@store/actions/ingredientActions', async () => {
-  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
-  return {
-    fetchIngredients: createAsyncThunk('ingredients/fetch', async () => []),
-    createIngredient: createAsyncThunk('ingredients/create', async () => ({})),
-    updateIngredient: createAsyncThunk('ingredients/update', async () => ({})),
-    deleteIngredient: createAsyncThunk('ingredients/delete', async () => ({})),
-  };
-});
-
-vi.mock('@store/actions/recipeActions', async () => {
-  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
-  return {
-    fetchRecipes: createAsyncThunk('recipes/fetch', async () => []),
-    createRecipe: createAsyncThunk('recipes/create', async () => ({})),
-    updateRecipe: createAsyncThunk('recipes/update', async () => ({})),
-    deleteRecipe: createAsyncThunk('recipes/delete', async () => ({})),
-  };
-});
-
-vi.mock('@store/actions/shareRecipeActions', async () => {
-  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
-  return {
-    shareRecipe: createAsyncThunk('recipes/share', async () => ({})),
-    unshareRecipe: createAsyncThunk('recipes/unshare', async () => ({})),
-    fetchSharedRecipe: createAsyncThunk('recipes/fetchShared', async () => null),
-  };
-});
-
-vi.mock('@store/actions/shoppingListActions', async () => {
-  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
-  return {
-    fetchShoppingList: createAsyncThunk('shoppingList/fetch', async () => []),
-    createShoppingListItem: createAsyncThunk('shoppingList/create', async () => ({})),
-    updateShoppingListItem: createAsyncThunk('shoppingList/update', async () => ({})),
-    deleteShoppingListItem: createAsyncThunk('shoppingList/delete', async () => ({})),
-    clearCheckedShoppingListItems: createAsyncThunk('shoppingList/clearChecked', async () => ({})),
-  };
-});
-
 vi.mock('@lib/ollama/actions', () => ({
   createRecipeAction: {
     execute: vi.fn().mockResolvedValue({ cancelled: false, data: { proposal: null } }),

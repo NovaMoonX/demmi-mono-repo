@@ -19,7 +19,10 @@ vi.mock('firebase/firestore', () => ({
   where: vi.fn(),
   setDoc: vi.fn(),
   runTransaction: vi.fn(),
-  writeBatch: vi.fn(() => ({ delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) })),
+  writeBatch: vi.fn(() => ({
+    delete: vi.fn(),
+    commit: vi.fn().mockResolvedValue(undefined),
+  })),
 }));
 
 vi.mock('@utils/generatedId', () => ({
@@ -35,7 +38,10 @@ function createTestStore(demoActive: boolean, items: unknown[] = []) {
     },
     preloadedState: {
       demo: { isActive: demoActive, isHydrated: true } as never,
-      user: { user: { uid: 'user1', email: 'a@b.com', emailVerified: true }, loading: false } as never,
+      user: {
+        user: { uid: 'user1', email: 'a@b.com', emailVerified: true },
+        loading: false,
+      } as never,
       shoppingList: { items, loading: false, error: null } as never,
     },
   });
@@ -46,7 +52,11 @@ describe('shoppingListActions', () => {
     it('skips execution when demo mode is active', async () => {
       const store = createTestStore(true);
       const result = await store.dispatch(fetchShoppingList());
-      expect(result.meta.condition).toBe(true);
+      expect(result.meta.requestStatus).toBe('rejected');
+      expect(
+        (result as ReturnType<typeof fetchShoppingList.rejected>).meta
+          .condition,
+      ).toBe(true);
     });
   });
 
@@ -130,7 +140,9 @@ describe('shoppingListActions', () => {
       ];
       const store = createTestStore(true, checkedItems);
       const result = await store.dispatch(clearCheckedShoppingListItems());
-      expect(result.type).toBe('shoppingList/clearCheckedShoppingListItems/fulfilled');
+      expect(result.type).toBe(
+        'shoppingList/clearCheckedShoppingListItems/fulfilled',
+      );
       expect(result.payload).toEqual(['sl1', 'sl2']);
     });
   });

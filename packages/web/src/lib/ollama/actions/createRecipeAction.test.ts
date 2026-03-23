@@ -31,10 +31,6 @@ vi.mock('../schemas/recipe.schemas', () => ({
   RECIPE_INSTRUCTIONS_SCHEMA: {},
 }));
 
-vi.mock('@store/index', () => ({
-  store: { getState: () => ({ ingredients: { items: [] } }) },
-}));
-
 import { formatContextMessages, createRecipeAction } from './createRecipeAction';
 import { ollamaClient } from '../ollama.service';
 

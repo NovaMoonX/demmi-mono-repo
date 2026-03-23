@@ -17,22 +17,12 @@ vi.mock('react-router-dom', async () => ({
   ),
 }));
 
-vi.mock('@store/actions/ingredientActions', async () => {
-  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
-  return {
-    fetchIngredients: createAsyncThunk('ingredients/fetch', async () => []),
-    createIngredient: createAsyncThunk('ingredients/create', async () => ({})),
-    updateIngredient: createAsyncThunk('ingredients/update', async () => ({})),
-    deleteIngredient: createAsyncThunk('ingredients/delete', async () => ({})),
-  };
-});
-
 function createIngredient(overrides: Partial<Ingredient> = {}): Ingredient {
   return {
     id: 'ing-1',
     userId: 'user-1',
     name: 'Chicken Breast',
-    type: 'protein',
+    type: 'meat',
     currentAmount: 500,
     servingSize: 100,
     unit: 'g',

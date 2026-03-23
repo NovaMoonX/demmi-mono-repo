@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
+import { DataSnapshot } from 'firebase/database';
 import { afterEach, vi } from 'vitest';
+import { mock } from 'vitest-mock-extended';
 
 afterEach(() => {
   cleanup();
@@ -40,3 +42,25 @@ Object.defineProperty(window, 'IntersectionObserver', {
   writable: true,
   value: MockIntersectionObserver,
 });
+
+// Mock Firestore 
+vi.mock('@lib/firebase', () => ({
+  db: {},
+  rtdb: {},
+}));
+
+vi.mock('firebase/firestore', () => ({
+  collection: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+  getDocs: vi.fn().mockResolvedValue({
+    docs: [{ data: () => ({ id: '1', name: 'Milk' }) }],
+  }),
+}));
+
+vi.mock('firebase/database', () => ({
+  ref: vi.fn(),
+  set: vi.fn(),
+  remove: vi.fn(),
+  get: vi.fn().mockResolvedValue(mock<DataSnapshot>({ val: () => null, exists: () => false })),
+}));

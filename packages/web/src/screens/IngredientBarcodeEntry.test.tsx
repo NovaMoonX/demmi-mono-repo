@@ -13,24 +13,6 @@ vi.mock('react-router-dom', async () => ({
   ),
 }));
 
-const mockTriggerLookup = vi.fn();
-vi.mock('@store/api/openFoodFactsApi', () => ({
-  openFoodFactsApi: {
-    reducerPath: 'openFoodFactsApi',
-    reducer: (s = {}) => s,
-    middleware: () => (n: Function) => (a: unknown) => n(a),
-  },
-  useGetProductByBarcodeQuery: vi.fn().mockReturnValue({
-    data: null,
-    isLoading: false,
-    error: null,
-  }),
-  useLazyGetProductByBarcodeQuery: () => [
-    mockTriggerLookup,
-    { data: null, isFetching: false, isError: false },
-  ],
-}));
-
 vi.mock('@/utils', () => ({
   getBarcodePrefillOptions: vi.fn().mockReturnValue({
     options: [],

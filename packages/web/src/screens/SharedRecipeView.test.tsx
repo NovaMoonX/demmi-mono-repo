@@ -1,34 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
-import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
-import { SharedRecipeView } from './SharedRecipeView';
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import type { SharedRecipe } from '@lib/recipes/sharedRecipe.types';
+import { render, screen, waitFor } from '@testing-library/react';
+import { DataSnapshot, get } from 'firebase/database';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mock } from 'vitest-mock-extended';
+import { SharedRecipeView } from './SharedRecipeView';
 
-const mockNavigate = vi.fn();
-let mockShareId = 'share-123';
-
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
-  useNavigate: () => mockNavigate,
-  useParams: () => ({ shareId: mockShareId }),
-  Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
-    <a href={to} {...props}>{children}</a>
-  ),
-}));
-
-const mockFetchSharedRecipe = vi.fn();
-
-vi.mock('@store/actions/shareRecipeActions', async () => {
-  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
-  return {
-    shareRecipe: createAsyncThunk('recipes/share', async () => ({})),
-    unshareRecipe: createAsyncThunk('recipes/unshare', async () => ({})),
-    fetchSharedRecipe: createAsyncThunk('recipes/fetchShared', async (shareId: string) => {
-      const result = await mockFetchSharedRecipe(shareId);
-      return result;
-    }),
-  };
-});
+const mockShareId = 'share-123';
 
 const mockSharedRecipe: SharedRecipe = {
   title: 'Shared Pasta',
@@ -40,66 +18,94 @@ const mockSharedRecipe: SharedRecipe = {
   instructions: ['Boil water', 'Cook pasta'],
   imageUrl: '',
   ingredients: [
-    { ingredientId: 'ing-1', name: 'Pasta', servings: 2 },
+    { ingredientId: 'ing-1', name: 'Pasta', servings: 2, unit: '' },
   ],
+  shareId: mockShareId,
+  recipeId: 'rec-123',
+  userId: 'user-1',
+  sharedAt: Date.now(),
 };
-
-beforeEach(() => {
-  vi.clearAllMocks();
-  mockShareId = 'share-123';
-});
 
 describe('SharedRecipeView', () => {
   it('shows loading state initially', () => {
-    mockFetchSharedRecipe.mockReturnValue(new Promise(() => {}));
-    renderWithProviders(<SharedRecipeView />);
+    const { wrapper } = generateTestWrapper({
+      route: `/shared/${mockShareId}`,
+      path: '/shared/:shareId',
+    });
+    render(<SharedRecipeView />, {
+      wrapper,
+    });
     expect(screen.getByText('Loading recipe…')).toBeInTheDocument();
   });
 
-  it('renders the shared recipe when loaded', async () => {
-    mockFetchSharedRecipe.mockResolvedValue(mockSharedRecipe);
-    renderWithProviders(<SharedRecipeView />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Shared Pasta')).toBeInTheDocument();
-    });
-    expect(screen.getByText('A delicious shared pasta recipe')).toBeInTheDocument();
-  });
-
-  it('renders instructions when available', async () => {
-    mockFetchSharedRecipe.mockResolvedValue(mockSharedRecipe);
-    renderWithProviders(<SharedRecipeView />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Boil water')).toBeInTheDocument();
-    });
-    expect(screen.getByText('Cook pasta')).toBeInTheDocument();
-  });
-
-  it('renders ingredients when available', async () => {
-    mockFetchSharedRecipe.mockResolvedValue(mockSharedRecipe);
-    renderWithProviders(<SharedRecipeView />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Pasta')).toBeInTheDocument();
-    });
-  });
-
   it('shows not found state when recipe not found', async () => {
-    mockFetchSharedRecipe.mockResolvedValue(null);
-    renderWithProviders(<SharedRecipeView />);
+    const { wrapper } = generateTestWrapper({
+      route: `/shared/${mockShareId}`,
+      path: '/shared/:shareId',
+    });
+    render(<SharedRecipeView />, {
+      wrapper,
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Recipe not found')).toBeInTheDocument();
     });
   });
 
-  it('shows not found when fetch fails', async () => {
-    mockFetchSharedRecipe.mockRejectedValue(new Error('fail'));
-    renderWithProviders(<SharedRecipeView />);
+  describe('when recipe is found', () => {
+    beforeEach(() => {
+      vi.mocked(get).mockResolvedValueOnce(
+        mock<DataSnapshot>({
+          val: () => Promise.resolve(mockSharedRecipe),
+          exists: () => true,
+        }),
+      );
+    });
 
-    await waitFor(() => {
-      expect(screen.getByText('Recipe not found')).toBeInTheDocument();
+    it('renders the shared recipe when loaded', async () => {
+      const { wrapper } = generateTestWrapper({
+        route: `/shared/${mockShareId}`,
+        path: '/shared/:shareId',
+      });
+      render(<SharedRecipeView />, {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Shared Pasta')).toBeInTheDocument();
+      });
+      expect(
+        screen.getByText('A delicious shared pasta recipe'),
+      ).toBeInTheDocument();
+    });
+
+    it('renders instructions when available', async () => {
+      const { wrapper } = generateTestWrapper({
+        route: `/shared/${mockShareId}`,
+        path: '/shared/:shareId',
+      });
+      render(<SharedRecipeView />, {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Boil water')).toBeInTheDocument();
+      });
+      expect(screen.getByText('Cook pasta')).toBeInTheDocument();
+    });
+
+    it('renders ingredients when available', async () => {
+      const { wrapper } = generateTestWrapper({
+        route: `/shared/${mockShareId}`,
+        path: '/shared/:shareId',
+      });
+      render(<SharedRecipeView />, {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Pasta')).toBeInTheDocument();
+      });
     });
   });
 });

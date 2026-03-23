@@ -18,15 +18,6 @@ vi.mock('@contexts/AuthContext', () => ({
   ),
 }));
 
-vi.mock('@store/index', async () => {
-  const toolkit = await vi.importActual<typeof import('@reduxjs/toolkit')>('@reduxjs/toolkit');
-  return {
-    store: toolkit.configureStore({
-      reducer: { stub: (s = {}) => s },
-    }),
-  };
-});
-
 describe('App', () => {
   it('renders without crashing', () => {
     render(<App />);

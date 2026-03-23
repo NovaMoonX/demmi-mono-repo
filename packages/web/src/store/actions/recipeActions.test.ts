@@ -33,7 +33,10 @@ function createTestStore(demoActive: boolean) {
     },
     preloadedState: {
       demo: { isActive: demoActive, isHydrated: true } as never,
-      user: { user: { uid: 'user1', email: 'a@b.com', emailVerified: true }, loading: false } as never,
+      user: {
+        user: { uid: 'user1', email: 'a@b.com', emailVerified: true },
+        loading: false,
+      } as never,
       recipes: { items: [], loading: false, error: null } as never,
     },
   });
@@ -44,7 +47,10 @@ describe('recipeActions', () => {
     it('skips execution when demo mode is active', async () => {
       const store = createTestStore(true);
       const result = await store.dispatch(fetchRecipes());
-      expect(result.meta.condition).toBe(true);
+      expect(result.meta.requestStatus).toBe('rejected');
+      expect(
+        (result as ReturnType<typeof fetchRecipes.rejected>).meta.condition,
+      ).toBe(true);
     });
   });
 

@@ -22,7 +22,6 @@ vi.mock('../schemas/recipe.schemas', () => ({
 
 vi.mock('../prompts', () => ({ GENERAL_PROMPT: '' }));
 vi.mock('../schemas', () => ({ GENERAL_SCHEMA: {} }));
-vi.mock('@store/index', () => ({ store: { getState: () => ({ ingredients: { items: [] } }) } }));
 
 import { getActionHandler } from './registry';
 

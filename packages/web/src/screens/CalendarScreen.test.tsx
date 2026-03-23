@@ -3,16 +3,6 @@ import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/helpers/renderWithProviders';
 import { CalendarScreen } from './CalendarScreen';
 
-vi.mock('@store/actions/calendarActions', async () => {
-  const { createAsyncThunk } = await vi.importActual('@reduxjs/toolkit');
-  return {
-    fetchPlannedRecipes: createAsyncThunk('calendar/fetch', async () => []),
-    createPlannedRecipe: createAsyncThunk('calendar/create', async () => ({})),
-    updatePlannedRecipe: createAsyncThunk('calendar/update', async () => ({})),
-    deletePlannedRecipe: createAsyncThunk('calendar/delete', async () => ({})),
-  };
-});
-
 vi.mock('@components/calendar', () => ({
   TotalsCard: () => <div data-testid="totals-card">TotalsCard</div>,
   DayCard: () => <div data-testid="day-card">DayCard</div>,

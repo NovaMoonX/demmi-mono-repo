@@ -33,7 +33,12 @@ function createTestStore(demoActive: boolean, userId: string | null = 'user1') {
     },
     preloadedState: {
       demo: { isActive: demoActive, isHydrated: true } as never,
-      user: { user: userId ? { uid: userId, email: 'a@b.com', emailVerified: true } : null, loading: false } as never,
+      user: {
+        user: userId
+          ? { uid: userId, email: 'a@b.com', emailVerified: true }
+          : null,
+        loading: false,
+      } as never,
       calendar: { plannedRecipes: [], loading: false, error: null } as never,
     },
   });
@@ -44,7 +49,11 @@ describe('calendarActions', () => {
     it('skips execution when demo mode is active', async () => {
       const store = createTestStore(true);
       const result = await store.dispatch(fetchPlannedRecipes());
-      expect(result.meta.condition).toBe(true);
+      expect(result.meta.requestStatus).toBe('rejected');
+      expect(
+        (result as ReturnType<typeof fetchPlannedRecipes.rejected>).meta
+          .condition,
+      ).toBe(true);
     });
   });
 
