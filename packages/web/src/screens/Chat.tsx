@@ -33,7 +33,7 @@ import { createIngredient } from '@store/actions/ingredientActions';
 import { createRecipe } from '@store/actions/recipeActions';
 import { createShoppingListItem } from '@store/actions/shoppingListActions';
 import { ChatMessage as ChatMessageType } from '@lib/chat';
-import type { RecipeIngredient } from '@lib/recipes';
+import type { Recipe, RecipeIngredient } from '@lib/recipes';
 import {
   detectIntent,
   generateSummary,
@@ -63,7 +63,8 @@ function buildIterationContextMessages(
   for (let i = pendingIndex; i >= 0; i--) {
     const message = existingMessages[i];
     const isAssistantNonRecipeMessage =
-      message.role === 'assistant' && message.agentAction?.type !== 'create_recipe';
+      message.role === 'assistant' &&
+      message.agentAction?.type !== 'create_recipe';
 
     if (isAssistantNonRecipeMessage) {
       threadStartIndex = i + 1;
@@ -75,7 +76,10 @@ function buildIterationContextMessages(
     }
   }
 
-  const threadMessages = existingMessages.slice(threadStartIndex, pendingIndex + 1);
+  const threadMessages = existingMessages.slice(
+    threadStartIndex,
+    pendingIndex + 1,
+  );
 
   const contextMessages = threadMessages.flatMap((message, idx) => {
     if (message.role === 'user') {
@@ -92,7 +96,10 @@ function buildIterationContextMessages(
     // Note: `idx` is the index in the original `threadMessages` array, so
     // `threadMessages[idx - 1]` is always the immediately preceding thread message.
     const previousThreadMessage = threadMessages[idx - 1];
-    if (previousThreadMessage?.role === 'user' && previousThreadMessage.iterationInvalid === true) {
+    if (
+      previousThreadMessage?.role === 'user' &&
+      previousThreadMessage.iterationInvalid === true
+    ) {
       return [];
     }
 
@@ -260,7 +267,10 @@ export function Chat() {
         selectedModel,
         // Pass the previously agreed name as initial context so proposeNameStep
         // reuses it directly instead of generating a new (potentially different) name.
-        { messages: allMessages, previousResults: { name: action.proposedName } },
+        {
+          messages: allMessages,
+          previousResults: { name: action.proposedName },
+        },
         {
           abortSignal: abortController.signal,
           // Each completed step notifies the consumer to update the partial recipe UI.
@@ -306,11 +316,8 @@ export function Chat() {
             }),
           );
 
-          const msgIndex = allMessages.findIndex(
-            (m) => m.id === messageId,
-          );
-          const userMessage =
-            msgIndex > 0 ? allMessages[msgIndex - 1] : null;
+          const msgIndex = allMessages.findIndex((m) => m.id === messageId);
+          const userMessage = msgIndex > 0 ? allMessages[msgIndex - 1] : null;
 
           if (userMessage?.role === 'user') {
             generateSummary(
@@ -370,7 +377,8 @@ export function Chat() {
       updateMessageContent({
         chatId: currentChatId,
         messageId,
-        content: "Got it! I won't create that recipe. Let me know if you'd like help with something else.",
+        content:
+          "Got it! I won't create that recipe. Let me know if you'd like help with something else.",
       }),
     );
   };
@@ -400,7 +408,10 @@ export function Chat() {
         const recipeIngredients: RecipeIngredient[] = [];
 
         for (const ingredientProposal of recipeProposal.ingredients) {
-          if (!ingredientProposal.isNew && ingredientProposal.existingIngredientId) {
+          if (
+            !ingredientProposal.isNew &&
+            ingredientProposal.existingIngredientId
+          ) {
             recipeIngredients.push({
               ingredientId: ingredientProposal.existingIngredientId,
               servings: ingredientProposal.servings,
@@ -437,20 +448,19 @@ export function Chat() {
           }
         }
 
-        await dispatch(
-          createRecipe({
-            title: recipeProposal.title,
-            description: recipeProposal.description,
-            category: recipeProposal.category,
-            prepTime: recipeProposal.prepTime,
-            cookTime: recipeProposal.cookTime,
-            servingSize: recipeProposal.servingSize,
-            instructions: recipeProposal.instructions,
-            imageUrl: recipeProposal.imageUrl,
-            ingredients: recipeIngredients,
-            share: null,
-          }),
-        ).unwrap();
+        const recipe: Omit<Recipe, 'id' | 'userId'> = {
+          title: recipeProposal.title,
+          description: recipeProposal.description,
+          category: recipeProposal.category,
+          prepTime: recipeProposal.prepTime,
+          cookTime: recipeProposal.cookTime,
+          servingSize: recipeProposal.servingSize,
+          instructions: recipeProposal.instructions,
+          imageUrl: recipeProposal.imageUrl,
+          ingredients: recipeIngredients,
+          share: null,
+        };
+        await dispatch(createRecipe(recipe)).unwrap();
 
         recipesCreated++;
       }
@@ -481,7 +491,9 @@ export function Chat() {
     }
   };
 
-  const handleAddToShoppingList = async (messageId: string): Promise<number> => {
+  const handleAddToShoppingList = async (
+    messageId: string,
+  ): Promise<number> => {
     const chatId = currentChatId;
     if (!chatId) return 0;
 
@@ -551,7 +563,8 @@ export function Chat() {
       updateMessageContent({
         chatId: currentChatId,
         messageId,
-        content: "No problem! The recipe has been discarded. Let me know if you'd like to create a different one.",
+        content:
+          "No problem! The recipe has been discarded. Let me know if you'd like to create a different one.",
       }),
     );
   };
@@ -729,15 +742,21 @@ export function Chat() {
             // The user's message wasn't about refining the recipe.
             // The agent's explanation is already in the message content (set via onStepComplete).
             // Remove the iterating action card and restore the original pending_approval proposal.
-            const invalidContent = result.data.agentMessage as string | undefined;
+            const invalidContent = result.data.agentMessage as
+              | string
+              | undefined;
             if (!invalidContent) {
-              console.warn('[iterateRecipeAction] validation returned no agentMessage — using fallback');
+              console.warn(
+                '[iterateRecipeAction] validation returned no agentMessage — using fallback',
+              );
             }
             dispatch(
               updateMessageContent({
                 chatId: currentChatId,
                 messageId: iteratingMessageId,
-                content: invalidContent ?? "I'm not sure what you'd like to change. Could you clarify?",
+                content:
+                  invalidContent ??
+                  "I'm not sure what you'd like to change. Could you clarify?",
                 agentAction: null,
               }),
             );
@@ -775,9 +794,12 @@ export function Chat() {
             // Use the LLM-generated summary when available so the user gets a specific,
             // natural description of what changed. Fall back to a generic string only if
             // the summary step was skipped (e.g. no fields were updated).
-            const iterationSummary = result.data.iterationSummary as string | undefined;
-            const displayContent = iterationSummary
-              ?? (newProposal
+            const iterationSummary = result.data.iterationSummary as
+              | string
+              | undefined;
+            const displayContent =
+              iterationSummary ??
+              (newProposal
                 ? 'I updated the recipe based on your feedback. Review the changes and save when ready.'
                 : 'I reviewed your feedback — no recipe changes were detected.');
 
@@ -804,7 +826,9 @@ export function Chat() {
             addToast({
               title: 'Refinement failed',
               description:
-                err instanceof Error ? err.message : 'An unexpected error occurred.',
+                err instanceof Error
+                  ? err.message
+                  : 'An unexpected error occurred.',
               type: 'error',
             });
           }

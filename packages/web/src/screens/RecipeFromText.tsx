@@ -1,6 +1,12 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Textarea, Button, Label, Badge, Card } from '@moondreamsdev/dreamer-ui/components';
+import {
+  Textarea,
+  Button,
+  Label,
+  Badge,
+  Card,
+} from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
@@ -10,7 +16,7 @@ import { createIngredient } from '@store/actions/ingredientActions';
 import { createRecipe } from '@store/actions/recipeActions';
 import { createShoppingListItem } from '@store/actions/shoppingListActions';
 import { createRecipeAction } from '@lib/ollama/actions';
-import type { RecipeCategory } from '@lib/recipes';
+import type { Recipe, RecipeCategory } from '@lib/recipes';
 import { RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
 import { INGREDIENT_TYPE_EMOJIS } from '@lib/ingredients';
 import type {
@@ -34,7 +40,9 @@ const STEP_LABELS: Partial<Record<CreateRecipeAgentActionStatus, string>> = {
   generating_instructions: 'Generating instructions…',
 };
 
-const STEP_STATUS_MAP: Partial<Record<RecipeStep, CreateRecipeAgentActionStatus>> = {
+const STEP_STATUS_MAP: Partial<
+  Record<RecipeStep, CreateRecipeAgentActionStatus>
+> = {
   name: 'generating_info',
   info: 'generating_description',
   description: 'generating_ingredients',
@@ -53,16 +61,21 @@ const EMPTY_PARTIAL_RECIPE: AgentPartialRecipe = {
 
 function PartialRecipePreview({ recipe }: { recipe: AgentPartialRecipe }) {
   const showCategory = recipe.category != null;
-  const showDescription = recipe.description != null && recipe.description !== '';
-  const showIngredients = recipe.ingredients != null && recipe.ingredients.length > 0;
-  const showInstructions = recipe.instructions != null && recipe.instructions.length > 0;
+  const showDescription =
+    recipe.description != null && recipe.description !== '';
+  const showIngredients =
+    recipe.ingredients != null && recipe.ingredients.length > 0;
+  const showInstructions =
+    recipe.instructions != null && recipe.instructions.length > 0;
 
   return (
     <div className='flex flex-col gap-2'>
       <div className='flex items-start justify-between gap-2'>
         <div className='min-w-0 flex-1'>
           {recipe.name && (
-            <h4 className='text-foreground text-base font-semibold'>{recipe.name}</h4>
+            <h4 className='text-foreground text-base font-semibold'>
+              {recipe.name}
+            </h4>
           )}
           {showDescription && (
             <p className='text-muted-foreground mt-0.5 line-clamp-3 text-sm'>
@@ -80,12 +93,17 @@ function PartialRecipePreview({ recipe }: { recipe: AgentPartialRecipe }) {
         <div className='flex flex-wrap items-center gap-2'>
           <Badge
             variant='base'
-            className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category as RecipeCategory])}
+            className={join(
+              'capitalize',
+              RECIPE_CATEGORY_COLORS[recipe.category as RecipeCategory],
+            )}
           >
             {recipe.category}
           </Badge>
           {recipe.totalTime != null && (
-            <span className='text-muted-foreground text-xs'>{recipe.totalTime}m total</span>
+            <span className='text-muted-foreground text-xs'>
+              {recipe.totalTime}m total
+            </span>
           )}
           {recipe.servings != null && (
             <span className='text-muted-foreground text-xs'>
@@ -130,23 +148,34 @@ function RecipeProposalCard({ recipe }: { recipe: AgentRecipeProposal }) {
       <div className='flex flex-col gap-3 p-4'>
         <div className='flex items-start justify-between gap-2'>
           <div className='min-w-0 flex-1'>
-            <h4 className='text-foreground text-base font-semibold'>{recipe.title}</h4>
-            <p className='text-muted-foreground mt-0.5 line-clamp-3 text-sm'>{recipe.description}</p>
+            <h4 className='text-foreground text-base font-semibold'>
+              {recipe.title}
+            </h4>
+            <p className='text-muted-foreground mt-0.5 line-clamp-3 text-sm'>
+              {recipe.description}
+            </p>
           </div>
-          <span className='shrink-0 text-2xl'>{RECIPE_CATEGORY_EMOJIS[recipe.category]}</span>
+          <span className='shrink-0 text-2xl'>
+            {RECIPE_CATEGORY_EMOJIS[recipe.category]}
+          </span>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <Badge
             variant='base'
-            className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
+            className={join(
+              'capitalize',
+              RECIPE_CATEGORY_COLORS[recipe.category],
+            )}
           >
             {recipe.category}
           </Badge>
           <span className='text-muted-foreground text-xs'>
-            Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m total
+            Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m
+            total
           </span>
           <span className='text-muted-foreground text-xs'>
-            {recipe.servingSize} {recipe.servingSize === 1 ? 'serving' : 'servings'}
+            {recipe.servingSize}{' '}
+            {recipe.servingSize === 1 ? 'serving' : 'servings'}
           </span>
         </div>
         {recipe.ingredients.length > 0 && (
@@ -160,7 +189,9 @@ function RecipeProposalCard({ recipe }: { recipe: AgentRecipeProposal }) {
             <ol className='flex flex-col gap-1'>
               {recipe.instructions.map((step, i) => (
                 <li key={i} className='text-foreground flex gap-2 text-sm'>
-                  <span className='text-muted-foreground shrink-0 font-medium'>{i + 1}.</span>
+                  <span className='text-muted-foreground shrink-0 font-medium'>
+                    {i + 1}.
+                  </span>
                   <span>{step}</span>
                 </li>
               ))}
@@ -172,7 +203,11 @@ function RecipeProposalCard({ recipe }: { recipe: AgentRecipeProposal }) {
   );
 }
 
-function IngredientProposalList({ ingredients }: { ingredients: AgentIngredientProposal[] }) {
+function IngredientProposalList({
+  ingredients,
+}: {
+  ingredients: AgentIngredientProposal[];
+}) {
   return (
     <div className='flex flex-col gap-1.5'>
       <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
@@ -195,7 +230,7 @@ function IngredientProposalList({ ingredients }: { ingredients: AgentIngredientP
               {ing.servings} {ing.unit}
             </span>
             {ing.isNew && (
-              <span className='bg-primary/20 text-primary rounded px-1 py-0.5 text-xs font-semibold leading-none'>
+              <span className='bg-primary/20 text-primary rounded px-1 py-0.5 text-xs leading-none font-semibold'>
                 new
               </span>
             )}
@@ -217,11 +252,15 @@ export function RecipeFromText() {
   const [phase, setPhase] = useState<ScreenPhase>('paste');
   const [generatingStatus, setGeneratingStatus] =
     useState<CreateRecipeAgentActionStatus>('generating_name');
-  const [partialRecipe, setPartialRecipe] = useState<AgentPartialRecipe | null>(null);
+  const [partialRecipe, setPartialRecipe] = useState<AgentPartialRecipe | null>(
+    null,
+  );
   const [proposal, setProposal] = useState<AgentRecipeProposal | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
-  const [shoppingListPhase, setShoppingListPhase] = useState<'idle' | 'prompt' | 'adding' | 'done'>('idle');
+  const [shoppingListPhase, setShoppingListPhase] = useState<
+    'idle' | 'prompt' | 'adding' | 'done'
+  >('idle');
   const [ingredientsAddedCount, setIngredientsAddedCount] = useState(0);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -280,8 +319,13 @@ export function RecipeFromText() {
       }
     } catch (err) {
       if (!abortController.signal.aborted) {
-        const errMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
-        addToast({ title: 'Generation failed', description: errMsg, type: 'error' });
+        const errMsg =
+          err instanceof Error ? err.message : 'An unexpected error occurred.';
+        addToast({
+          title: 'Generation failed',
+          description: errMsg,
+          type: 'error',
+        });
         setPhase('paste');
         setPartialRecipe(null);
       }
@@ -320,7 +364,10 @@ export function RecipeFromText() {
 
     try {
       for (const ingredientProposal of proposal.ingredients) {
-        if (!ingredientProposal.isNew && ingredientProposal.existingIngredientId) {
+        if (
+          !ingredientProposal.isNew &&
+          ingredientProposal.existingIngredientId
+        ) {
           recipeIngredients.push({
             ingredientId: ingredientProposal.existingIngredientId,
             servings: ingredientProposal.servings,
@@ -357,20 +404,21 @@ export function RecipeFromText() {
         }
       }
 
-      const savedRecipe = await dispatch(
-        createRecipe({
-          title: proposal.title,
-          description: proposal.description,
-          category: proposal.category,
-          prepTime: proposal.prepTime,
-          cookTime: proposal.cookTime,
-          servingSize: proposal.servingSize,
-          instructions: proposal.instructions,
-          imageUrl: proposal.imageUrl,
-          ingredients: recipeIngredients,
-          share: null,
-        }),
-      ).unwrap();
+      const recipe: Omit<Recipe, 'id' | 'userId'> = {
+        title: proposal.title,
+        description: proposal.description,
+        category: proposal.category,
+        
+        prepTime: proposal.prepTime,
+        cookTime: proposal.cookTime,
+        servingSize: proposal.servingSize,
+        instructions: proposal.instructions,
+        imageUrl: proposal.imageUrl,
+        ingredients: recipeIngredients,
+        share: null,
+      };
+
+      const savedRecipe = await dispatch(createRecipe(recipe)).unwrap();
 
       newlySavedRecipeId = savedRecipe.id;
 
@@ -380,7 +428,8 @@ export function RecipeFromText() {
         type: 'success',
       });
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      const errMsg =
+        err instanceof Error ? err.message : 'An unexpected error occurred.';
       addToast({ title: 'Failed to save', description: errMsg, type: 'error' });
     } finally {
       if (newlySavedRecipeId) {
@@ -428,7 +477,8 @@ export function RecipeFromText() {
 
   if (phase === 'generating') {
     const stepLabel = STEP_LABELS[generatingStatus] ?? 'Generating recipe…';
-    const hasPartialData = partialRecipe?.name != null && partialRecipe.name !== '';
+    const hasPartialData =
+      partialRecipe?.name != null && partialRecipe.name !== '';
 
     return (
       <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
@@ -439,7 +489,9 @@ export function RecipeFromText() {
           >
             ← Back to Recipes
           </Link>
-          <h1 className='text-foreground mb-2 text-4xl font-bold'>Generating Recipe…</h1>
+          <h1 className='text-foreground mb-2 text-4xl font-bold'>
+            Generating Recipe…
+          </h1>
           <p className='text-muted-foreground'>
             Please wait while we process your recipe text.
           </p>
@@ -452,8 +504,12 @@ export function RecipeFromText() {
           <div className='flex items-center gap-3'>
             <div className='text-muted-foreground flex gap-1'>
               <span className='animate-bounce text-sm'>●</span>
-              <span className='animate-bounce text-sm [animation-delay:0.15s]'>●</span>
-              <span className='animate-bounce text-sm [animation-delay:0.3s]'>●</span>
+              <span className='animate-bounce text-sm [animation-delay:0.15s]'>
+                ●
+              </span>
+              <span className='animate-bounce text-sm [animation-delay:0.3s]'>
+                ●
+              </span>
             </div>
             <p className='text-muted-foreground text-xs'>{stepLabel}</p>
           </div>
@@ -523,9 +579,11 @@ export function RecipeFromText() {
           {shoppingListPhase === 'done' && (
             <div className='flex flex-col gap-3'>
               {ingredientsAddedCount > 0 && (
-                <div className='border-border flex items-center justify-between gap-3 rounded-xl border bg-card/50 px-4 py-3'>
+                <div className='border-border bg-card/50 flex items-center justify-between gap-3 rounded-xl border px-4 py-3'>
                   <p className='text-foreground text-sm'>
-                    🛒 Added {ingredientsAddedCount} ingredient{ingredientsAddedCount === 1 ? '' : 's'} to your shopping list
+                    🛒 Added {ingredientsAddedCount} ingredient
+                    {ingredientsAddedCount === 1 ? '' : 's'} to your shopping
+                    list
                   </p>
                   <Button
                     variant='tertiary'
@@ -565,7 +623,11 @@ export function RecipeFromText() {
               >
                 {isSaving ? 'Saving…' : '✓ Create Recipe'}
               </Button>
-              <Button variant='secondary' className='flex-1' onClick={handleRepaste}>
+              <Button
+                variant='secondary'
+                className='flex-1'
+                onClick={handleRepaste}
+              >
                 Repaste
               </Button>
             </div>
@@ -584,9 +646,12 @@ export function RecipeFromText() {
         >
           ← Back to Recipes
         </Link>
-        <h1 className='text-foreground mb-2 text-4xl font-bold'>Paste Your Recipe</h1>
+        <h1 className='text-foreground mb-2 text-4xl font-bold'>
+          Paste Your Recipe
+        </h1>
         <p className='text-muted-foreground'>
-          Someone sent you a recipe? Paste the full text below and we'll take it from there.
+          Someone sent you a recipe? Paste the full text below and we'll take it
+          from there.
         </p>
       </div>
 
