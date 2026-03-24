@@ -342,11 +342,6 @@ type DietaryRestriction =
   | 'halal' | 'kosher' | 'nut-free' | 'no-restrictions'
   | (string & {});
 
-type CuisineType =
-  | 'italian' | 'mexican' | 'chinese' | 'japanese' | 'thai'
-  | 'indian' | 'middle-eastern' | 'american' | 'french' | 'greek'
-  | (string & {});
-
 type CookingGoal =
   | 'eat-healthier' | 'lose-weight' | 'save-money' | 'save-time'
   | 'reduce-waste' | 'track-macros' | 'meal-prep'
@@ -371,7 +366,7 @@ interface UserProfile {
   dietaryRestrictions: DietaryRestriction[];
   customDietaryRestrictions: string[];
   avoidIngredients: string[];
-  cuisinePreferences: CuisineType[];
+  cuisinePreferences: RecipeCuisineType[];
   cookingGoal: CookingGoal | null;
   cookingGoalDetails: CookingGoalDetails | null;
   householdSize: number;

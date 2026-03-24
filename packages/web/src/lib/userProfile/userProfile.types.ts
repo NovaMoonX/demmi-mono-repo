@@ -1,3 +1,5 @@
+import { RecipeCuisineType } from '../recipes';
+
 export type DietaryRestriction =
   | 'vegetarian'
   | 'vegan'
@@ -7,19 +9,6 @@ export type DietaryRestriction =
   | 'kosher'
   | 'nut-free'
   | 'no-restrictions'
-  | (string & {});
-
-export type CuisineType =
-  | 'italian'
-  | 'mexican'
-  | 'chinese'
-  | 'japanese'
-  | 'thai'
-  | 'indian'
-  | 'middle-eastern'
-  | 'american'
-  | 'french'
-  | 'greek'
   | (string & {});
 
 export type CookingGoal =
@@ -54,7 +43,7 @@ export interface UserProfile {
   dietaryRestrictions: DietaryRestriction[];
   customDietaryRestrictions: string[];
   avoidIngredients: string[];
-  cuisinePreferences: CuisineType[];
+  cuisinePreferences: RecipeCuisineType[];
   cookingGoal: CookingGoal | null;
   cookingGoalDetails: CookingGoalDetails | null;
   householdSize: number;
