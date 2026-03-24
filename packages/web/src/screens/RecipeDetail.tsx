@@ -12,7 +12,7 @@ import {
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
-import { Recipe, RecipeCategory, RecipeIngredient, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
+import { Recipe, RecipeCategory, RecipeIngredient, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RECIPE_CUISINE_COLORS, RECIPE_CUISINE_EMOJIS, RECIPE_CUISINE_OPTIONS } from '@lib/recipes';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import {
   createRecipe as createRecipeAsync,
@@ -52,6 +52,9 @@ export function RecipeDetail() {
   );
   const [category, setCategory] = useState<string>(
     existingRecipe?.category ?? 'breakfast',
+  );
+  const [cuisine, setCuisine] = useState<string>(
+    existingRecipe?.cuisine ?? 'american',
   );
   const [prepTime, setPrepTime] = useState(
     existingRecipe?.prepTime.toString() ?? '0',
@@ -101,6 +104,8 @@ export function RecipeDetail() {
       text: `${emoji} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`,
     }),
   );
+
+  const cuisineOptions = RECIPE_CUISINE_OPTIONS;
 
   const formatSharedAt = (ts: number) => {
     const d = new Date(ts);
@@ -217,6 +222,7 @@ export function RecipeDetail() {
       title,
       description,
       category: category as RecipeCategory,
+      cuisine,
       prepTime: Number(prepTime) || 0,
       cookTime: Number(cookTime) || 0,
       servingSize: Number(servingSize) || 1,
@@ -352,6 +358,15 @@ export function RecipeDetail() {
                 )}
               >
                 {RECIPE_CATEGORY_EMOJIS[existingRecipe.category]} {existingRecipe.category}
+              </Badge>
+              <Badge
+                variant='base'
+                className={join(
+                  RECIPE_CUISINE_COLORS[existingRecipe.cuisine] ?? 'bg-muted text-muted-foreground',
+                )}
+              >
+                {RECIPE_CUISINE_EMOJIS[existingRecipe.cuisine] ?? '🍽️'}{' '}
+                {existingRecipe.cuisine.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
               </Badge>
             </div>
             <div className='hidden md:flex shrink-0 gap-2'>
@@ -595,16 +610,30 @@ export function RecipeDetail() {
           />
         </div>
 
-        <div>
-          <Label htmlFor='category'>
-            Category *
-          </Label>
-          <Select
-            options={categoryOptions}
-            value={category}
-            onChange={(value) => setCategory(value)}
-            placeholder='Select category'
-          />
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div>
+            <Label htmlFor='category'>
+              Category *
+            </Label>
+            <Select
+              options={categoryOptions}
+              value={category}
+              onChange={(value) => setCategory(value)}
+              placeholder='Select category'
+            />
+          </div>
+
+          <div>
+            <Label htmlFor='cuisine'>
+              Cuisine *
+            </Label>
+            <Select
+              options={cuisineOptions}
+              value={cuisine}
+              onChange={(value) => setCuisine(value)}
+              placeholder='Select cuisine'
+            />
+          </div>
         </div>
 
         <div className='grid grid-cols-3 items-end gap-4'>

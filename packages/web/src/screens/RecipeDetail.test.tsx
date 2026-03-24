@@ -17,6 +17,7 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
     title: 'Spaghetti Bolognese',
     description: 'Classic Italian pasta dish',
     category: 'dinner',
+    cuisine: 'italian',
     prepTime: 15,
     cookTime: 45,
     servingSize: 4,

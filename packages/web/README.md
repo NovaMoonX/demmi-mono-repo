@@ -200,10 +200,12 @@ npm run test:ui       # Open Vitest UI in browser
 - 21 measurement units including custom units
 
 ### 🍽️ Recipes
-- Card-based recipe browser with search, category/time filters
+- Card-based recipe browser with search, category, cuisine, and time filters
+- Each recipe has a category badge and a cuisine badge (with emoji and color)
 - Full CRUD with image upload, dynamic ingredient list, and interactive instruction steps
 - **Cook Mode**: immersive step-by-step cooking with progress bar, ingredient drawer, voice navigation ("Hey Demi"), and responsive layout
 - Create from manual entry, pasted text (AI-parsed), or URL
+- Cuisine type supports 10 built-in cuisines (Italian, Mexican, Chinese, Japanese, Thai, Indian, Middle Eastern, American, French, Greek) plus custom values
 
 ### 📅 Meal Planner
 - Day, week, and custom range views with date navigation
@@ -305,6 +307,7 @@ interface Recipe {
   title: string;
   description: string;
   category: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert' | 'drink';
+  cuisine: 'italian' | 'mexican' | 'chinese' | 'japanese' | 'thai' | 'indian' | 'middle-eastern' | 'american' | 'french' | 'greek' | string;
   prepTime: number;
   cookTime: number;
   servingSize: number;
