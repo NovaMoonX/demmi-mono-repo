@@ -22,8 +22,8 @@ test.describe('Electron App', () => {
     const window = await app.firstWindow();
 
     const { width, height } = await window.evaluate(() => ({
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: globalThis.innerWidth,
+      height: globalThis.innerHeight,
     }));
 
     expect(width).toBeGreaterThan(0);
