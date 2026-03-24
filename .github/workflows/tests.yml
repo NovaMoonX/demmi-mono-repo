@@ -44,7 +44,7 @@ jobs:
             xauth \
             xvfb \
             libgbm-dev \
-            libasound2
+            libasound2t64
       - run: npx playwright install --with-deps
       - run: npm run build --workspace=@demmi/web
         env:
