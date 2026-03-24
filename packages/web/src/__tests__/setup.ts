@@ -69,6 +69,9 @@ vi.mock('firebase/firestore', () => ({
   getDocs: vi.fn().mockResolvedValue({
     docs: [{ data: () => ({ id: '1', name: 'Milk' }) }],
   }),
+  getDoc: vi.fn(),
+  setDoc: vi.fn(),
+  doc: vi.fn(() => ({}))
 }));
 
 vi.mock('firebase/database', () => ({

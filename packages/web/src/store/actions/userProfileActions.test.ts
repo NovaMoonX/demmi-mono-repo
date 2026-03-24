@@ -15,16 +15,6 @@ import type { UserProfile } from '@lib/userProfile';
 import { getDoc, setDoc } from 'firebase/firestore';
 import type { DocumentSnapshot } from 'firebase/firestore';
 
-vi.mock('firebase/firestore', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('firebase/firestore')>();
-  return {
-    ...actual,
-    getDoc: vi.fn(),
-    setDoc: vi.fn(),
-    doc: vi.fn(() => ({})),
-  };
-});
-
 const mockProfile: UserProfile = {
   userId: 'user-1',
   displayName: 'Test User',
@@ -77,7 +67,7 @@ describe('fetchUserProfile', () => {
 
     const result = await store.dispatch(fetchUserProfile());
     expect(result.meta.requestStatus).toBe('rejected');
-    expect(getDoc).not.toHaveBeenCalled();
+    expect(vi.mocked(getDoc)).not.toHaveBeenCalled();
   });
 
   it('returns null when document does not exist', async () => {
