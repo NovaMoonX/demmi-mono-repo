@@ -21,6 +21,7 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
     title: 'Test Recipe',
     description: 'A test recipe',
     category: 'dinner',
+    cuisine: 'italian',
     prepTime: 10,
     cookTime: 20,
     servingSize: 4,

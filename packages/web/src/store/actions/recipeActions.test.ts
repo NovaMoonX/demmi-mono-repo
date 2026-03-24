@@ -9,6 +9,7 @@ import {
   updateRecipe,
   deleteRecipe,
 } from './recipeActions';
+import { Recipe } from '@/lib/recipes';
 
 vi.mock('@utils/generatedId', () => ({
   generatedId: vi.fn(() => 'recipe-id-123'),
@@ -47,11 +48,11 @@ describe('recipeActions', () => {
   describe('createRecipe', () => {
     it('returns local data in demo mode', async () => {
       const store = createTestStore(true);
-      const result = await store.dispatch(
-        createRecipe({
+      const recipe: Omit<Recipe, 'id' | 'userId'> = {
           title: 'Pasta',
           description: 'Delicious pasta',
           category: 'dinner',
+          cuisine: 'italian',
           prepTime: 10,
           cookTime: 20,
           servingSize: 4,
@@ -59,7 +60,9 @@ describe('recipeActions', () => {
           imageUrl: '',
           ingredients: [],
           share: null,
-        }),
+        }
+      const result = await store.dispatch(
+        createRecipe(recipe),
       );
       expect(result.type).toBe('recipes/createRecipeAsync/fulfilled');
       const payload = result.payload as Record<string, unknown>;
@@ -71,12 +74,13 @@ describe('recipeActions', () => {
   describe('updateRecipe', () => {
     it('returns recipe as-is in demo mode', async () => {
       const store = createTestStore(true);
-      const recipe = {
+      const recipe: Recipe = {
         id: 'r1',
         userId: 'demo',
         title: 'Pasta',
         description: 'Delicious pasta',
-        category: 'dinner' as const,
+        category: 'dinner',
+        cuisine: 'italian',
         prepTime: 10,
         cookTime: 20,
         servingSize: 4,

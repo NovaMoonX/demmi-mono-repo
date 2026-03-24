@@ -28,6 +28,7 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
     title: 'Pancakes',
     description: 'Fluffy pancakes',
     category: 'breakfast',
+    cuisine: 'american',
     prepTime: 10,
     cookTime: 15,
     servingSize: 2,
