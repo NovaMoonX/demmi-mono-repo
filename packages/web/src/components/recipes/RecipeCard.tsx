@@ -1,6 +1,7 @@
 import { Card, Badge } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import {
+  capitalizeCuisine,
   Recipe,
   RECIPE_CATEGORY_COLORS,
   RECIPE_CATEGORY_EMOJIS,
@@ -56,7 +57,7 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
               className={join(RECIPE_CUISINE_COLORS[recipe.cuisine] ?? 'bg-muted text-muted-foreground')}
             >
               {RECIPE_CUISINE_EMOJIS[recipe.cuisine] ?? '🍽️'}{' '}
-              {recipe.cuisine.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+              {capitalizeCuisine(recipe.cuisine)}
             </Badge>
           </div>
         </div>

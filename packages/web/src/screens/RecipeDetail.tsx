@@ -12,7 +12,7 @@ import {
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
-import { Recipe, RecipeCategory, RecipeIngredient, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RECIPE_CUISINE_COLORS, RECIPE_CUISINE_EMOJIS, RECIPE_CUISINE_OPTIONS } from '@lib/recipes';
+import { Recipe, RecipeCategory, RecipeIngredient, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RECIPE_CUISINE_COLORS, RECIPE_CUISINE_EMOJIS, RECIPE_CUISINE_OPTIONS, capitalizeCuisine } from '@lib/recipes';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import {
   createRecipe as createRecipeAsync,
@@ -366,7 +366,7 @@ export function RecipeDetail() {
                 )}
               >
                 {RECIPE_CUISINE_EMOJIS[existingRecipe.cuisine] ?? '🍽️'}{' '}
-                {existingRecipe.cuisine.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                {capitalizeCuisine(existingRecipe.cuisine)}
               </Badge>
             </div>
             <div className='hidden md:flex shrink-0 gap-2'>

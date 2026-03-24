@@ -1,3 +1,4 @@
+import { capitalizeCuisine } from './recipe.utils';
 import { RecipeCategory, RecipeCuisineType } from './recipes.types';
 
 export const RECIPE_PLACEHOLDER_IMAGE_URL = '/images/recipe-placeholder.jpg';
@@ -68,8 +69,5 @@ export const RECIPE_CUISINE_EMOJIS: Record<string, string> = {
 
 export const RECIPE_CUISINE_OPTIONS = RECIPE_CUISINES.map((cuisine) => ({
   value: cuisine,
-  text: `${RECIPE_CUISINE_EMOJIS[cuisine]} ${cuisine
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')}`,
+  text: `${RECIPE_CUISINE_EMOJIS[cuisine]} ${capitalizeCuisine(cuisine)}`,
 }));
