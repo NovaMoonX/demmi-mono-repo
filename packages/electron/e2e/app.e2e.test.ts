@@ -7,48 +7,38 @@ const __dirname = path.dirname(__filename);
 const MAIN_PATH = path.join(__dirname, '..', 'dist', 'main.js');
 
 test.describe('Electron App', () => {
-	test('launches and shows main window', async () => {
-		const app = await electron.launch({
-			args: [
-				MAIN_PATH,
-				'--no-sandbox',
-				'--disable-setuid-sandbox',
-				'--disable-gpu',
-				'--disable-dev-shm-usage',
-        '--disable-software-rasterizer',
-			],
-		});
+  test('launches and shows main window', async () => {
+    const app = await electron.launch({ args: [MAIN_PATH] });
+    const window = await app.firstWindow();
 
-		const window = await app.firstWindow();
+    const title = await window.title();
+    expect(title).toBeTruthy();
 
-		const title = await window.title();
-		expect(title).toBeTruthy();
+    await app.close();
+  });
 
-		await app.close();
-	});
+  test('window has expected dimensions', async () => {
+    const app = await electron.launch({ args: [MAIN_PATH] });
+    const window = await app.firstWindow();
 
-	test('window has expected dimensions', async () => {
-		const app = await electron.launch({ args: [MAIN_PATH] });
-		const window = await app.firstWindow();
+    const { width, height } = await window.evaluate(() => ({
+      width: globalThis.innerWidth,
+      height: globalThis.innerHeight,
+    }));
 
-		const { width, height } = await window.evaluate(() => ({
-			width: globalThis.innerWidth,
-			height: globalThis.innerHeight,
-		}));
+    expect(width).toBeGreaterThan(0);
+    expect(height).toBeGreaterThan(0);
 
-		expect(width).toBeGreaterThan(0);
-		expect(height).toBeGreaterThan(0);
+    await app.close();
+  });
 
-		await app.close();
-	});
+  test('registers the custom app:// protocol', async () => {
+    const app = await electron.launch({ args: [MAIN_PATH] });
+    const window = await app.firstWindow();
 
-	test('registers the custom app:// protocol', async () => {
-		const app = await electron.launch({ args: [MAIN_PATH] });
-		const window = await app.firstWindow();
+    const url = window.url();
+    expect(url).toMatch(/^app:\/\//);
 
-		const url = window.url();
-		expect(url).toMatch(/^app:\/\//);
-
-		await app.close();
-	});
+    await app.close();
+  });
 });

@@ -24,7 +24,7 @@ jobs:
 
   test-electron:
     name: Electron Tests
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,19 +32,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Install Electron dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-0 \
-            libnotify4 \
-            libnss3 \
-            libxss1 \
-            libxtst6 \
-            xauth \
-            xvfb \
-            libgbm-dev \
-            libasound2t64
       - run: npx playwright install --with-deps
       - run: npm run build --workspace=@demmi/web
         env:
@@ -56,19 +43,7 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
       - run: npm run build --workspace=@demmi/electron
-      - name: Debug Electron launch
-        run: |
-          cd packages/electron
-          xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" \
-          npx electron dist/main.js --no-sandbox 2>&1 || true
-        env:
-          DISPLAY: ':99'
-
-      - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test:electron
-        env:
-          DEBUG: pw:browser*
-          ELECTRON_ENABLE_LOGGING: 1
-          DISPLAY: ':99'
+      - run: npm run test:electron
 
   test-mobile:
     name: Mobile Tests
