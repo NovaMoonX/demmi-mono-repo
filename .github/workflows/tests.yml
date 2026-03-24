@@ -56,7 +56,16 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
       - run: npm run build --workspace=@demmi/electron
-      - run: xvfb-run npm run test:electron
+      - name: Debug Electron launch
+        run: |
+          cd packages/electron
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" \
+          npx electron dist/main.js --no-sandbox 2>&1 || true
+
+      - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test:electron
+        env:
+          DEBUG: pw:browser*
+          ELECTRON_ENABLE_LOGGING: 1
 
   test-mobile:
     name: Mobile Tests
