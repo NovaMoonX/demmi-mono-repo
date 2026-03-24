@@ -13,6 +13,7 @@ import ingredientsReducer from '@store/slices/ingredientsSlice';
 import recipesReducer from '@store/slices/recipesSlice';
 import shoppingListReducer from '@store/slices/shoppingListSlice';
 import userReducer from '@store/slices/userSlice';
+import userProfileReducer from '@store/slices/userProfileSlice';
 
 interface GenerateTestWrapperOptions extends Omit<RenderOptions, 'wrapper'> {
   /** The initial state for the Redux store */
@@ -50,6 +51,7 @@ export function generateTestWrapper(options?: GenerateTestWrapperOptions) {
       calendar: calendarReducer,
       demo: demoReducer,
       shoppingList: shoppingListReducer,
+      userProfile: userProfileReducer,
       [openFoodFactsApi.reducerPath]: openFoodFactsApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>

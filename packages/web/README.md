@@ -117,9 +117,9 @@ src/
 ├── store/              # Redux Toolkit state management
 │   ├── index.ts        # Store configuration
 │   ├── hooks.ts        # Typed hooks (useAppDispatch, useAppSelector)
-│   ├── actions/        # Async Firestore thunks (calendar, chat, ingredient, recipe, shoppingList, shareRecipe)
+│   ├── actions/        # Async Firestore thunks (calendar, chat, ingredient, recipe, shoppingList, shareRecipe, userProfile)
 │   ├── api/            # External API clients (Open Food Facts)
-│   └── slices/         # Redux slices (calendar, chats, demo, ingredients, recipes, shoppingList, user)
+│   └── slices/         # Redux slices (calendar, chats, demo, ingredients, recipes, shoppingList, user, userProfile)
 ├── ui/                 # Layout components (Layout, Loading)
 └── utils/              # Shared utilities (generatedId, capitalize, formatDate, barcodePrefill)
 ```
@@ -317,7 +317,11 @@ interface RecipeIngredient {
   ingredientId: string;
   servings: number;
 }
+```
 
+### PlannedRecipe / Calendar
+
+```typescript
 interface PlannedRecipe {
   id: string;
   userId: string;
@@ -325,6 +329,55 @@ interface PlannedRecipe {
   date: number;
   category: RecipeCategory;
   notes: string | null;
+}
+```
+
+### UserProfile
+
+Stored at `/userProfiles/{uid}` in Firestore. The document key is the Firebase Auth UID.
+
+```typescript
+type DietaryRestriction =
+  | 'vegetarian' | 'vegan' | 'gluten-free' | 'dairy-free'
+  | 'halal' | 'kosher' | 'nut-free' | 'no-restrictions'
+  | (string & {});
+
+type CookingGoal =
+  | 'eat-healthier' | 'lose-weight' | 'save-money' | 'save-time'
+  | 'reduce-waste' | 'track-macros' | 'meal-prep'
+  | 'explore-cuisines' | 'learn-cooking';
+
+type CookingSkillLevel = 'beginner' | 'intermediate' | 'advanced';
+type CookTimePreference = 'under-20' | '30-min' | 'any';
+type WeightUnit = 'kg' | 'lbs';
+
+interface CookingGoalDetails {
+  'lose-weight': { currentWeight: number; goalWeight: number; weightUnit: WeightUnit } | null;
+  'track-macros': { protein: number; carbs: number; fat: number } | null;
+  'save-money': { weeklyBudget: number } | null;
+  'save-time': { maxCookMinutes: number } | null;
+  'reduce-waste': { trackLeftovers: boolean } | null;
+  'meal-prep': { daysAhead: number } | null;
+}
+
+interface UserProfile {
+  userId: string;
+  displayName: string | null;
+  dietaryRestrictions: DietaryRestriction[];
+  customDietaryRestrictions: string[];
+  avoidIngredients: string[];
+  cuisinePreferences: RecipeCuisineType[];
+  cookingGoal: CookingGoal | null;
+  cookingGoalDetails: CookingGoalDetails | null;
+  householdSize: number;
+  skillLevel: CookingSkillLevel | null;
+  cookTimePreference: CookTimePreference | null;
+  lovedMealDescription: string | null;
+  dislikedMealDescription: string | null;
+  autoPantryDeduct: boolean | null;
+  createdAt: number;
+  updatedAt: number;
+  onboardingCompletedAt: number | null;
 }
 ```
 
@@ -357,5 +410,6 @@ Redux Toolkit with typed hooks (`useAppDispatch`, `useAppSelector`). The store i
 | `shoppingListSlice` | Shopping list items |
 | `userSlice` | Authentication state |
 | `demoSlice` | Demo mode session management |
+| `userProfileSlice` | User profile (dietary, preferences, goals) |
 
 All Firestore async thunks read the user from Redux state (never accept `userId` as a parameter) and use the `condition` option to skip execution when demo mode is active.

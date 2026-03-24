@@ -10,6 +10,19 @@ export interface RecipeShare {
   sharedAt: number; // epoch ms when this share was last created/refreshed
 }
 
+export type RecipeCuisineType =
+  | 'italian'
+  | 'mexican'
+  | 'chinese'
+  | 'japanese'
+  | 'thai'
+  | 'indian'
+  | 'middle-eastern'
+  | 'american'
+  | 'french'
+  | 'greek'
+  | (string & {});
+
 export interface Recipe {
   id: string;
   userId: string;
