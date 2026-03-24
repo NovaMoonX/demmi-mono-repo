@@ -11,20 +11,6 @@ import {
   clearCheckedShoppingListItems,
 } from './shoppingListActions';
 
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(),
-  doc: vi.fn(),
-  getDocs: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  setDoc: vi.fn(),
-  runTransaction: vi.fn(),
-  writeBatch: vi.fn(() => ({
-    delete: vi.fn(),
-    commit: vi.fn().mockResolvedValue(undefined),
-  })),
-}));
-
 vi.mock('@utils/generatedId', () => ({
   generatedId: vi.fn(() => 'sl-id-123'),
 }));

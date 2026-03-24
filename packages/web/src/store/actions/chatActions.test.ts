@@ -12,19 +12,6 @@ import {
   fetchChatMessages,
 } from './chatActions';
 
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(),
-  doc: vi.fn(),
-  getDocs: vi.fn(),
-  getDoc: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  setDoc: vi.fn(),
-  updateDoc: vi.fn(),
-  arrayUnion: vi.fn((val: unknown) => val),
-  runTransaction: vi.fn(),
-}));
-
 vi.mock('@utils/generatedId', () => ({
   generatedId: vi.fn(() => 'chat-id-123'),
 }));

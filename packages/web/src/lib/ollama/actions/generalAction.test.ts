@@ -1,30 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-vi.mock('ollama/browser', () => {
-  const mockClient = {
-    chat: vi.fn(),
-    generate: vi.fn(),
-    list: vi.fn(),
-    pull: vi.fn(),
-  };
-  class MockOllama {
-    chat = mockClient.chat;
-    generate = mockClient.generate;
-    list = mockClient.list;
-    pull = mockClient.pull;
-  }
-  return { Ollama: MockOllama };
-});
-
-vi.mock('../prompts', () => ({
-  GENERAL_PROMPT: 'You are a cooking assistant.',
-}));
-
-vi.mock('../schemas', () => ({
-  GENERAL_SCHEMA: {},
-}));
-
 import { generalAction } from './generalAction';
 import { ollamaClient } from '../ollama.service';
+import { ChatResponse } from 'ollama';
+
 
 describe('generalAction', () => {
   beforeEach(() => {
@@ -54,9 +32,9 @@ describe('generalAction', () => {
         };
       },
       abort: vi.fn(),
-    };
+    } as unknown as ChatResponse;
 
-    (ollamaClient.chat as jest.Mock).mockResolvedValue(asyncIterator);
+    vi.mocked(ollamaClient.chat).mockResolvedValue(asyncIterator);
 
     const onProgress = vi.fn();
     const result = await generalAction.execute(

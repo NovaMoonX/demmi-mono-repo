@@ -10,16 +10,6 @@ import {
   deleteRecipe,
 } from './recipeActions';
 
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(),
-  doc: vi.fn(),
-  getDocs: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  setDoc: vi.fn(),
-  runTransaction: vi.fn(),
-}));
-
 vi.mock('@utils/generatedId', () => ({
   generatedId: vi.fn(() => 'recipe-id-123'),
 }));

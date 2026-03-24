@@ -10,6 +10,8 @@ import chatsReducer from '@store/slices/chatsSlice';
 import calendarReducer from '@store/slices/calendarSlice';
 import shoppingListReducer from '@store/slices/shoppingListSlice';
 import { openFoodFactsApi } from '@store/api/openFoodFactsApi';
+import { AuthProvider } from './AuthContext';
+import { useAuth } from '@hooks/useAuth';
 
 let authStateCallback: ((user: unknown) => void) | null = null;
 
@@ -20,22 +22,6 @@ vi.mock('firebase/auth', () => ({
     return vi.fn();
   }),
 }));
-
-vi.mock('@lib/firebase/auth.service', () => ({
-  signIn: vi.fn().mockResolvedValue({}),
-  signUp: vi.fn().mockResolvedValue({}),
-  signInWithGoogle: vi.fn().mockResolvedValue({}),
-  logOut: vi.fn().mockResolvedValue(undefined),
-  resendVerificationEmail: vi.fn().mockResolvedValue({}),
-  convertFirebaseUser: vi.fn((user: unknown) => {
-    if (!user) return null;
-    const u = user as { uid: string; email: string; emailVerified: boolean };
-    return { uid: u.uid, email: u.email, emailVerified: u.emailVerified };
-  }),
-}));
-
-import { AuthProvider } from './AuthContext';
-import { useAuth } from '@hooks/useAuth';
 
 function TestConsumer() {
   const { user, loading } = useAuth();

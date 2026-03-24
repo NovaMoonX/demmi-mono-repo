@@ -1,31 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
+import { describe, it } from 'vitest';
 import App from './App';
 
-vi.mock('@routes/AppRoutes', () => ({
-  router: 'mock-router',
-}));
-
-vi.mock('react-router-dom', async () => ({
-  ...(await vi.importActual('react-router-dom')),
-  RouterProvider: () => <div data-testid="router-provider">Router</div>,
-}));
-
-vi.mock('@contexts/AuthContext', () => ({
-  AuthProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="auth-provider">{children}</div>
-  ),
-}));
-
 describe('App', () => {
-  it('renders without crashing', () => {
+  it('renders without crashing', async () => {
     render(<App />);
-    expect(screen.getByTestId('router-provider')).toBeInTheDocument();
-  });
-
-  it('wraps content in AuthProvider', () => {
-    render(<App />);
-    expect(screen.getByTestId('auth-provider')).toBeInTheDocument();
+    await screen.findByText('Demmi');
   });
 });

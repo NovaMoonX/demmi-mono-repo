@@ -1,34 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-vi.mock('ollama/browser', () => {
-  const mockClient = {
-    list: vi.fn(),
-    generate: vi.fn(),
-    chat: vi.fn(),
-    pull: vi.fn(),
-  };
-  class MockOllama {
-    list = mockClient.list;
-    generate = mockClient.generate;
-    chat = mockClient.chat;
-    pull = mockClient.pull;
-  }
-  return {
-    Ollama: MockOllama,
-  };
-});
-
-vi.mock('./ollama.constants', () => ({
-  INTENT_ACTIONS: ['general', 'createRecipe'],
-  INTENT_ACTION_PROMPT_DESCRIPTION: {
-    general: 'General question',
-    createRecipe: 'Create a recipe',
-  },
-  INTENT_ACTION_SHORT_DESCRIPTIONS: {
-    general: 'General',
-    createRecipe: 'Create',
-  },
-}));
-
 import {
   ollamaClient,
   listLocalModels,
@@ -37,6 +7,8 @@ import {
   parseGeneralResponse,
   extractPartialResponse,
 } from './ollama.service';
+import { mock } from 'vitest-mock-extended';
+import { GenerateResponse, ModelResponse } from 'ollama';
 
 describe('ollama.service', () => {
   beforeEach(() => {
@@ -45,12 +17,12 @@ describe('ollama.service', () => {
 
   describe('listLocalModels', () => {
     it('returns text model names', async () => {
-      (ollamaClient.list as jest.Mock).mockResolvedValue({
-        models: [
+      vi.mocked(ollamaClient.list).mockResolvedValue({
+        models: mock<ModelResponse[]>([
           { name: 'mistral' },
           { name: 'llama3' },
           { name: 'nomic-embed-text' },
-        ],
+        ]),
       });
 
       const result = await listLocalModels();
@@ -58,12 +30,12 @@ describe('ollama.service', () => {
     });
 
     it('filters out embed, vision and multimodal models', async () => {
-      (ollamaClient.list as jest.Mock).mockResolvedValue({
-        models: [
+      vi.mocked(ollamaClient.list).mockResolvedValue({
+        models: mock<ModelResponse[]>([
           { name: 'llava-vision' },
           { name: 'embed-model' },
           { name: 'multimodal-test' },
-        ],
+        ]),
       });
 
       const result = await listLocalModels();
@@ -78,9 +50,9 @@ describe('ollama.service', () => {
     });
 
     it('generates summary for long exchanges', async () => {
-      (ollamaClient.generate as jest.Mock).mockResolvedValue({
+      vi.mocked(ollamaClient.generate).mockResolvedValue(mock<GenerateResponse>({
         response: 'User asked about pasta. Assistant provided a recipe.',
-      });
+      }));
 
       const longUser = 'a'.repeat(101);
       const longAssistant = 'b'.repeat(201);
@@ -91,7 +63,7 @@ describe('ollama.service', () => {
 
   describe('detectIntent', () => {
     it('returns general by default on error', async () => {
-      (ollamaClient.generate as jest.Mock).mockRejectedValue(new Error('fail'));
+      vi.mocked(ollamaClient.generate).mockRejectedValue(new Error('fail'));
 
       const result = await detectIntent('mistral', [
         { id: '1', role: 'user', content: 'Hello', timestamp: 1, model: null, rawContent: null, agentAction: null, summary: null, iterationInvalid: null },
@@ -100,9 +72,9 @@ describe('ollama.service', () => {
     });
 
     it('detects createRecipe intent', async () => {
-      (ollamaClient.generate as jest.Mock).mockResolvedValue({
+      vi.mocked(ollamaClient.generate).mockResolvedValue(mock<GenerateResponse>({
         response: JSON.stringify({ action: 'createRecipe' }),
-      });
+      }));
 
       const result = await detectIntent('mistral', [
         { id: '1', role: 'user', content: 'Make me a pasta recipe', timestamp: 1, model: null, rawContent: null, agentAction: null, summary: null, iterationInvalid: null },

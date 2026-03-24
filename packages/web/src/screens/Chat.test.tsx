@@ -39,13 +39,6 @@ vi.mock('@hooks/useOllamaModels', () => ({
   }),
 }));
 
-vi.mock('@lib/ollama', () => ({
-  detectIntent: vi.fn(),
-  generateSummary: vi.fn(),
-  getActionHandler: vi.fn(),
-  iterateRecipeAction: vi.fn(),
-}));
-
 describe('Chat', () => {
   it('renders the New Chat heading when no conversation selected', () => {
     const { wrapper } = generateTestWrapper({

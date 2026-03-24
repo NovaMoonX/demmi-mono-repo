@@ -1,38 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-vi.mock('ollama/browser', () => {
-  const mockClient = {
-    chat: vi.fn(),
-    generate: vi.fn(),
-    list: vi.fn(),
-    pull: vi.fn(),
-  };
-  class MockOllama {
-    chat = mockClient.chat;
-    generate = mockClient.generate;
-    list = mockClient.list;
-    pull = mockClient.pull;
-  }
-  return { Ollama: MockOllama };
-});
-
-vi.mock('../prompts/recipe.prompts', () => ({
-  RECIPE_NAME_PROMPT: 'name prompt',
-  RECIPE_INFO_PROMPT: 'info prompt',
-  RECIPE_DESCRIPTION_PROMPT: 'desc prompt',
-  RECIPE_INGREDIENTS_PROMPT: 'ing prompt',
-  RECIPE_INSTRUCTIONS_PROMPT: 'inst prompt',
-}));
-
-vi.mock('../schemas/recipe.schemas', () => ({
-  RECIPE_NAME_SCHEMA: {},
-  RECIPE_INFO_SCHEMA: {},
-  RECIPE_DESCRIPTION_SCHEMA: {},
-  RECIPE_INGREDIENTS_SCHEMA: {},
-  RECIPE_INSTRUCTIONS_SCHEMA: {},
-}));
-
 import { formatContextMessages, createRecipeAction } from './createRecipeAction';
 import { ollamaClient } from '../ollama.service';
+import { mock } from 'vitest-mock-extended';
+import { ChatResponse } from 'ollama';
 
 describe('createRecipeAction', () => {
   describe('formatContextMessages', () => {
@@ -72,9 +42,9 @@ describe('createRecipeAction', () => {
     });
 
     it('executes proposeName step', async () => {
-      (ollamaClient.chat as jest.Mock).mockResolvedValue({
+      vi.mocked(ollamaClient.chat).mockResolvedValue(mock<ChatResponse>({
         message: { content: JSON.stringify({ name: 'Spaghetti Carbonara' }) },
-      });
+      }));
 
       const result = await createRecipeAction.executeStep(
         'mistral',

@@ -10,18 +10,6 @@ import {
   fetchSharedRecipe,
 } from './shareRecipeActions';
 
-vi.mock('firebase/firestore', () => ({
-  doc: vi.fn(),
-  runTransaction: vi.fn(),
-}));
-
-vi.mock('firebase/database', () => ({
-  ref: vi.fn(),
-  set: vi.fn(),
-  remove: vi.fn(),
-  get: vi.fn().mockResolvedValue({ exists: () => false, val: () => null }),
-}));
-
 vi.mock('@utils/generatedId', () => ({
   generatedId: vi.fn(() => 'share-id-123'),
 }));

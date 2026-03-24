@@ -49,6 +49,19 @@ vi.mock('@lib/firebase', () => ({
   rtdb: {},
 }));
 
+vi.mock('firebase/auth', () => ({
+  GoogleAuthProvider: vi.fn(),
+  signInWithPopup: vi.fn(),
+  createUserWithEmailAndPassword: vi.fn(),
+  signInWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+  sendEmailVerification: vi.fn(),
+  onAuthStateChanged: vi.fn((_auth: unknown, cb: (user: unknown) => void) => {
+      cb(null);
+      return vi.fn();
+    }),
+}));
+
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(),
   query: vi.fn(),
@@ -64,3 +77,22 @@ vi.mock('firebase/database', () => ({
   remove: vi.fn(),
   get: vi.fn().mockResolvedValue(mock<DataSnapshot>({ val: () => null, exists: () => false })),
 }));
+
+// Mock Ollama client
+vi.mock('ollama/browser', () => {
+  const mockClient = {
+    list: vi.fn(),
+    generate: vi.fn(),
+    chat: vi.fn(),
+    pull: vi.fn(),
+  };
+  class MockOllama {
+    list = mockClient.list;
+    generate = mockClient.generate;
+    chat = mockClient.chat;
+    pull = mockClient.pull;
+  }
+  return {
+    Ollama: MockOllama,
+  };
+});
