@@ -17,7 +17,7 @@ import { createRecipe } from '@store/actions/recipeActions';
 import { createShoppingListItem } from '@store/actions/shoppingListActions';
 import { createRecipeAction } from '@lib/ollama/actions';
 import type { Recipe, RecipeCategory } from '@lib/recipes';
-import { RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
+import { RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RECIPE_CUISINE_COLORS, RECIPE_CUISINE_EMOJIS, capitalizeCuisine, getCuisineColorClass } from '@lib/recipes';
 import { INGREDIENT_TYPE_EMOJIS } from '@lib/ingredients';
 import type {
   AgentRecipeProposal,
@@ -52,6 +52,7 @@ const STEP_STATUS_MAP: Partial<
 const EMPTY_PARTIAL_RECIPE: AgentPartialRecipe = {
   name: null,
   category: null,
+  cuisine: null,
   servings: null,
   totalTime: null,
   description: null,
@@ -100,6 +101,14 @@ function PartialRecipePreview({ recipe }: { recipe: AgentPartialRecipe }) {
           >
             {recipe.category}
           </Badge>
+          {recipe.cuisine && (
+            <Badge
+              variant='base'
+              className={join(getCuisineColorClass(recipe.cuisine, RECIPE_CUISINE_COLORS))}
+            >
+              {RECIPE_CUISINE_EMOJIS[recipe.cuisine] ?? '🍽️'} {capitalizeCuisine(recipe.cuisine)}
+            </Badge>
+          )}
           {recipe.totalTime != null && (
             <span className='text-muted-foreground text-xs'>
               {recipe.totalTime}m total
@@ -408,7 +417,7 @@ export function RecipeFromText() {
         title: proposal.title,
         description: proposal.description,
         category: proposal.category,
-        
+        cuisine: proposal.cuisine,
         prepTime: proposal.prepTime,
         cookTime: proposal.cookTime,
         servingSize: proposal.servingSize,

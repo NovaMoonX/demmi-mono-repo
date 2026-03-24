@@ -12,7 +12,7 @@ import {
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
-import { Recipe, RecipeCategory, RecipeIngredient, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RECIPE_CUISINE_COLORS, RECIPE_CUISINE_EMOJIS, RECIPE_CUISINE_OPTIONS, capitalizeCuisine } from '@lib/recipes';
+import { Recipe, RecipeCategory, RecipeIngredient, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RECIPE_CUISINE_COLORS, RECIPE_CUISINE_EMOJIS, RECIPE_CUISINE_OPTIONS, capitalizeCuisine, getCuisineColorClass } from '@lib/recipes';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import {
   createRecipe as createRecipeAsync,
@@ -362,7 +362,7 @@ export function RecipeDetail() {
               <Badge
                 variant='base'
                 className={join(
-                  RECIPE_CUISINE_COLORS[existingRecipe.cuisine] ?? 'bg-muted text-muted-foreground',
+                  getCuisineColorClass(existingRecipe.cuisine, RECIPE_CUISINE_COLORS),
                 )}
               >
                 {RECIPE_CUISINE_EMOJIS[existingRecipe.cuisine] ?? '🍽️'}{' '}

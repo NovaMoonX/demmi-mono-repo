@@ -1,5 +1,5 @@
 import { INGREDIENT_TYPES, MEASUREMENT_UNITS } from '@/lib/ingredients';
-import { RECIPE_CATEGORIES } from '@/lib/recipes';
+import { RECIPE_CATEGORIES, RECIPE_CUISINES } from '@/lib/recipes';
 
 export const RECIPE_NAME_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 
@@ -21,10 +21,11 @@ Given the recipe name, provide basic recipe metadata.
 
 Rules:
 - category: one of ${RECIPE_CATEGORIES.join(' | ')}
+- cuisine: the cuisine type (e.g. ${RECIPE_CUISINES.slice(0, 5).join(', ')}, etc.) — use lowercase with hyphens for multi-word cuisines (e.g. middle-eastern)
 - servings: realistic serving count (integer, 1-12)
 - totalTime: total cooking + prep time in minutes (integer)
 
-Respond with JSON: { "category": "dinner", "servings": 4, "totalTime": 35 }`;
+Respond with JSON: { "category": "dinner", "cuisine": "italian", "servings": 4, "totalTime": 35 }`;
 
 export const RECIPE_DESCRIPTION_PROMPT = `You are Demmi's AI assistant specialized in cooking and recipes.
 

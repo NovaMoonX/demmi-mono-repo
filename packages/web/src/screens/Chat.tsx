@@ -452,6 +452,7 @@ export function Chat() {
           title: recipeProposal.title,
           description: recipeProposal.description,
           category: recipeProposal.category,
+          cuisine: recipeProposal.cuisine,
           prepTime: recipeProposal.prepTime,
           cookTime: recipeProposal.cookTime,
           servingSize: recipeProposal.servingSize,

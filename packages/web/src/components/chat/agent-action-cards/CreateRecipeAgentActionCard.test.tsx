@@ -20,6 +20,7 @@ const mockProposal = {
   title: 'Spaghetti Carbonara',
   description: 'Classic Italian pasta dish',
   category: 'dinner' as const,
+  cuisine: 'italian' as const,
   prepTime: 10,
   cookTime: 20,
   servingSize: 4,

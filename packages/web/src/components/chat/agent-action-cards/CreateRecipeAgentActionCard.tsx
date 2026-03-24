@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { INGREDIENT_TYPE_EMOJIS } from '@lib/ingredients';
 import type { RecipeCategory } from '@lib/recipes';
-import { RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
+import { RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RECIPE_CUISINE_COLORS, RECIPE_CUISINE_EMOJIS, capitalizeCuisine, getCuisineColorClass } from '@lib/recipes';
 import type {
   AgentIngredientProposal,
   AgentRecipeProposal,
@@ -93,6 +93,12 @@ function IteratingRecipeCard({
             >
               {recipe.category}
             </Badge>
+            <Badge
+              variant='base'
+              className={join(getCuisineColorClass(recipe.cuisine, RECIPE_CUISINE_COLORS))}
+            >
+              {RECIPE_CUISINE_EMOJIS[recipe.cuisine] ?? '🍽️'} {capitalizeCuisine(recipe.cuisine)}
+            </Badge>
             <span className='text-muted-foreground text-xs'>
               Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m total
             </span>
@@ -162,6 +168,12 @@ function RecipePreviewCard({ recipe }: { recipe: AgentRecipeProposal }) {
             className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
           >
             {recipe.category}
+          </Badge>
+          <Badge
+            variant='base'
+            className={join(getCuisineColorClass(recipe.cuisine, RECIPE_CUISINE_COLORS))}
+          >
+            {RECIPE_CUISINE_EMOJIS[recipe.cuisine] ?? '🍽️'} {capitalizeCuisine(recipe.cuisine)}
           </Badge>
           <span className='text-muted-foreground text-xs'>
             Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m total
