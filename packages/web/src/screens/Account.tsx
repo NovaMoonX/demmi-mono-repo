@@ -13,13 +13,17 @@ export function Account() {
   const [isViewMode, setIsViewMode] = useState(true);
 
   const handleSave = async (updates: Partial<UserProfile>) => {
-    await dispatch(saveUserProfile(updates));
-    setIsViewMode(true);
+    const result = await dispatch(saveUserProfile(updates));
+    if (result.meta.requestStatus === 'fulfilled') {
+      setIsViewMode(true);
+    }
   };
 
   const handleResetOnboarding = async () => {
-    await dispatch(saveUserProfile({ onboardingCompletedAt: null }));
-    navigate('/onboarding');
+    const result = await dispatch(saveUserProfile({ onboardingCompletedAt: null }));
+    if (result.meta.requestStatus === 'fulfilled') {
+      navigate('/onboarding');
+    }
   };
 
   if (loading) {

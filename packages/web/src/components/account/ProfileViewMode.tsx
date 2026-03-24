@@ -134,11 +134,11 @@ export function ProfileViewMode({ profile, onEdit, onResetOnboarding }: ProfileV
 
         <ViewRow label='Pantry deduction'>
           <span className='text-foreground'>
-            {profile.autoPantryDeduct === true
-              ? 'Auto-deduct enabled'
-              : profile.autoPantryDeduct === false
-                ? 'Auto-deduct disabled'
-                : 'Not set'}
+            {profile.autoPantryDeduct === null
+              ? 'Not set'
+              : profile.autoPantryDeduct
+                ? 'Auto-deduct enabled'
+                : 'Auto-deduct disabled'}
           </span>
         </ViewRow>
       </div>

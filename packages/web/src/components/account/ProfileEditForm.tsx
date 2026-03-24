@@ -118,9 +118,9 @@ export function ProfileEditForm({ profile, saving, onSave, onCancel }: ProfileEd
   };
 
   const handleOtherDietaryToggle = () => {
-    const result = !showOtherChip;
-    setShowOtherChip(result);
-    if (!result) {
+    const isShowing = !showOtherChip;
+    setShowOtherChip(isShowing);
+    if (!isShowing) {
       setForm((prev) => ({ ...prev, customDietaryRestrictions: [] }));
       setOtherDietaryInput('');
     } else {
