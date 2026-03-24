@@ -120,12 +120,25 @@ npm run dev:mobile
 
 > See each package's README for detailed setup, configuration, and environment variable instructions.
 
+### Run Tests
+
+```bash
+# All packages
+npm test
+
+# Individual packages
+npm run test:web
+npm run test:electron
+npm run test:mobile
+```
+
 ## Contributing
 
 1. Clone the repo and run `npm install` at the root
 2. Read the relevant package README for the platform you're working on
 3. Review `.github/copilot-instructions.md` for coding standards and conventions
 4. All TypeScript, 2-space indentation, strict mode enabled across all packages
+5. Run `npm test` before submitting changes — CI enforces passing tests on all PRs
 
 ## License
 

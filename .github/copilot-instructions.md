@@ -305,6 +305,7 @@ return <form>...</form>;
 - **Form labels: ALWAYS use `Label` from Dreamer UI, NEVER native `<label>` or className on Label**
 - **Nullish coalescing: Use `??` by default, only `||` for explicit falsy checks**
 - **Detail pages: Always implement view/edit mode for existing items**
+- **Testing: Every logic file must have a co-located `.test.ts(x)` file — run `npm test` to validate**
 
 ## Monorepo Rules
 - **Electron and Mobile packages wrap the web build** — they have no UI code of their own
@@ -327,6 +328,8 @@ return <form>...</form>;
 - **Extract screen sub-components to separate files in `@components/<feature>/`**
 - **Use `.types.ts` and `.constants.ts` in `@lib/<feature>/` for domain logic**
 - **Use `??` instead of `||` unless explicitly handling falsy values (empty string, NaN, 0)**
+- **Every logic file (hooks, components, utils, slices) MUST have a co-located test file**
+- **Run `npm run test:web`, `npm run test:mobile`, and `npm run build:web` before submitting changes to ensure all tests and builds pass**
 
 ## Firestore Security Rules
 
@@ -370,7 +373,174 @@ This ensures demo mode never touches Firestore and throws no errors.
 
 
 
-### 16. README.md Update Rule
+### 16. Testing
+Every file that contains logic (hooks, components, utilities, Redux slices) must have a co-located test file named `<filename>.test.ts(x)`.
+
+**Testing Philosophy:**
+- Test what happens **within** the component/hook/utility — not nested child behavior
+- For screens, mock child components (e.g., `IngredientCard`, `RecipeCard`) and verify they are rendered with correct props
+- For Redux slices, test synchronous reducers directly by importing the reducer and action creators
+- Keep tests focused; avoid testing every edge case — test what matters
+
+**Running Tests:**
+```bash
+# All packages
+npm test
+
+# Individual packages
+npm run test:web
+npm run test:electron
+npm run test:mobile
+```
+
+**⚠️ MANDATORY: Before completing any task, run all affected test scripts and ensure they pass:**
+```bash
+# After changes in packages/web/
+npm run test --workspace=@demmi/web
+npm run build --workspace=@demmi/web
+
+# After changes in packages/electron/
+npm run test --workspace=@demmi/electron
+
+# After changes in packages/mobile/
+npm run test --workspace=@demmi/mobile
+
+# Or use root-level shorthand scripts
+npm run test:web
+npm run test:electron
+npm run test:mobile
+npm run build:web
+```
+**This is non-negotiable.** Never submit changes without confirming the relevant tests AND build pass. If tests fail, fix them before completing the task. Re-run tests iteratively until all pass. This applies to all agentic work — automated agents must run these scripts and verify success before marking work as complete.
+
+**Test Infrastructure (Web):**
+- **Framework**: Vitest (with `globals: false` — imports from `'vitest'` required in every test)
+- **Config**: `packages/web/vitest.config.ts`
+- **Component testing**: `@testing-library/react` + `@testing-library/jest-dom/vitest`
+- **Test wrapper**: `src/__tests__/generateTestWrapper.tsx` — provides Redux store + MemoryRouter via `{ wrapper, store }`
+- **Mocks**: `src/__tests__/mocks/` — Dreamer UI components/hooks/utils/providers/symbols, Firebase config
+- **Setup**: `src/__tests__/setup.ts` (vitest matchers, cleanup, matchMedia/IntersectionObserver mocks, Firebase SDK mocks)
+- **UI mode**: `npm run test:ui --workspace=@demmi/web` — opens Vitest UI in browser
+
+**Test Infrastructure (Electron):**
+- **Framework**: Playwright with `@playwright/test`
+- **Config**: `packages/electron/playwright.config.ts`
+- **E2E tests**: `packages/electron/e2e/` — launches real Electron app
+- **Jest**: Will be added later for IPC handler unit tests (separation of concerns pattern)
+
+**Test Infrastructure (Mobile):**
+- **Framework**: Jest 29 with `jest-expo` preset
+- **Config**: `packages/mobile/jest.config.cjs`
+- **Component testing**: `@testing-library/react-native`
+
+**Writing Vitest tests (web package):**
+```tsx
+// Every test file must import what it uses from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Use generateTestWrapper for all component/hook/screen tests
+import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
+import { render } from '@testing-library/react';
+
+// Basic usage — wraps with real Redux store + MemoryRouter
+const { wrapper } = generateTestWrapper();
+render(<MyComponent />, { wrapper });
+
+// With preloaded Redux state
+const { wrapper } = generateTestWrapper({
+  preloadedState: { recipes: { items: mockRecipes } },
+});
+
+// With route params — generateTestWrapper creates the MemoryRouter, useParams() returns real values
+const { wrapper } = generateTestWrapper({
+  route: '/recipes/rec-1',
+  path: '/recipes/:id',
+});
+
+// Access the store directly to assert state changes
+const { wrapper, store } = generateTestWrapper();
+render(<MyComponent />, { wrapper });
+fireEvent.click(screen.getByText('Save'));
+expect(store.getState().recipes.items).toHaveLength(1);
+
+// For hooks — use renderHook with the wrapper
+const { wrapper, store } = generateTestWrapper();
+const { result } = renderHook(() => useMyHook(), { wrapper });
+
+// vi.fn() for mocks
+const mockFn = vi.fn();
+
+// Mock specific service/library functions (OK)
+vi.mock('@hooks/useAuth', () => ({
+  useAuth: () => ({ user: mockUser, loading: false }),
+}));
+
+// Mock child components to isolate the component under test (OK)
+vi.mock('@components/recipes/RecipeCard', () => ({
+  RecipeCard: ({ recipe }: { recipe: Recipe }) => <div>{recipe.title}</div>,
+}));
+
+// Mock Firebase SDK methods for Firestore/RTDB (OK)
+// Note: firebase/firestore and firebase/database are mocked globally in setup.ts
+// Use vi.mocked() to customize per-test behavior:
+vi.mocked(get).mockResolvedValueOnce(
+  mock<DataSnapshot>({ val: () => mockData, exists: () => true }),
+);
+
+// Constructor mocks must use classes (vi.fn doesn't support `new`)
+vi.mock('ollama/browser', () => {
+  class MockOllama {
+    list = vi.fn();
+  }
+  return { Ollama: MockOllama };
+});
+```
+
+**Anti-patterns to AVOID:**
+```tsx
+// ❌ NEVER use renderWithProviders (deleted)
+renderWithProviders(<Component />, { preloadedState });
+
+// ❌ NEVER mock/spy on react-router-dom navigation hooks
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual('react-router-dom')),
+  useNavigate: () => mockNavigate,  // BAD
+  useParams: () => ({ id: 'rec-1' }),  // BAD
+  useLocation: () => ({ pathname: '/recipes' }),  // BAD
+}));
+
+// ❌ NEVER spy on the Redux store dispatch
+vi.spyOn(store, 'dispatch');
+
+// ❌ NEVER assert on mockNavigate calls (spy on routing)
+expect(mockNavigate).toHaveBeenCalledWith('/auth');
+
+// ✅ Instead — use route/path options in generateTestWrapper for useParams
+const { wrapper } = generateTestWrapper({ route: '/recipes/rec-1', path: '/recipes/:id' });
+
+// ✅ Instead — assert store state changes directly
+expect(store.getState().demo.isActive).toBe(false);
+
+// ✅ Instead — check DOM state after interactions, not navigation calls
+expect(screen.queryByText('Some content')).not.toBeInTheDocument();
+```
+
+**Exceptions (acceptable mocks):**
+- `useRouteError` from react-router-dom — only works in error boundaries, must be mocked
+- `RouterProvider` from react-router-dom — acceptable when testing App root component
+- `Outlet` from react-router-dom — acceptable in Layout tests (nested routes not set up in tests)
+
+**When adding new files:**
+- ✅ New utility function → add `<name>.test.ts` in the same directory
+- ✅ New Redux slice → add `<sliceName>.test.ts` in `store/slices/`
+- ✅ New hook → add `<hookName>.test.ts` in `hooks/`
+- ✅ New component → add `<ComponentName>.test.tsx` in the same directory
+- ✅ New screen → add `<ScreenName>.test.tsx` in `screens/`
+- ❌ Constant files, type files, mock data files → no tests needed
+
+**CI:** Tests run automatically via GitHub Actions on push to `main` and on pull requests.
+
+### 17. README.md Update Rule
 **CRITICAL**: READMEs must be updated with **EVERY** change to the codebase.
 
 This is a monorepo with multiple READMEs:

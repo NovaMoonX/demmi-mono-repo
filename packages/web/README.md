@@ -29,6 +29,9 @@ The dev server starts at `http://localhost:5173` (with `--host` for LAN access /
 | `npm run dev` | Start Vite dev server with `--host` |
 | `npm run build` | Type-check with `tsc` then build with Vite |
 | `npm run lint` | Run ESLint across the project |
+| `npm run test` | Run Vitest test suite |
+| `npm run test:ui` | Open Vitest UI in browser |
+| `npm run test:watch` | Run Vitest in watch mode |
 | `npm run preview` | Preview the production build locally |
 | `npm run fbdeploy` | Build and deploy to Firebase Hosting |
 
@@ -135,6 +138,31 @@ src/
 | [Dreamer UI](https://www.npmjs.com/package/@moondreamsdev/dreamer-ui) | Component library |
 | [React Router](https://reactrouter.com/) 7 | Client-side routing |
 | [React Markdown](https://github.com/remarkjs/react-markdown) | Markdown rendering for AI responses |
+| [Vitest](https://vitest.dev/) | Testing framework |
+| [@testing-library/react](https://testing-library.com/) | Component testing utilities |
+
+## Testing
+
+Tests are co-located with source files (e.g., `capitalize.test.ts` next to `capitalize.ts`).
+Uses **Vitest** with `globals: false` — every test file imports `describe`, `it`, `expect`, `vi` from `'vitest'`.
+
+```bash
+npm run test          # Run all tests
+npm run test:watch    # Watch mode
+npm run test:ui       # Open Vitest UI in browser
+```
+
+**Test structure:**
+- `src/utils/*.test.ts` — Utility function tests
+- `src/lib/**/*.test.ts` — Domain logic tests (calendar utils, ingredient utils)
+- `src/store/slices/*.test.ts` — Redux slice reducer tests
+- `src/store/actions/*.test.ts` — Async thunk action tests
+- `src/hooks/*.test.ts` — Custom hook tests
+- `src/components/**/*.test.tsx` — Component tests
+- `src/screens/*.test.tsx` — Screen integration tests (with mocked child components)
+- `src/__tests__/helpers/` — Shared test utilities (`renderWithProviders`)
+- `src/__tests__/mocks/` — Mocks for Firebase, Dreamer UI components/hooks/utils/providers/symbols
+- `vitest.config.ts` — Vitest configuration (aliases, environment, setup)
 
 ## Features
 
