@@ -15,6 +15,7 @@ test.describe('Electron App', () => {
 				'--disable-setuid-sandbox',
 				'--disable-gpu',
 				'--disable-dev-shm-usage',
+        '--disable-software-rasterizer',
 			],
 		});
 
