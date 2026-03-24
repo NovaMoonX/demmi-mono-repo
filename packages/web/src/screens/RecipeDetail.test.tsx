@@ -56,6 +56,29 @@ describe('RecipeDetail - View Mode', () => {
     expect(screen.getByText('Spaghetti Bolognese')).toBeInTheDocument();
   });
 
+  it('renders the category badge with emoji', () => {
+    const recipe = createRecipe();
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
+    render(<RecipeDetail />, { wrapper });
+    expect(screen.getByText(/🌙 Dinner/i)).toBeInTheDocument();
+  });
+
+  it('renders the cuisine badge with emoji', () => {
+    const recipe = createRecipe();
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
+    render(<RecipeDetail />, { wrapper });
+    expect(screen.getByText('🍝 Italian')).toBeInTheDocument();
+  });
+
+
   it('renders Edit, Delete, and Cook buttons in view mode', () => {
     const recipe = createRecipe();
     const { wrapper } = generateTestWrapper({
