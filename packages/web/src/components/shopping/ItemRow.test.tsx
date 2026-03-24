@@ -1,10 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { ItemRow } from './ItemRow';
+import type { Ingredient, Product } from '@lib/ingredients';
 import type { ShoppingListItem } from '@lib/shoppingList';
-import type { Ingredient } from '@lib/ingredients';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mock } from 'vitest-mock-extended';
+import { ItemRow } from './ItemRow';
 
-function createItem(overrides: Partial<ShoppingListItem> = {}): ShoppingListItem {
+function createItem(
+  overrides: Partial<ShoppingListItem> = {},
+): ShoppingListItem {
   return {
     id: 'sl-1',
     userId: 'user-1',
@@ -28,13 +31,27 @@ function createIngredient(overrides: Partial<Ingredient> = {}): Ingredient {
     name: 'Bananas',
     type: 'produce',
     imageUrl: '',
-    nutrients: { protein: 1, carbs: 23, fat: 0.3, fiber: 2.6, sugar: 12, sodium: 1, calories: 89 },
+    nutrients: {
+      protein: 1,
+      carbs: 23,
+      fat: 0.3,
+      fiber: 2.6,
+      sugar: 12,
+      sodium: 1,
+      calories: 89,
+    },
     currentAmount: 6,
     servingSize: 1,
     unit: 'piece',
     otherUnit: null,
     products: [
-      { id: 'prod-1', retailer: 'Walmart', label: 'Organic Bananas', price: 1.99, url: null },
+      mock<Product>({
+        id: 'prod-1',
+        retailer: 'Walmart',
+        label: 'Organic Bananas',
+        cost: 1.99,
+        url: null,
+      }),
     ],
     defaultProductId: 'prod-1',
     barcode: null,
@@ -98,7 +115,9 @@ describe('ItemRow', () => {
   it('renders product info when ingredient and product match', () => {
     const ingredient = createIngredient();
     const item = createItem({ ingredientId: 'ing-1', productId: 'prod-1' });
-    render(<ItemRow {...defaultProps} item={item} ingredients={[ingredient]} />);
+    render(
+      <ItemRow {...defaultProps} item={item} ingredients={[ingredient]} />,
+    );
     expect(screen.getByText(/Walmart/)).toBeInTheDocument();
     expect(screen.getByText(/Organic Bananas/)).toBeInTheDocument();
   });

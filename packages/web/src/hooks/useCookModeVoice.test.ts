@@ -56,6 +56,6 @@ describe('useCookModeVoice', () => {
     );
     expect(result.current.voiceState).toBe('wake_word');
 
-    delete (window as Record<string, unknown>).SpeechRecognition;
+    delete (window as unknown as Record<string, unknown>).SpeechRecognition;
   });
 });
