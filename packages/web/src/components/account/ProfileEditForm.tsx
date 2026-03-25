@@ -23,7 +23,7 @@ interface FormState {
   customDietaryRestrictions: string[];
   avoidIngredients: string[];
   cuisinePreferences: RecipeCuisineType[];
-  cookingGoal: CookingGoal | null;
+  cookingGoal: CookingGoal[] | null;
   householdSize: number;
   skillLevel: CookingSkillLevel | null;
   cookTimePreference: CookTimePreference | null;
@@ -203,25 +203,40 @@ export function ProfileEditForm({ profile, saving, onSave, onCancel }: ProfileEd
       <div className='space-y-6'>
         <div className='space-y-2'>
           <Label htmlFor='cooking-goal'>Cooking goal</Label>
+          <p className='text-muted-foreground text-xs'>Pick up to 2.</p>
           <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-            {COOKING_GOAL_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type='button'
-                onClick={() =>
-                  setForm((prev) => ({ ...prev, cookingGoal: opt.value }))
-                }
-                className={join(
-                  'rounded-xl border p-3 text-left transition-colors',
-                  form.cookingGoal === opt.value
-                    ? 'bg-primary/10 border-primary'
-                    : 'bg-background border-border hover:bg-muted',
-                )}
-              >
-                <p className='text-foreground text-sm font-medium'>{opt.label}</p>
-                <p className='text-muted-foreground mt-0.5 text-xs'>{opt.description}</p>
-              </button>
-            ))}
+            {COOKING_GOAL_OPTIONS.map((opt) => {
+              const goals = form.cookingGoal ?? [];
+              const isSelected = goals.includes(opt.value);
+              const isDisabled = !isSelected && goals.length >= 2;
+              return (
+                <button
+                  key={opt.value}
+                  type='button'
+                  onClick={() => {
+                    const current = form.cookingGoal ?? [];
+                    if (current.includes(opt.value)) {
+                      const next = current.filter((g) => g !== opt.value);
+                      setForm((prev) => ({ ...prev, cookingGoal: next.length > 0 ? next : null }));
+                    } else if (current.length < 2) {
+                      setForm((prev) => ({ ...prev, cookingGoal: [...current, opt.value] }));
+                    }
+                  }}
+                  disabled={isDisabled}
+                  className={join(
+                    'rounded-xl border p-3 text-left transition-colors',
+                    isSelected
+                      ? 'bg-primary/10 border-primary'
+                      : 'bg-background border-border',
+                    !isSelected && !isDisabled && 'hover:bg-muted',
+                    isDisabled && 'cursor-not-allowed opacity-40',
+                  )}
+                >
+                  <p className='text-foreground text-sm font-medium'>{opt.label}</p>
+                  <p className='text-muted-foreground mt-0.5 text-xs'>{opt.description}</p>
+                </button>
+              );
+            })}
           </div>
         </div>
 

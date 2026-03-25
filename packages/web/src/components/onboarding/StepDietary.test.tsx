@@ -57,18 +57,28 @@ describe('StepDietary', () => {
     expect(callArg.avoidIngredients).toEqual([]);
   });
 
-  it('shows "Other (specify)" chip and reveals input when activated', () => {
+  it('shows "Have other ingredients you want to avoid?" prompt', () => {
     const { wrapper } = generateTestWrapper();
     render(<StepDietary {...baseProps} />, { wrapper });
-    fireEvent.click(screen.getByText('✏️ Other (specify)'));
-    expect(screen.getByPlaceholderText(/Type a restriction/)).toBeInTheDocument();
+    expect(screen.getByText('Have other ingredients you want to avoid?')).toBeInTheDocument();
   });
 
-  it('calls skip when Skip is clicked', () => {
-    const skip = vi.fn();
+  it('reveals avoid input when prompt is clicked', () => {
     const { wrapper } = generateTestWrapper();
-    render(<StepDietary {...baseProps} skip={skip} />, { wrapper });
-    fireEvent.click(screen.getByText('Skip'));
-    expect(skip).toHaveBeenCalledTimes(1);
+    render(<StepDietary {...baseProps} />, { wrapper });
+    fireEvent.click(screen.getByText('Have other ingredients you want to avoid?'));
+    expect(screen.getByPlaceholderText(/shellfish/)).toBeInTheDocument();
+  });
+
+  it('adds ingredient to avoidIngredients on Enter', () => {
+    const update = vi.fn();
+    const { wrapper } = generateTestWrapper();
+    render(<StepDietary {...baseProps} update={update} />, { wrapper });
+    fireEvent.click(screen.getByText('Have other ingredients you want to avoid?'));
+    const input = screen.getByPlaceholderText(/shellfish/);
+    fireEvent.change(input, { target: { value: 'shellfish' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(update).toHaveBeenCalledWith({ avoidIngredients: ['shellfish'] });
   });
 });
+

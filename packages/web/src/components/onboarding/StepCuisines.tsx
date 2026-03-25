@@ -1,4 +1,3 @@
-import { Button } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { RECIPE_CUISINE_OPTIONS } from '@lib/recipes';
 import type { RecipeCuisineType } from '@lib/recipes';
@@ -6,7 +5,7 @@ import type { StepProps } from './types';
 
 const MAX_CUISINES = 5;
 
-export function StepCuisines({ formData, update, next, skip }: StepProps) {
+export function StepCuisines({ formData, update }: StepProps) {
   const selected = formData.cuisinePreferences ?? [];
 
   const toggle = (value: RecipeCuisineType) => {
@@ -39,22 +38,14 @@ export function StepCuisines({ formData, update, next, skip }: StepProps) {
                 isSelected
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-background text-foreground border-border',
-                isDisabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-muted',
+                !isSelected && !isDisabled && 'hover:bg-muted',
+                isDisabled && 'cursor-not-allowed opacity-40',
               )}
             >
               {opt.text}
             </button>
           );
         })}
-      </div>
-
-      <div className='flex gap-3'>
-        <Button variant='primary' onClick={next}>
-          Next
-        </Button>
-        <Button variant='secondary' onClick={skip}>
-          Skip
-        </Button>
       </div>
     </div>
   );

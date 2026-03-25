@@ -55,12 +55,4 @@ describe('StepCuisines', () => {
     const indianBtn = screen.getByText(/Indian/i);
     expect(indianBtn).toBeDisabled();
   });
-
-  it('calls skip when Skip is clicked', () => {
-    const skip = vi.fn();
-    const { wrapper } = generateTestWrapper();
-    render(<StepCuisines {...baseProps} skip={skip} />, { wrapper });
-    fireEvent.click(screen.getByText('Skip'));
-    expect(skip).toHaveBeenCalledTimes(1);
-  });
 });

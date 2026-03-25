@@ -9,7 +9,7 @@ const mockProfile: UserProfile = {
   customDietaryRestrictions: [],
   avoidIngredients: [],
   cuisinePreferences: ['italian'],
-  cookingGoal: 'eat-healthier',
+  cookingGoal: ['eat-healthier'],
   cookingGoalDetails: null,
   householdSize: 2,
   skillLevel: 'intermediate',

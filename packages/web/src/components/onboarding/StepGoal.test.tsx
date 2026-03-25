@@ -18,47 +18,55 @@ describe('StepGoal', () => {
     expect(screen.getByText('What brings you here?')).toBeInTheDocument();
   });
 
-  it('calls update with selected goal when a card is clicked', () => {
+  it('calls update with an array when first goal is clicked', () => {
     const update = vi.fn();
     const { wrapper } = generateTestWrapper();
     render(<StepGoal {...baseProps} update={update} />, { wrapper });
     fireEvent.click(screen.getByText('🥦 Eat healthier'));
-    expect(update).toHaveBeenCalledWith({ cookingGoal: 'eat-healthier' });
+    expect(update).toHaveBeenCalledWith({ cookingGoal: ['eat-healthier'] });
   });
 
-  it('deselects a goal when clicked again', () => {
+  it('adds a second goal up to the max of 2', () => {
     const update = vi.fn();
     const { wrapper } = generateTestWrapper();
     render(
-      <StepGoal {...baseProps} formData={{ cookingGoal: 'eat-healthier' }} update={update} />,
+      <StepGoal
+        {...baseProps}
+        formData={{ cookingGoal: ['eat-healthier'] }}
+        update={update}
+      />,
+      { wrapper },
+    );
+    fireEvent.click(screen.getByText('💸 Save money'));
+    expect(update).toHaveBeenCalledWith({ cookingGoal: ['eat-healthier', 'save-money'] });
+  });
+
+  it('deselects a goal when clicked again and returns null when empty', () => {
+    const update = vi.fn();
+    const { wrapper } = generateTestWrapper();
+    render(
+      <StepGoal
+        {...baseProps}
+        formData={{ cookingGoal: ['eat-healthier'] }}
+        update={update}
+      />,
       { wrapper },
     );
     fireEvent.click(screen.getByText('🥦 Eat healthier'));
     expect(update).toHaveBeenCalledWith({ cookingGoal: null });
   });
 
-  it('calls skip when Skip is clicked', () => {
-    const skip = vi.fn();
-    const { wrapper } = generateTestWrapper();
-    render(<StepGoal {...baseProps} skip={skip} />, { wrapper });
-    fireEvent.click(screen.getByText('Skip'));
-    expect(skip).toHaveBeenCalledTimes(1);
-  });
-
-  it('Next button is disabled when no goal is selected', () => {
-    const { wrapper } = generateTestWrapper();
-    render(<StepGoal {...baseProps} formData={{}} />, { wrapper });
-    const nextBtn = screen.getByText('Next');
-    expect(nextBtn).toBeDisabled();
-  });
-
-  it('Next button is enabled when a goal is selected', () => {
+  it('disables cards beyond the max of 2 selections', () => {
     const { wrapper } = generateTestWrapper();
     render(
-      <StepGoal {...baseProps} formData={{ cookingGoal: 'meal-prep' }} />,
+      <StepGoal
+        {...baseProps}
+        formData={{ cookingGoal: ['eat-healthier', 'save-money'] }}
+      />,
       { wrapper },
     );
-    const nextBtn = screen.getByText('Next');
-    expect(nextBtn).not.toBeDisabled();
+    const saveTimeBtn = screen.getByText('⏱️ Save time').closest('button');
+    expect(saveTimeBtn).toBeDisabled();
   });
 });
+

@@ -10,7 +10,7 @@ const mockProfile: UserProfile = {
   customDietaryRestrictions: [],
   avoidIngredients: [],
   cuisinePreferences: [],
-  cookingGoal: 'eat-healthier',
+  cookingGoal: ['eat-healthier'],
   cookingGoalDetails: null,
   householdSize: 2,
   skillLevel: 'intermediate',
@@ -76,7 +76,7 @@ describe('ProfileEditForm', () => {
     fireEvent.click(screen.getByText('Save'));
     expect(onSave).toHaveBeenCalledOnce();
     const saved = onSave.mock.calls[0][0] as Partial<UserProfile>;
-    expect(saved.cookingGoal).toBe('eat-healthier');
+    expect(saved.cookingGoal).toEqual(['eat-healthier']);
     expect(saved.householdSize).toBe(2);
   });
 

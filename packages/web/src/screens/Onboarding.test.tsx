@@ -3,40 +3,11 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 
 vi.mock('@components/onboarding', () => ({
-  StepWelcome: ({ next }: { next: () => void }) => (
-    <div>
-      <span>StepWelcome</span>
-      <button onClick={next}>Let's go</button>
-    </div>
-  ),
-  StepGoal: ({ next, skip }: { next: () => void; skip: () => void }) => (
-    <div>
-      <span>StepGoal</span>
-      <button onClick={next}>Next</button>
-      <button onClick={skip}>Skip</button>
-    </div>
-  ),
-  StepDietary: ({ next, skip }: { next: () => void; skip: () => void }) => (
-    <div>
-      <span>StepDietary</span>
-      <button onClick={next}>Next</button>
-      <button onClick={skip}>Skip</button>
-    </div>
-  ),
-  StepCuisines: ({ next, skip }: { next: () => void; skip: () => void }) => (
-    <div>
-      <span>StepCuisines</span>
-      <button onClick={next}>Next</button>
-      <button onClick={skip}>Skip</button>
-    </div>
-  ),
-  StepHousehold: ({ next, skip }: { next: () => void; skip: () => void }) => (
-    <div>
-      <span>StepHousehold</span>
-      <button onClick={next}>Next</button>
-      <button onClick={skip}>Skip</button>
-    </div>
-  ),
+  StepWelcome: () => <div><span>StepWelcome</span></div>,
+  StepGoal: () => <div><span>StepGoal</span></div>,
+  StepDietary: () => <div><span>StepDietary</span></div>,
+  StepCuisines: () => <div><span>StepCuisines</span></div>,
+  StepHousehold: () => <div><span>StepHousehold</span></div>,
 }));
 
 vi.mock('@hooks/useOnboardingStep', () => ({
@@ -52,6 +23,13 @@ describe('Onboarding', () => {
     expect(screen.getByText('StepWelcome')).toBeInTheDocument();
   });
 
+  it('shows "Let\'s go" and "Skip setup" on step 0', () => {
+    const { wrapper } = generateTestWrapper();
+    render(<Onboarding />, { wrapper });
+    expect(screen.getByText("Let's go")).toBeInTheDocument();
+    expect(screen.getByText('Skip setup')).toBeInTheDocument();
+  });
+
   it('advances to StepGoal when "Let\'s go" is clicked', () => {
     const { wrapper } = generateTestWrapper();
     render(<Onboarding />, { wrapper });
@@ -59,26 +37,30 @@ describe('Onboarding', () => {
     expect(screen.getByText('StepGoal')).toBeInTheDocument();
   });
 
-  it('shows progress bar after step 0', () => {
+  it('shows progress bar and step count after step 0', () => {
     const { wrapper } = generateTestWrapper();
     render(<Onboarding />, { wrapper });
     fireEvent.click(screen.getByText("Let's go"));
     expect(screen.getByText(/Step 1 of/)).toBeInTheDocument();
   });
 
-  it('shows "Skip setup" button in header after step 0', () => {
+  it('shows Next, Skip, Previous buttons in footer after step 0', () => {
     const { wrapper } = generateTestWrapper();
     render(<Onboarding />, { wrapper });
     fireEvent.click(screen.getByText("Let's go"));
-    expect(screen.getByText('Skip setup')).toBeInTheDocument();
+    expect(screen.getByText('Next →')).toBeInTheDocument();
+    expect(screen.getByText('Skip')).toBeInTheDocument();
+    expect(screen.getByText('← Previous')).toBeInTheDocument();
   });
 
-  it('advances through steps with Next', () => {
+  it('advances through steps with Next →', () => {
     const { wrapper } = generateTestWrapper();
     render(<Onboarding />, { wrapper });
     fireEvent.click(screen.getByText("Let's go"));
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('StepDietary')).toBeInTheDocument();
+    // Skip step 1 (goal required) then advance from step 2 (dietary - always enabled)
+    fireEvent.click(screen.getByText('Skip'));
+    fireEvent.click(screen.getByText('Next →'));
+    expect(screen.getByText('StepCuisines')).toBeInTheDocument();
   });
 
   it('skips a step with Skip', () => {
@@ -88,4 +70,14 @@ describe('Onboarding', () => {
     fireEvent.click(screen.getByText('Skip'));
     expect(screen.getByText('StepDietary')).toBeInTheDocument();
   });
+
+  it('goes back with ← Previous', () => {
+    const { wrapper } = generateTestWrapper();
+    render(<Onboarding />, { wrapper });
+    fireEvent.click(screen.getByText("Let's go"));
+    fireEvent.click(screen.getByText('Next →'));
+    fireEvent.click(screen.getByText('← Previous'));
+    expect(screen.getByText('StepGoal')).toBeInTheDocument();
+  });
 });
+

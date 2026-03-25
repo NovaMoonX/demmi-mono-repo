@@ -1,9 +1,8 @@
-import { Button } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { HOUSEHOLD_SIZE_OPTIONS } from '@lib/userProfile';
 import type { StepProps } from './types';
 
-export function StepHousehold({ formData, update, next, skip }: StepProps) {
+export function StepHousehold({ formData, update }: StepProps) {
   const selected = formData.householdSize ?? null;
 
   return (
@@ -28,18 +27,10 @@ export function StepHousehold({ formData, update, next, skip }: StepProps) {
                 : 'bg-background border-border hover:bg-muted',
             )}
           >
-            <p className='text-foreground text-base font-semibold'>{opt.label}</p>
+            <p className='mb-1 text-2xl'>{opt.emoji}</p>
+            <p className='text-foreground text-sm font-semibold'>{opt.label}</p>
           </button>
         ))}
-      </div>
-
-      <div className='flex gap-3'>
-        <Button variant='primary' onClick={next} disabled={selected === null}>
-          Next
-        </Button>
-        <Button variant='secondary' onClick={skip}>
-          Skip
-        </Button>
       </div>
     </div>
   );

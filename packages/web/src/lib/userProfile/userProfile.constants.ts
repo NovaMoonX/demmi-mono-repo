@@ -23,11 +23,11 @@ export const COOKING_GOAL_OPTIONS: { value: CookingGoal; label: string; descript
   { value: 'learn-cooking', label: '👨‍🍳 Learn cooking', description: 'Build skills and try new techniques in the kitchen' },
 ];
 
-export const HOUSEHOLD_SIZE_OPTIONS: { value: number; label: string }[] = [
-  { value: 1, label: 'Just me' },
-  { value: 2, label: '2' },
-  { value: 3, label: '3-4' },
-  { value: 5, label: '5+' },
+export const HOUSEHOLD_SIZE_OPTIONS: { value: number; label: string; emoji: string }[] = [
+  { value: 1, label: 'Just me', emoji: '🧑' },
+  { value: 2, label: '2 people', emoji: '👫' },
+  { value: 3, label: '3–4 people', emoji: '👨‍👩‍👧' },
+  { value: 5, label: '5+ people', emoji: '👨‍👩‍👧‍👦' },
 ];
 
 export const SKILL_LEVEL_OPTIONS: { value: CookingSkillLevel; label: string }[] = [

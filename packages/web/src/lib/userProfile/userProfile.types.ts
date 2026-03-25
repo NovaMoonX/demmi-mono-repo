@@ -44,7 +44,7 @@ export interface UserProfile {
   customDietaryRestrictions: string[];
   avoidIngredients: string[];
   cuisinePreferences: RecipeCuisineType[];
-  cookingGoal: CookingGoal | null;
+  cookingGoal: CookingGoal[] | null;
   cookingGoalDetails: CookingGoalDetails | null;
   householdSize: number;
   skillLevel: CookingSkillLevel | null;

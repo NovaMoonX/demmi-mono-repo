@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { StepWelcome } from './StepWelcome';
 
@@ -22,19 +22,5 @@ describe('StepWelcome', () => {
     const { wrapper } = generateTestWrapper();
     render(<StepWelcome {...baseProps} />, { wrapper });
     expect(screen.getByText(/personal cooking space/)).toBeInTheDocument();
-  });
-
-  it('calls next when "Let\'s go" is clicked', () => {
-    const next = vi.fn();
-    const { wrapper } = generateTestWrapper();
-    render(<StepWelcome {...baseProps} next={next} />, { wrapper });
-    fireEvent.click(screen.getByText("Let's go"));
-    expect(next).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders "Skip setup" button', () => {
-    const { wrapper } = generateTestWrapper();
-    render(<StepWelcome {...baseProps} />, { wrapper });
-    expect(screen.getByText('Skip setup')).toBeInTheDocument();
   });
 });

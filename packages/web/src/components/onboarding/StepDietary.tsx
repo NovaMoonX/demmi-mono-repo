@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Button, Input } from '@moondreamsdev/dreamer-ui/components';
+import { Input } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { DIETARY_RESTRICTION_OPTIONS } from '@lib/userProfile';
 import type { DietaryRestriction } from '@lib/userProfile';
@@ -40,14 +40,13 @@ function ChipToggle({
   );
 }
 
-export function StepDietary({ formData, update, next, skip }: StepProps) {
+export function StepDietary({ formData, update }: StepProps) {
   const restrictions = formData.dietaryRestrictions ?? [];
   const avoidIngredients = formData.avoidIngredients ?? [];
-  const customRestrictions = formData.customDietaryRestrictions ?? [];
 
-  const [showOther, setShowOther] = useState(customRestrictions.length > 0);
-  const [otherInput, setOtherInput] = useState('');
-  const otherRef = useRef<HTMLInputElement>(null);
+  const [showAvoidInput, setShowAvoidInput] = useState(false);
+  const [avoidInput, setAvoidInput] = useState('');
+  const avoidRef = useRef<HTMLInputElement>(null);
 
   const isDietarySelected = (value: DietaryRestriction) => restrictions.includes(value);
 
@@ -70,34 +69,24 @@ export function StepDietary({ formData, update, next, skip }: StepProps) {
     update({ dietaryRestrictions: nextRestrictions, avoidIngredients: nextAvoid });
   };
 
-  const handleOtherToggle = () => {
-    const next = !showOther;
-    setShowOther(next);
-    if (!next) {
-      update({ customDietaryRestrictions: [] });
-      setOtherInput('');
-    } else {
-      setTimeout(() => otherRef.current?.focus(), 0);
-    }
-  };
-
-  const handleOtherKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && otherInput.trim()) {
+  const handleAvoidKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && avoidInput.trim()) {
       e.preventDefault();
-      const trimmed = otherInput.trim();
-      if (!customRestrictions.includes(trimmed)) {
-        update({ customDietaryRestrictions: [...customRestrictions, trimmed] });
+      const trimmed = avoidInput.trim();
+      if (!avoidIngredients.includes(trimmed)) {
+        update({ avoidIngredients: [...avoidIngredients, trimmed] });
       }
-      setOtherInput('');
+      setAvoidInput('');
     }
-  };
-
-  const removeCustom = (item: string) => {
-    update({ customDietaryRestrictions: customRestrictions.filter((r) => r !== item) });
   };
 
   const removeAvoid = (item: string) => {
     update({ avoidIngredients: avoidIngredients.filter((a) => a !== item) });
+  };
+
+  const handleShowAvoidInput = () => {
+    setShowAvoidInput(true);
+    setTimeout(() => avoidRef.current?.focus(), 0);
   };
 
   return (
@@ -107,90 +96,69 @@ export function StepDietary({ formData, update, next, skip }: StepProps) {
         <p className='text-muted-foreground text-sm'>Select all that apply.</p>
       </div>
 
-      <div className='space-y-4'>
-        <div className='flex flex-wrap gap-2'>
-          {DIETARY_RESTRICTION_OPTIONS.map((opt) => (
-            <ChipToggle
-              key={opt.value}
-              label={opt.label}
-              selected={isDietarySelected(opt.value)}
-              onToggle={() => toggleDietary(opt.value)}
-            />
-          ))}
+      <div className='flex flex-wrap gap-2'>
+        {DIETARY_RESTRICTION_OPTIONS.map((opt) => (
           <ChipToggle
-            label='✏️ Other (specify)'
-            selected={showOther}
-            onToggle={handleOtherToggle}
+            key={opt.value}
+            label={opt.label}
+            selected={isDietarySelected(opt.value)}
+            onToggle={() => toggleDietary(opt.value)}
           />
-        </div>
-
-        {showOther && (
-          <div className='space-y-2'>
-            {customRestrictions.length > 0 && (
-              <div className='flex flex-wrap gap-1.5'>
-                {customRestrictions.map((item) => (
-                  <span
-                    key={item}
-                    className='bg-muted text-foreground flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm'
-                  >
-                    {item}
-                    <button
-                      type='button'
-                      onClick={() => removeCustom(item)}
-                      className='text-muted-foreground hover:text-foreground ml-0.5'
-                      aria-label={`Remove ${item}`}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <Input
-              ref={otherRef}
-              id='other-dietary-input'
-              placeholder='Type a restriction and press Enter'
-              value={otherInput}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOtherInput(e.target.value)}
-              onKeyDown={handleOtherKeyDown}
-            />
-          </div>
-        )}
-
-        {avoidIngredients.length > 0 && (
-          <div className='space-y-1.5'>
-            <p className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
-              Ingredients to avoid
-            </p>
-            <div className='flex flex-wrap gap-1.5'>
-              {avoidIngredients.map((item) => (
-                <span
-                  key={item}
-                  className='bg-muted text-foreground flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm'
-                >
-                  {item}
-                  <button
-                    type='button'
-                    onClick={() => removeAvoid(item)}
-                    className='text-muted-foreground hover:text-foreground ml-0.5'
-                    aria-label={`Remove ${item}`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        ))}
       </div>
 
-      <div className='flex gap-3'>
-        <Button variant='primary' onClick={next}>
-          Next
-        </Button>
-        <Button variant='secondary' onClick={skip}>
-          Skip
-        </Button>
+      {avoidIngredients.length > 0 && (
+        <div className='space-y-1.5'>
+          <p className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
+            Ingredients to avoid
+          </p>
+          <div className='flex flex-wrap gap-1.5'>
+            {avoidIngredients.map((item) => (
+              <span
+                key={item}
+                className='bg-muted text-foreground flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm'
+              >
+                {item}
+                <button
+                  type='button'
+                  onClick={() => removeAvoid(item)}
+                  className='text-muted-foreground hover:text-foreground ml-0.5'
+                  aria-label={`Remove ${item}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className='space-y-2'>
+        {!showAvoidInput ? (
+          <button
+            type='button'
+            onClick={handleShowAvoidInput}
+            className='text-muted-foreground hover:text-foreground text-sm underline transition-colors'
+          >
+            Have other ingredients you want to avoid?
+          </button>
+        ) : (
+          <div className='space-y-2'>
+            <p className='text-muted-foreground text-xs'>
+              Type an ingredient and press Enter to add it.
+            </p>
+            <Input
+              ref={avoidRef}
+              id='avoid-input'
+              placeholder='e.g. shellfish, cilantro…'
+              value={avoidInput}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setAvoidInput(e.target.value)
+              }
+              onKeyDown={handleAvoidKeyDown}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
