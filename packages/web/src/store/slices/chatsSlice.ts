@@ -33,6 +33,7 @@ const initialState: ChatsState = {
 const EMPTY_PARTIAL_RECIPE: AgentPartialRecipe = {
   name: null,
   category: null,
+  cuisine: null,
   servings: null,
   totalTime: null,
   description: null,

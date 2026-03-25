@@ -73,7 +73,7 @@ Determine whether the user's latest message is asking to refine or modify the cu
 
 A message IS about refining the recipe if it:
 - Asks to change, add, remove, or substitute ingredients
-- Asks to adjust serving size, cooking time, or category
+- Asks to adjust serving size, cooking time, category, or cuisine
 - Mentions an allergy, intolerance, or dietary restriction
 - Asks to rename the dish or update its description
 - Asks for a style change (e.g. "make it vegan", "make it spicier")
