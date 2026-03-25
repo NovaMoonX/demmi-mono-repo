@@ -178,6 +178,12 @@ function RecipeProposalCard({ recipe }: { recipe: AgentRecipeProposal }) {
           >
             {recipe.category}
           </Badge>
+          <Badge
+            variant='base'
+            className={join(getCuisineColorClass(recipe.cuisine, RECIPE_CUISINE_COLORS))}
+          >
+            {RECIPE_CUISINE_EMOJIS[recipe.cuisine] ?? '🍽️'} {capitalizeCuisine(recipe.cuisine)}
+          </Badge>
           <span className='text-muted-foreground text-xs'>
             Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m
             total
