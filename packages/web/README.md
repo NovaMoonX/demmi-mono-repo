@@ -361,7 +361,7 @@ type CookingGoal =
   | 'explore-cuisines' | 'learn-cooking';
 
 type CookingSkillLevel = 'beginner' | 'intermediate' | 'advanced';
-type CookTimePreference = 'under-20' | '30-min' | 'any';
+type CookTimePreference = 'under-20' | '30-min' | 'under-an-hour' | 'any';
 type WeightUnit = 'kg' | 'lbs';
 
 interface CookingGoalDetails {

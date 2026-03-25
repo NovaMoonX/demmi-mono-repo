@@ -24,7 +24,7 @@ export type CookingGoal =
 
 export type CookingSkillLevel = 'beginner' | 'intermediate' | 'advanced';
 
-export type CookTimePreference = 'under-20' | '30-min' | 'any';
+export type CookTimePreference = 'under-20' | '30-min' | 'under-an-hour' | 'any';
 
 export type WeightUnit = 'kg' | 'lbs';
 

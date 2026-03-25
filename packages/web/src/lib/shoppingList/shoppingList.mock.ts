@@ -37,7 +37,7 @@ export const mockShoppingList: ShoppingListItem[] = [
     amount: 1,
     unit: 'l',
     category: 'dairy',
-    note: '2% or whole – either works',
+    note: '2% or whole - either works',
     checked: true,
     createdAt: Date.now() - 1000 * 60 * 60 * 20,
   },

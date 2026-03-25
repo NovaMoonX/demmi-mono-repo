@@ -110,7 +110,7 @@ export function CalendarScreen() {
   const dateRangeLabel = useMemo(() => {
     if (view === 'day') return formatDateFull(selectedDate);
     if (view === 'week') {
-      return `${formatDateShort(dateRange.start)} – ${formatDateShort(dateRange.end)}`;
+      return `${formatDateShort(dateRange.start)} - ${formatDateShort(dateRange.end)}`;
     }
     return '';
   }, [view, selectedDate, dateRange]);

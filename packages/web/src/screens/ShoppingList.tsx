@@ -58,7 +58,7 @@ export function ShoppingList() {
     if (!ing) return [];
     return ing.products.map((p) => ({
       value: p.id,
-      text: `${p.retailer} – ${p.label}`,
+      text: `${p.retailer} - ${p.label}`,
     }));
   }, [form.ingredientId, ingredients]);
 

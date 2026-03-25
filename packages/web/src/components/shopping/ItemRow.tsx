@@ -53,7 +53,7 @@ export function ItemRow({ item, ingredients, onToggle, onEdit, onDelete }: ItemR
         </div>
         {productInfo && (
           <p className='text-muted-foreground mt-0.5 text-xs'>
-            🏪 {productInfo.retailer} – {productInfo.label}
+            🏪 {productInfo.retailer} - {productInfo.label}
           </p>
         )}
         {item.note && (
