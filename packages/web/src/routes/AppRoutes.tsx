@@ -53,6 +53,14 @@ export const router = createBrowserRouter([
         element: <ProtectedRoutes />,
         children: [
           {
+            path: 'onboarding',
+            HydrateFallback: Loading,
+            lazy: async () => {
+              const { default: Onboarding } = await import('@screens/Onboarding');
+              return { Component: Onboarding };
+            },
+          },
+          {
             element: <Layout />,
             children: [
               {
