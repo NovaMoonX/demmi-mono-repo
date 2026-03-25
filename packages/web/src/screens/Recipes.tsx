@@ -4,13 +4,14 @@ import { Select, Input, Toggle, Button } from '@moondreamsdev/dreamer-ui/compone
 import { RecipeCard } from '@components/recipes/RecipeCard';
 import { CreateRecipeModal } from '@components/recipes/CreateRecipeModal';
 import { useAppSelector } from '@store/hooks';
-import { Recipe, RECIPE_CATEGORY_OPTIONS } from '@lib/recipes';
+import { Recipe, RECIPE_CATEGORY_OPTIONS, RECIPE_CUISINE_OPTIONS } from '@lib/recipes';
 
 export function Recipes() {
   const recipes = useAppSelector((state) => state.recipes.items);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [cuisineFilter, setCuisineFilter] = useState<string>('all');
   const [timeFilter, setTimeFilter] = useState<string>('all');
   const [noPrepTime, setNoPrepTime] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -18,6 +19,11 @@ export function Recipes() {
   const categoryOptions = [
     { value: 'all', text: 'All Categories' },
     ...RECIPE_CATEGORY_OPTIONS,
+  ];
+
+  const cuisineOptions = [
+    { value: 'all', text: 'All Cuisines' },
+    ...RECIPE_CUISINE_OPTIONS,
   ];
 
   const timeOptions = [
@@ -39,6 +45,9 @@ export function Recipes() {
     
     // Filter by category
     const matchesCategory = categoryFilter === 'all' || recipe.category === categoryFilter;
+
+    // Filter by cuisine
+    const matchesCuisine = cuisineFilter === 'all' || recipe.cuisine === cuisineFilter;
     
     // Filter by total cook time
     let matchesTime = true;
@@ -55,7 +64,7 @@ export function Recipes() {
     // Filter by no prep time
     const matchesNoPrepTime = !noPrepTime || recipe.prepTime === 0;
     
-    return matchesSearch && matchesCategory && matchesTime && matchesNoPrepTime;
+    return matchesSearch && matchesCategory && matchesCuisine && matchesTime && matchesNoPrepTime;
   });
 
   const handleCreateRecipe = () => {
@@ -69,11 +78,13 @@ export function Recipes() {
   const handleClearFilters = () => {
     const nextSearchQuery = '';
     const nextCategoryFilter = 'all';
+    const nextCuisineFilter = 'all';
     const nextTimeFilter = 'all';
     const nextNoPrepTime = false;
 
     setSearchQuery(nextSearchQuery);
     setCategoryFilter(nextCategoryFilter);
+    setCuisineFilter(nextCuisineFilter);
     setTimeFilter(nextTimeFilter);
     setNoPrepTime(nextNoPrepTime);
   };
@@ -98,7 +109,6 @@ export function Recipes() {
           Browse your recipes
         </p>
         
-        {/* Search and Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-4">
           <Input
             type="text"
@@ -109,13 +119,21 @@ export function Recipes() {
           />
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 items-start">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-start">
           <Select
             options={categoryOptions}
             value={categoryFilter}
             onChange={(value) => setCategoryFilter(value)}
             placeholder="Filter by category"
-            className="sm:w-64"
+            className="sm:w-52"
+          />
+
+          <Select
+            options={cuisineOptions}
+            value={cuisineFilter}
+            onChange={(value) => setCuisineFilter(value)}
+            placeholder="Filter by cuisine"
+            className="sm:w-52"
           />
           
           <Select
@@ -123,7 +141,7 @@ export function Recipes() {
             value={timeFilter}
             onChange={(value) => setTimeFilter(value)}
             placeholder="Filter by total time"
-            className="sm:w-64"
+            className="sm:w-52"
           />
           
           <div className="flex items-center gap-3 px-3 py-2">

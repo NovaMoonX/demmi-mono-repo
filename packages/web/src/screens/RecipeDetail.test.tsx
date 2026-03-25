@@ -17,6 +17,7 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
     title: 'Spaghetti Bolognese',
     description: 'Classic Italian pasta dish',
     category: 'dinner',
+    cuisine: 'italian',
     prepTime: 15,
     cookTime: 45,
     servingSize: 4,
@@ -54,6 +55,29 @@ describe('RecipeDetail - View Mode', () => {
     render(<RecipeDetail />, { wrapper });
     expect(screen.getByText('Spaghetti Bolognese')).toBeInTheDocument();
   });
+
+  it('renders the category badge with emoji', () => {
+    const recipe = createRecipe();
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
+    render(<RecipeDetail />, { wrapper });
+    expect(screen.getByText(/🌙 Dinner/i)).toBeInTheDocument();
+  });
+
+  it('renders the cuisine badge with emoji', () => {
+    const recipe = createRecipe();
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
+    render(<RecipeDetail />, { wrapper });
+    expect(screen.getByText('🍝 Italian')).toBeInTheDocument();
+  });
+
 
   it('renders Edit, Delete, and Cook buttons in view mode', () => {
     const recipe = createRecipe();

@@ -1,4 +1,4 @@
-import type { RecipeCategory } from '@lib/recipes';
+import type { RecipeCategory, RecipeCuisineType } from '@lib/recipes';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 import { store } from '@store/index';
 import { ollamaClient } from '../ollama.service';
@@ -50,6 +50,7 @@ function withContext(baseContent: string, additionalContext?: string): string {
 export interface RecipeResult extends Record<string, unknown> {
   name: string;
   category: RecipeCategory;
+  cuisine: RecipeCuisineType;
   servings: number;
   totalTime: number;
   description: string;
@@ -167,6 +168,7 @@ export const generateBasicInfoStep: ActionStep<RecipeResult, 'generateBasicInfo'
     const parsed = JSON.parse(response.message.content);
     const result = {
       category: (parsed.category ?? 'dinner') as RecipeCategory,
+      cuisine: (parsed.cuisine ?? 'american') as RecipeCuisineType,
       servings: Number(parsed.servings) || 4,
       totalTime: Number(parsed.totalTime) || 30,
     };
@@ -390,6 +392,7 @@ export const createRecipeAction = {
         title: accumulatedResult.name ?? '',
         description: accumulatedResult.description ?? '',
         category: accumulatedResult.category ?? 'dinner',
+        cuisine: accumulatedResult.cuisine ?? 'american',
         prepTime,
         cookTime,
         servingSize: accumulatedResult.servings ?? 4,

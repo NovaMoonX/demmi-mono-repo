@@ -538,9 +538,49 @@ expect(screen.queryByText('Some content')).not.toBeInTheDocument();
 - ✅ New screen → add `<ScreenName>.test.tsx` in `screens/`
 - ❌ Constant files, type files, mock data files → no tests needed
 
+**Cascading test changes when modifying shared types:**
+When you add or change a required field on a core shared type (e.g. `Recipe`, `Ingredient`, `PlannedRecipe`), you MUST update every test file that constructs an object of that type. This is non-negotiable — test factory functions and inline object literals both need the new field. Steps:
+1. Search for all test files that construct the modified type: `grep -r "id: 'rec-\|category: 'dinner'\|ingredientId:" packages/web/src --include="*.test.*"`
+2. Update every factory function (`createRecipe()`, `createIngredient()`, etc.) and inline mock objects in those test files
+3. Run `npm run test:web` and fix any remaining failures before moving on
+
 **CI:** Tests run automatically via GitHub Actions on push to `main` and on pull requests.
 
-### 17. README.md Update Rule
+### 17. Cascading Changes When Adding Fields to Core Types
+
+When you add a **required field to a core shared type** (e.g. `Recipe`, `Ingredient`, `AgentRecipeProposal`), the change cascades to many places. You must audit and update **all** of the following before marking the task complete:
+
+**Type & constants files:**
+- The type definition (`.types.ts`)
+- Any related intermediate types that contain the parent type (e.g. `AgentRecipeProposal` mirrors fields of `Recipe`)
+- AI prompt and JSON schema files if the field should be AI-generated
+- Constants files if the field has a set of allowed values with colors/emojis
+
+**Agentic / AI pipeline (if field is AI-generated):**
+- Prompt file: add the field to the instruction text + example JSON
+- Schema file: add the field to the JSON schema `required` array and `properties`
+- Action file: extract the new field from the parsed LLM response and include it in the proposal assembly
+
+**All screens and components that create or display the type:**
+- Every form (create + edit) — add a field input
+- Every read/view mode — add display of the field
+- Every place that manually constructs the object (`const recipe: Omit<Recipe, ...> = { ... }`) — add the field
+- Partial/streaming preview components (e.g. `PartialRecipePreview`, `RecipePreviewCard`) — show the field when available
+
+**Mock data & test factories (non-negotiable — tests will fail otherwise):**
+- `.mock.ts` files — update all mock objects
+- Every test file that uses a factory function (`createRecipe()`, `createIngredient()`) — update the factory
+- Every test file that creates an inline mock object of the modified type — update the object
+- Search across ALL test files: `grep -rn "category: 'dinner'\|id: 'rec-" packages/web/src --include="*.test.*"`
+
+**Checklist to verify completeness:**
+```
+grep -rn "Omit<Recipe" packages/web/src --include="*.ts" --include="*.tsx"
+grep -rn "AgentRecipeProposal" packages/web/src --include="*.ts" --include="*.tsx"
+npm run test:web   # must pass with zero failures
+```
+
+### 18. README.md Update Rule
 **CRITICAL**: READMEs must be updated with **EVERY** change to the codebase.
 
 This is a monorepo with multiple READMEs:

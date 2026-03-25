@@ -14,6 +14,7 @@ const sampleRecipe: Recipe = {
   title: 'Pasta',
   description: 'Delicious pasta',
   category: 'dinner',
+  cuisine: 'italian',
   prepTime: 10,
   cookTime: 20,
   servingSize: 4,

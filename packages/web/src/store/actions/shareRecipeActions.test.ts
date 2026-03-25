@@ -9,6 +9,7 @@ import {
   unshareRecipe,
   fetchSharedRecipe,
 } from './shareRecipeActions';
+import { Recipe } from '@/lib/recipes';
 
 vi.mock('@utils/generatedId', () => ({
   generatedId: vi.fn(() => 'share-id-123'),
@@ -31,12 +32,13 @@ function createTestStore(demoActive: boolean) {
   });
 }
 
-const mockRecipe = {
+const mockRecipe: Recipe = {
   id: 'r1',
   userId: 'demo',
   title: 'Pasta',
   description: 'Tasty',
-  category: 'dinner' as const,
+  category: 'dinner',
+  cuisine: 'italian',
   prepTime: 10,
   cookTime: 20,
   servingSize: 4,

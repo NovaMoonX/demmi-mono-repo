@@ -29,6 +29,7 @@ export interface Recipe {
   title: string;
   description: string;
   category: RecipeCategory;
+  cuisine: RecipeCuisineType;
   prepTime: number; // in minutes
   cookTime: number; // in minutes
   servingSize: number;

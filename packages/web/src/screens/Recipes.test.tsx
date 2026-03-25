@@ -24,6 +24,7 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
     title: 'Pasta',
     description: 'Delicious pasta',
     category: 'dinner',
+    cuisine: 'italian',
     prepTime: 10,
     cookTime: 20,
     servingSize: 4,
@@ -36,9 +37,9 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
 }
 
 const mockRecipes: Recipe[] = [
-  createRecipe({ id: 'rec-1', title: 'Pasta', category: 'dinner', prepTime: 10, cookTime: 20 }),
-  createRecipe({ id: 'rec-2', title: 'Smoothie', description: 'Berry smoothie', category: 'drink', prepTime: 0, cookTime: 5 }),
-  createRecipe({ id: 'rec-3', title: 'Steak', category: 'dinner', prepTime: 5, cookTime: 60 }),
+  createRecipe({ id: 'rec-1', title: 'Pasta', category: 'dinner', cuisine: 'italian', prepTime: 10, cookTime: 20 }),
+  createRecipe({ id: 'rec-2', title: 'Smoothie', description: 'Berry smoothie', category: 'drink', cuisine: 'american', prepTime: 0, cookTime: 5 }),
+  createRecipe({ id: 'rec-3', title: 'Steak', category: 'dinner', cuisine: 'american', prepTime: 5, cookTime: 60 }),
 ];
 
 describe('Recipes Screen', () => {
