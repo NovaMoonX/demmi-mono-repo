@@ -2,10 +2,9 @@ import { useState, useRef } from 'react';
 import { Button, Input, Label, Toggle } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import type { UserProfile, CookingGoal, CookingSkillLevel, CookTimePreference, DietaryRestriction } from '@lib/userProfile';
-import type { RecipeCuisineType } from '@lib/recipes';
+import { RECIPE_CUISINE_OPTIONS, type RecipeCuisineType } from '@lib/recipes';
 import {
   DIETARY_RESTRICTION_OPTIONS,
-  CUISINE_TYPE_OPTIONS,
   COOKING_GOAL_OPTIONS,
   HOUSEHOLD_SIZE_OPTIONS,
   SKILL_LEVEL_OPTIONS,
@@ -339,10 +338,10 @@ export function ProfileEditForm({ profile, saving, onSave, onCancel }: ProfileEd
         <div className='space-y-2'>
           <Label>Cuisine preferences</Label>
           <div className='flex flex-wrap gap-2'>
-            {CUISINE_TYPE_OPTIONS.map((opt) => (
+            {RECIPE_CUISINE_OPTIONS.map((opt) => (
               <ChipToggle
                 key={opt.value}
-                label={opt.label}
+                label={opt.text}
                 selected={isCuisineSelected(opt.value)}
                 onToggle={() => toggleCuisine(opt.value)}
               />

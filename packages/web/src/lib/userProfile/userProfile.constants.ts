@@ -1,5 +1,4 @@
 import type { DietaryRestriction, CookingGoal, CookingSkillLevel, CookTimePreference } from './userProfile.types';
-import type { RecipeCuisineType } from '../recipes';
 
 export const DIETARY_RESTRICTION_OPTIONS: { value: DietaryRestriction; label: string }[] = [
   { value: 'vegetarian', label: '🥦 Vegetarian' },
@@ -10,19 +9,6 @@ export const DIETARY_RESTRICTION_OPTIONS: { value: DietaryRestriction; label: st
   { value: 'kosher', label: '✡️ Kosher' },
   { value: 'nut-free', label: '🥜 Nut-Free' },
   { value: 'no-restrictions', label: '✅ No restrictions' },
-];
-
-export const CUISINE_TYPE_OPTIONS: { value: RecipeCuisineType; label: string }[] = [
-  { value: 'italian', label: '🍝 Italian' },
-  { value: 'mexican', label: '🌮 Mexican' },
-  { value: 'chinese', label: '🥡 Chinese' },
-  { value: 'japanese', label: '🍣 Japanese' },
-  { value: 'thai', label: '🍜 Thai' },
-  { value: 'indian', label: '🍛 Indian' },
-  { value: 'middle-eastern', label: '🥙 Middle Eastern' },
-  { value: 'american', label: '🍔 American' },
-  { value: 'french', label: '🥐 French' },
-  { value: 'greek', label: '🫒 Greek' },
 ];
 
 export const COOKING_GOAL_OPTIONS: { value: CookingGoal; label: string; description: string }[] = [

@@ -2,12 +2,12 @@ import { Button, Badge } from '@moondreamsdev/dreamer-ui/components';
 import type { UserProfile } from '@lib/userProfile';
 import {
   DIETARY_RESTRICTION_OPTIONS,
-  CUISINE_TYPE_OPTIONS,
   COOKING_GOAL_OPTIONS,
   HOUSEHOLD_SIZE_OPTIONS,
   SKILL_LEVEL_OPTIONS,
   COOK_TIME_OPTIONS,
 } from '@lib/userProfile';
+import { RECIPE_CUISINE_OPTIONS } from '@/lib/recipes';
 
 interface ProfileViewModeProps {
   profile: UserProfile;
@@ -35,7 +35,7 @@ export function ProfileViewMode({ profile, onEdit, onResetOnboarding }: ProfileV
   const customLabels = profile.customDietaryRestrictions;
 
   const cuisineLabels = profile.cuisinePreferences.map(
-    (c) => CUISINE_TYPE_OPTIONS.find((o) => o.value === c)?.label ?? c,
+    (c) => RECIPE_CUISINE_OPTIONS.find((o) => o.value === c)?.text ?? c,
   );
 
   const goalOption = profile.cookingGoal
