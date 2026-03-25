@@ -114,3 +114,12 @@ export function AuthForm(props: Record<string, unknown>) {
 export function ErrorBoundary({ children }: React.PropsWithChildren<Record<string, unknown>>) {
   return React.createElement('div', { 'data-testid': 'error-boundary' }, children);
 }
+
+export function Callout({ children, title, ...props }: React.PropsWithChildren<{ title?: string } & Record<string, unknown>>) {
+  return React.createElement(
+    'div',
+    { 'data-testid': 'callout', ...props },
+    title ? React.createElement('p', { 'data-testid': 'callout-title' }, title) : null,
+    children,
+  );
+}

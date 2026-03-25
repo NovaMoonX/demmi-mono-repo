@@ -84,6 +84,7 @@ The Chat feature requires [Ollama](https://ollama.com) running locally.
 ```
 src/
 ├── components/         # Reusable UI components (organized by feature)
+│   ├── account/        # ProfileViewMode, ProfileEditForm
 │   ├── calendar/       # DayCard, DayDetailModal, MonthView, TotalsDisplay
 │   ├── chat/           # ChatHistory, ChatMessage, OllamaModelControl, agent-action-cards/
 │   ├── cook/           # VoiceIndicator
@@ -102,6 +103,7 @@ src/
 │   ├── recipes/          # Recipe types, constants, shared-recipe types, mock data
 │   ├── ollama/         # Ollama service, action types, prompts, schemas
 │   └── shoppingList/   # Shopping list types, mock data
+│   └── userProfile/    # UserProfile types, constants, mock data
 ├── routes/             # Router config (AppRoutes, ProtectedRoutes)
 ├── screens/            # Page-level components
 │   ├── Auth.tsx, VerifyEmail.tsx        # Authentication
@@ -167,9 +169,17 @@ npm run test:ui       # Open Vitest UI in browser
 ## Features
 
 ### 🎭 Demo Mode
-- Try the app without an account — pre-loaded mock data for all features
+- Try the app without an account — pre-loaded mock data for all features including a demo user profile
 - Session-scoped persistence via `sessionStorage`; amber banner indicates demo status
 - All CRUD thunks handle demo mode internally — components never branch on demo state
+
+### 👤 Account & User Profile
+- View and edit dietary restrictions (predefined + custom "Other" freeform input), avoid ingredients (freeform chips), and cuisine preferences
+- Cooking goal selection with descriptive cards, household size, skill level, and cook time preference via segmented controls
+- Auto pantry deduction toggle — automatically updates pantry when shopping list items are checked off
+- Reset onboarding shortcut navigates back to `/onboarding`
+- Read-only view mode by default; switches to edit form on demand
+- Skeleton loading state and fallback callout when profile is unavailable
 
 ### 🔐 Authentication & Security
 - Email/password and Google sign-in via Firebase Authentication
@@ -351,7 +361,7 @@ type CookingGoal =
   | 'explore-cuisines' | 'learn-cooking';
 
 type CookingSkillLevel = 'beginner' | 'intermediate' | 'advanced';
-type CookTimePreference = 'under-20' | '30-min' | 'any';
+type CookTimePreference = 'under-20' | '30-min' | 'under-an-hour' | 'any';
 type WeightUnit = 'kg' | 'lbs';
 
 interface CookingGoalDetails {

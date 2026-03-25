@@ -5,12 +5,14 @@ import { setConversations, resetChats } from './chatsSlice';
 import { setRecipes, resetRecipes } from './recipesSlice';
 import { setIngredients, resetIngredients } from './ingredientsSlice';
 import { setShoppingList, resetShoppingList } from './shoppingListSlice';
+import { setProfile, clearProfile } from './userProfileSlice';
 import { clearUserData } from './userSlice';
 import { generateDemoCalendarData } from '@lib/calendar';
 import { mockChatConversations } from '@lib/chat';
 import { mockRecipes } from '@lib/recipes';
 import { mockIngredients } from '@lib/ingredients';
 import { mockShoppingList } from '@lib/shoppingList';
+import { mockUserProfile } from '@lib/userProfile';
 
 interface DemoState {
   isActive: boolean;
@@ -59,6 +61,7 @@ export const loadDemoData = createAsyncThunk<void, void, { dispatch: AppDispatch
       mockIngredients.map((ing) => ({ ...ing, otherUnit: null, defaultProductId: null }))
     ));
     dispatch(setShoppingList(mockShoppingList));
+    dispatch(setProfile(mockUserProfile));
     dispatch(resetCalendar());
     const calendarData = generateDemoCalendarData();
     calendarData.forEach((plannedRecipe) => {
@@ -75,6 +78,7 @@ export const clearDemoData = createAsyncThunk<void, void, { dispatch: AppDispatc
     dispatch(resetIngredients());
     dispatch(resetCalendar());
     dispatch(resetShoppingList());
+    dispatch(clearProfile());
   }
 );
 

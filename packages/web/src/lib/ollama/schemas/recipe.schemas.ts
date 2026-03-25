@@ -7,7 +7,7 @@ export const RECIPE_NAME_SCHEMA: Record<string, unknown> = {
   properties: {
     name: {
       type: 'string',
-      description: 'The specific name of the recipe (1–4 words, proper capitalization)',
+      description: 'The specific name of the recipe (1-4 words, proper capitalization)',
     },
   },
 };
@@ -46,7 +46,7 @@ export const RECIPE_DESCRIPTION_SCHEMA: Record<string, unknown> = {
   properties: {
     description: {
       type: 'string',
-      description: 'A 1–2 sentence appetizing description of the recipe',
+      description: 'A 1-2 sentence appetizing description of the recipe',
     },
   },
 };
