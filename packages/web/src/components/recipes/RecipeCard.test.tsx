@@ -10,6 +10,7 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
     title: 'Spaghetti Carbonara',
     description: 'Classic Italian pasta',
     category: 'dinner',
+    cuisine: 'italian',
     prepTime: 15,
     cookTime: 20,
     servingSize: 4,
@@ -110,5 +111,26 @@ describe('RecipeCard', () => {
   it('renders the category emoji', () => {
     render(<RecipeCard recipe={createRecipe({ category: 'breakfast' })} />);
     expect(screen.getByText('🌅')).toBeInTheDocument();
+  });
+
+  it('renders the cuisine badge', () => {
+    render(<RecipeCard recipe={createRecipe({ cuisine: 'italian' })} />);
+    const badges = screen.getAllByTestId('badge');
+    const cuisineBadge = badges.find((b) => b.textContent?.includes('Italian'));
+    expect(cuisineBadge).toBeTruthy();
+  });
+
+  it('renders a custom cuisine badge for unknown cuisines', () => {
+    render(<RecipeCard recipe={createRecipe({ cuisine: 'peruvian' })} />);
+    const badges = screen.getAllByTestId('badge');
+    const cuisineBadge = badges.find((b) => b.textContent?.includes('Peruvian'));
+    expect(cuisineBadge).toBeTruthy();
+  });
+
+  it('renders fallback emoji for unknown cuisine', () => {
+    render(<RecipeCard recipe={createRecipe({ cuisine: 'peruvian' })} />);
+    const badges = screen.getAllByTestId('badge');
+    const cuisineBadge = badges.find((b) => b.textContent?.includes('🍽️'));
+    expect(cuisineBadge).toBeTruthy();
   });
 });

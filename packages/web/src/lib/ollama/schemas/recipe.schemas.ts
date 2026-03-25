@@ -1,4 +1,4 @@
-import { RECIPE_CATEGORIES } from '@lib/recipes';
+import { RECIPE_CATEGORIES, RECIPE_CUISINES } from '@lib/recipes';
 import { INGREDIENT_TYPES, MEASUREMENT_UNITS } from '@lib/ingredients';
 
 export const RECIPE_NAME_SCHEMA: Record<string, unknown> = {
@@ -14,12 +14,17 @@ export const RECIPE_NAME_SCHEMA: Record<string, unknown> = {
 
 export const RECIPE_INFO_SCHEMA: Record<string, unknown> = {
   type: 'object',
-  required: ['category', 'servings', 'totalTime'],
+  required: ['category', 'cuisine', 'servings', 'totalTime'],
   properties: {
     category: {
       type: 'string',
       enum: RECIPE_CATEGORIES,
       description: 'The recipe category',
+    },
+    cuisine: {
+      type: 'string',
+      enum: RECIPE_CUISINES,
+      description: 'The cuisine type in lowercase with hyphens for multi-word names (e.g. italian, mexican, middle-eastern)',
     },
     servings: {
       type: 'integer',

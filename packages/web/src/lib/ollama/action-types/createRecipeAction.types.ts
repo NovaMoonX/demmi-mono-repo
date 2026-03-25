@@ -1,4 +1,4 @@
-import type { RecipeCategory } from '@lib/recipes';
+import type { RecipeCategory, RecipeCuisineType } from '@lib/recipes';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 
 /**
@@ -56,6 +56,7 @@ export interface AgentRecipeProposal {
   title: string;
   description: string;
   category: RecipeCategory;
+  cuisine: RecipeCuisineType;
   prepTime: number;
   cookTime: number;
   servingSize: number;
@@ -67,6 +68,7 @@ export interface AgentRecipeProposal {
 export interface AgentPartialRecipe {
   name: string | null;
   category: string | null;
+  cuisine: string | null;
   servings: number | null;
   totalTime: number | null;
   description: string | null;

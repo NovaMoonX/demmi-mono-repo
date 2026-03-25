@@ -1,4 +1,4 @@
-import type { RecipeCategory } from '@lib/recipes';
+import type { RecipeCategory, RecipeCuisineType } from '@lib/recipes';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 import { store } from '@store/index';
 import { ollamaClient } from '../ollama.service';
@@ -59,6 +59,7 @@ export interface RecipeIterationResult extends Record<string, unknown> {
   existingProposal: AgentRecipeProposal;
   name: string;
   category: RecipeCategory;
+  cuisine: RecipeCuisineType;
   servings: number;
   totalTime: number;
   description: string;
@@ -115,6 +116,7 @@ function formatProposalForPrompt(proposal: AgentRecipeProposal): string {
   return [
     `Title: ${proposal.title}`,
     `Category: ${proposal.category}`,
+    `Cuisine: ${proposal.cuisine}`,
     `Servings: ${proposal.servingSize}`,
     `Total time: ${totalTime} min (prep ${proposal.prepTime}m, cook ${proposal.cookTime}m)`,
     `Description: ${proposal.description}`,
@@ -140,6 +142,7 @@ function formatFieldForPrompt(
 
     return [
       `Category: ${proposal.category}`,
+      `Cuisine: ${proposal.cuisine}`,
       `Servings: ${proposal.servingSize}`,
       `Total time: ${totalTime} min (prep ${proposal.prepTime}m, cook ${proposal.cookTime}m)`,
     ].join('\n');
@@ -531,6 +534,7 @@ export const iterateRecipeAction = {
       existingProposal,
       name: keepIfUnchanged('name', existingProposal.title, fieldsToUpdate),
       category: keepIfUnchanged('info', existingProposal.category, fieldsToUpdate),
+      cuisine: keepIfUnchanged('info', existingProposal.cuisine, fieldsToUpdate),
       servings: keepIfUnchanged('info', existingProposal.servingSize, fieldsToUpdate),
       totalTime: keepIfUnchanged('info', existingProposal.prepTime + existingProposal.cookTime, fieldsToUpdate),
       description: keepIfUnchanged('description', existingProposal.description, fieldsToUpdate),
@@ -627,6 +631,7 @@ export const iterateRecipeAction = {
         description:
           accumulatedResult.description ?? existingProposal.description,
         category: accumulatedResult.category ?? existingProposal.category,
+        cuisine: accumulatedResult.cuisine ?? existingProposal.cuisine,
         prepTime,
         cookTime,
         servingSize: accumulatedResult.servings ?? existingProposal.servingSize,

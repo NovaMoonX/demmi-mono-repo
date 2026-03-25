@@ -1,6 +1,15 @@
 import { Card, Badge } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
-import { Recipe, RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS, RECIPE_PLACEHOLDER_IMAGE_URL } from '@lib/recipes';
+import {
+  capitalizeCuisine,
+  getCuisineColorClass,
+  Recipe,
+  RECIPE_CATEGORY_COLORS,
+  RECIPE_CATEGORY_EMOJIS,
+  RECIPE_CUISINE_COLORS,
+  RECIPE_CUISINE_EMOJIS,
+  RECIPE_PLACEHOLDER_IMAGE_URL,
+} from '@lib/recipes';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -40,9 +49,18 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
               {RECIPE_CATEGORY_EMOJIS[recipe.category]}
             </span>
           </div>
-          <Badge variant="base" className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}>
-            {recipe.category}
-          </Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="base" className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}>
+              {recipe.category}
+            </Badge>
+            <Badge
+              variant="base"
+              className={join(getCuisineColorClass(recipe.cuisine, RECIPE_CUISINE_COLORS))}
+            >
+              {RECIPE_CUISINE_EMOJIS[recipe.cuisine] ?? '🍽️'}{' '}
+              {capitalizeCuisine(recipe.cuisine)}
+            </Badge>
+          </div>
         </div>
 
         {/* Description */}

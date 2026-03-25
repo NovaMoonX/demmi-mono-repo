@@ -29,6 +29,7 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
     title: 'Omelette',
     description: 'Cheese omelette',
     category: 'breakfast',
+    cuisine: 'american',
     prepTime: 5,
     cookTime: 10,
     servingSize: 1,

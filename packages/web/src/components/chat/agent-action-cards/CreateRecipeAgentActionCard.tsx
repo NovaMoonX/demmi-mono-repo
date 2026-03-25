@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { INGREDIENT_TYPE_EMOJIS } from '@lib/ingredients';
 import type { RecipeCategory } from '@lib/recipes';
-import { RECIPE_CATEGORY_COLORS, RECIPE_CATEGORY_EMOJIS } from '@lib/recipes';
+import {
+  RECIPE_CATEGORY_COLORS,
+  RECIPE_CATEGORY_EMOJIS,
+  RECIPE_CUISINE_COLORS,
+  RECIPE_CUISINE_EMOJIS,
+  capitalizeCuisine,
+  getCuisineColorClass,
+} from '@lib/recipes';
 import type {
   AgentIngredientProposal,
   AgentRecipeProposal,
@@ -10,7 +17,12 @@ import type {
   CreateRecipeAgentActionStatus,
   RecipeIterableField,
 } from '@lib/ollama/action-types/createRecipeAction.types';
-import { Badge, Button, Card, Skeleton } from '@moondreamsdev/dreamer-ui/components';
+import {
+  Badge,
+  Button,
+  Card,
+  Skeleton,
+} from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { GeneratingIndicator } from '../GeneratingIndicator';
 import { AgentActionCardProps } from './types';
@@ -61,7 +73,9 @@ function IteratingRecipeCard({
             {updatingName ? (
               <Skeleton shape='rectangle' className='h-5 w-40' />
             ) : (
-              <h4 className='text-foreground text-base font-semibold'>{recipe.title}</h4>
+              <h4 className='text-foreground text-base font-semibold'>
+                {recipe.title}
+              </h4>
             )}
             {updatingDescription ? (
               <div className='mt-1.5 flex flex-col gap-1'>
@@ -89,15 +103,29 @@ function IteratingRecipeCard({
           <div className='flex flex-wrap items-center gap-2'>
             <Badge
               variant='base'
-              className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
+              className={join(
+                'capitalize',
+                RECIPE_CATEGORY_COLORS[recipe.category],
+              )}
             >
               {recipe.category}
             </Badge>
+            <Badge
+              variant='base'
+              className={join(
+                getCuisineColorClass(recipe.cuisine, RECIPE_CUISINE_COLORS),
+              )}
+            >
+              {RECIPE_CUISINE_EMOJIS[recipe.cuisine] ?? '🍽️'}{' '}
+              {capitalizeCuisine(recipe.cuisine)}
+            </Badge>
             <span className='text-muted-foreground text-xs'>
-              Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m total
+              Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m
+              total
             </span>
             <span className='text-muted-foreground text-xs'>
-              {recipe.servingSize} {recipe.servingSize === 1 ? 'serving' : 'servings'}
+              {recipe.servingSize}{' '}
+              {recipe.servingSize === 1 ? 'serving' : 'servings'}
             </span>
           </div>
         )}
@@ -119,17 +147,21 @@ function IteratingRecipeCard({
               Ingredients
             </p>
             <div className='flex flex-wrap gap-1.5'>
-              {(['w-16', 'w-12', 'w-20', 'w-14', 'w-10'] as const).map((wClass, i) => (
-                <Skeleton
-                  key={i}
-                  shape='rectangle'
-                  className={join('h-6 rounded-md', wClass)}
-                />
-              ))}
+              {(['w-16', 'w-12', 'w-20', 'w-14', 'w-10'] as const).map(
+                (wClass, i) => (
+                  <Skeleton
+                    key={i}
+                    shape='rectangle'
+                    className={join('h-6 rounded-md', wClass)}
+                  />
+                ),
+              )}
             </div>
           </div>
         ) : (
-          recipe.ingredients.length > 0 && <IngredientList ingredients={recipe.ingredients} />
+          recipe.ingredients.length > 0 && (
+            <IngredientList ingredients={recipe.ingredients} />
+          )
         )}
       </div>
     </Card>
@@ -159,15 +191,29 @@ function RecipePreviewCard({ recipe }: { recipe: AgentRecipeProposal }) {
         <div className='flex flex-wrap items-center gap-2'>
           <Badge
             variant='base'
-            className={join('capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
+            className={join(
+              'capitalize',
+              RECIPE_CATEGORY_COLORS[recipe.category],
+            )}
           >
             {recipe.category}
           </Badge>
+          <Badge
+            variant='base'
+            className={join(
+              getCuisineColorClass(recipe.cuisine, RECIPE_CUISINE_COLORS),
+            )}
+          >
+            {RECIPE_CUISINE_EMOJIS[recipe.cuisine] ?? '🍽️'}{' '}
+            {capitalizeCuisine(recipe.cuisine)}
+          </Badge>
           <span className='text-muted-foreground text-xs'>
-            Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m total
+            Prep {recipe.prepTime}m · Cook {recipe.cookTime}m · {totalTime}m
+            total
           </span>
           <span className='text-muted-foreground text-xs'>
-            {recipe.servingSize} {recipe.servingSize === 1 ? 'serving' : 'servings'}
+            {recipe.servingSize}{' '}
+            {recipe.servingSize === 1 ? 'serving' : 'servings'}
           </span>
         </div>
 
@@ -213,7 +259,7 @@ function IngredientList({
               {ing.servings} {ing.unit}
             </span>
             {ing.isNew && (
-              <span className='bg-primary/20 text-primary rounded px-1 py-0.5 text-xs font-semibold leading-none'>
+              <span className='bg-primary/20 text-primary rounded px-1 py-0.5 text-xs leading-none font-semibold'>
                 new
               </span>
             )}
@@ -291,6 +337,17 @@ function PartialRecipeCard({ recipe }: { recipe: AgentPartialRecipe }) {
           >
             {recipe.category}
           </Badge>
+          {recipe.cuisine && (
+            <Badge
+              variant='base'
+              className={join(
+                getCuisineColorClass(recipe.cuisine, RECIPE_CUISINE_COLORS),
+              )}
+            >
+              {RECIPE_CUISINE_EMOJIS[recipe.cuisine as string] ?? '🍽️'}{' '}
+              {capitalizeCuisine(recipe.cuisine as string)}
+            </Badge>
+          )}
           {recipe.totalTime != null && (
             <span className='text-muted-foreground text-xs'>
               {recipe.totalTime}m total
@@ -390,20 +447,24 @@ export function CreateRecipeAgentActionCard({
     const recipe = action.recipes[0];
     const updatingFields = action.updatingFields ?? [];
 
-    const fieldNames = updatingFields.map((f) => FIELD_LABELS[f]).join(', ')
-    const statusText = updatingFields.length > 0
-      ? `Updating ${fieldNames}…`
-      : undefined;
+    const fieldNames = updatingFields.map((f) => FIELD_LABELS[f]).join(', ');
+    const statusText =
+      updatingFields.length > 0 ? `Updating ${fieldNames}…` : undefined;
 
     return (
       <div className='border-border bg-card/50 mt-3 flex flex-col gap-3 rounded-xl border p-3'>
         <div className='flex items-center gap-2'>
           <GeneratingIndicator />
-          {statusText && <span className='text-muted-foreground text-xs'>{statusText}</span>}
+          {statusText && (
+            <span className='text-muted-foreground text-xs'>{statusText}</span>
+          )}
         </div>
 
         {recipe && updatingFields.length > 0 && (
-          <IteratingRecipeCard recipe={recipe} updatingFields={updatingFields} />
+          <IteratingRecipeCard
+            recipe={recipe}
+            updatingFields={updatingFields}
+          />
         )}
       </div>
     );
@@ -473,7 +534,9 @@ export function CreateRecipeAgentActionCard({
     return (
       <div className='mt-3 flex flex-col gap-3 rounded-xl border border-green-500/30 bg-green-500/5 p-3'>
         <div className='flex items-center gap-2 px-1'>
-          <span className='text-base text-green-600 dark:text-green-400'>✓</span>
+          <span className='text-base text-green-600 dark:text-green-400'>
+            ✓
+          </span>
           <span className='text-sm font-medium text-green-700 dark:text-green-400'>
             {action.recipes.length === 1
               ? 'Recipe saved'
@@ -484,27 +547,47 @@ export function CreateRecipeAgentActionCard({
 
         <div className='flex flex-col gap-2'>
           {action.recipes.map((recipe, i) => (
-            <div key={i} className='flex items-start justify-between gap-2 px-1'>
+            <div
+              key={i}
+              className='flex items-start justify-between gap-2 px-1'
+            >
               <div className='min-w-0 flex-1'>
-                <h4 className='text-foreground text-sm font-semibold'>{recipe.title}</h4>
+                <h4 className='text-foreground text-sm font-semibold'>
+                  {recipe.title}
+                </h4>
                 {recipe.description && (
                   <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
                     {recipe.description}
                   </p>
                 )}
               </div>
-              <Badge
-                variant='base'
-                className={join('shrink-0 capitalize', RECIPE_CATEGORY_COLORS[recipe.category])}
-              >
-                {RECIPE_CATEGORY_EMOJIS[recipe.category]} {recipe.category}
-              </Badge>
+              <div className='flex shrink-0 gap-2'>
+                <Badge
+                  variant='base'
+                  className={join(
+                    'shrink-0 capitalize',
+                    RECIPE_CATEGORY_COLORS[recipe.category],
+                  )}
+                >
+                  {RECIPE_CATEGORY_EMOJIS[recipe.category]} {recipe.category}
+                </Badge>
+                <Badge
+                  variant='base'
+                  className={join(
+                    'shrink-0',
+                    getCuisineColorClass(recipe.cuisine, RECIPE_CUISINE_COLORS),
+                  )}
+                >
+                  {RECIPE_CUISINE_EMOJIS[recipe.cuisine] ?? '🍽️'}{' '}
+                  {capitalizeCuisine(recipe.cuisine)}
+                </Badge>
+              </div>
             </div>
           ))}
         </div>
 
         {onAddToShoppingList && decision === null && (
-          <div className='border-green-500/20 flex flex-col gap-2 border-t pt-2'>
+          <div className='flex flex-col gap-2 border-t border-green-500/20 pt-2'>
             <p className='text-muted-foreground text-xs'>
               🛒 Would you like to add the ingredients to your shopping list?
             </p>
@@ -535,9 +618,10 @@ export function CreateRecipeAgentActionCard({
         )}
 
         {decision === 'added' && (
-          <div className='border-green-500/20 flex items-center justify-between gap-2 border-t pt-2'>
+          <div className='flex items-center justify-between gap-2 border-t border-green-500/20 pt-2'>
             <p className='text-muted-foreground text-xs'>
-              🛒 {itemsAdded} ingredient{itemsAdded === 1 ? '' : 's'} added to your shopping list
+              🛒 {itemsAdded} ingredient{itemsAdded === 1 ? '' : 's'} added to
+              your shopping list
             </p>
             <Link
               to='/shopping-list'
@@ -560,12 +644,19 @@ export function CreateRecipeAgentActionCard({
       <div className='border-border bg-muted/30 mt-3 flex items-center gap-3 rounded-xl border px-4 py-3 opacity-50'>
         <span className='text-muted-foreground shrink-0 text-sm'>✕</span>
         <div className='min-w-0 flex-1'>
-          {name && <p className='text-foreground truncate text-sm font-medium'>{name}</p>}
+          {name && (
+            <p className='text-foreground truncate text-sm font-medium'>
+              {name}
+            </p>
+          )}
         </div>
         {category && (
           <Badge
             variant='base'
-            className={join('shrink-0 capitalize', RECIPE_CATEGORY_COLORS[category])}
+            className={join(
+              'shrink-0 capitalize',
+              RECIPE_CATEGORY_COLORS[category],
+            )}
           >
             {RECIPE_CATEGORY_EMOJIS[category]} {category}
           </Badge>

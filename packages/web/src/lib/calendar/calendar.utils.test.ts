@@ -30,6 +30,7 @@ function createRecipe(id: string, ingredientIds: string[]): Recipe {
     title: `Recipe ${id}`,
     description: '',
     category: 'dinner',
+    cuisine: 'italian',
     prepTime: 10,
     cookTime: 20,
     servingSize: 4,
