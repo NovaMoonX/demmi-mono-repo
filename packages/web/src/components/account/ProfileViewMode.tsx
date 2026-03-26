@@ -38,9 +38,9 @@ export function ProfileViewMode({ profile, onEdit, onResetOnboarding }: ProfileV
     (c) => RECIPE_CUISINE_OPTIONS.find((o) => o.value === c)?.text ?? c,
   );
 
-  const goalOption = profile.cookingGoal
-    ? COOKING_GOAL_OPTIONS.find((o) => o.value === profile.cookingGoal)
-    : null;
+  const goalOptions = (profile.cookingGoal ?? [])
+    .map((g) => COOKING_GOAL_OPTIONS.find((o) => o.value === g) ?? null)
+    .filter((opt): opt is NonNullable<typeof opt> => opt !== null);
 
   const householdLabel = HOUSEHOLD_SIZE_OPTIONS.find(
     (o) => o.value === profile.householdSize,
@@ -70,8 +70,8 @@ export function ProfileViewMode({ profile, onEdit, onResetOnboarding }: ProfileV
 
       <div className='space-y-4'>
         <ViewRow label='Cooking goal'>
-          {goalOption ? (
-            <Badge>{goalOption.label}</Badge>
+          {goalOptions.length > 0 ? (
+            goalOptions.map((opt) => <Badge key={opt.value}>{opt.label}</Badge>)
           ) : (
             <EmptyValue />
           )}
