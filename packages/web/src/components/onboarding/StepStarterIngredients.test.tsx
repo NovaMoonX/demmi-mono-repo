@@ -90,4 +90,12 @@ describe('StepStarterIngredients', () => {
     fireEvent.click(screen.getByText('Skip for now'));
     expect(skip).toHaveBeenCalled();
   });
+
+  it('calls back when "← Back" clicked', () => {
+    const back = vi.fn();
+    const { wrapper } = generateTestWrapper();
+    render(<StepStarterIngredients {...baseProps} back={back} />, { wrapper });
+    fireEvent.click(screen.getByText('← Back'));
+    expect(back).toHaveBeenCalled();
+  });
 });

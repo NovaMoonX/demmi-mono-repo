@@ -16,8 +16,7 @@ describe('StepDislikedMeal', () => {
     const { wrapper } = generateTestWrapper();
     render(<StepDislikedMeal {...baseProps} />, { wrapper });
     expect(screen.getByText("What's a meal you didn't enjoy?")).toBeInTheDocument();
-    expect(screen.getByText(/Even if it fits your goals/)).toBeInTheDocument();
-  });
+    expect(screen.getByText(/Even if it fits your goals/)).toBeInTheDocument();  });
 
   it('renders textarea', () => {
     const { wrapper } = generateTestWrapper();

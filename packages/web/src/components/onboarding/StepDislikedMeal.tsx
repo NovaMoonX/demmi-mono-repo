@@ -15,13 +15,14 @@ export function StepDislikedMeal({ formData, update }: StepProps) {
       <div className='space-y-1'>
         <h2 className='text-foreground text-2xl font-bold'>What's a meal you didn't enjoy?</h2>
         <p className='text-muted-foreground text-sm'>
-          Even if it fits your goals — what just didn't work for you?
+          Even if it fits your goals — describe the texture, style, or overall feeling that just
+          didn't work for you.
         </p>
       </div>
 
       <Textarea
         id='disliked-meal'
-        placeholder='e.g. Plain boiled chicken with no seasoning — too bland and dry…'
+        placeholder='e.g. Something that felt too heavy or stodgy, with a texture that was off — left me feeling sluggish…'
         value={value}
         onChange={handleChange}
         rows={4}

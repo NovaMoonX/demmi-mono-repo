@@ -2,16 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 
-const mockListLocalModels = vi.fn();
-const mockOllamaChat = vi.fn();
-
-vi.mock('@lib/ollama', () => ({
-  listLocalModels: (...args: unknown[]) => mockListLocalModels(...args),
-  ollamaClient: {
-    chat: (...args: unknown[]) => mockOllamaChat(...args),
-  },
-}));
-
 vi.mock('@store/actions/recipeActions', async () => {
   const rtk = await vi.importActual('@reduxjs/toolkit') as typeof import('@reduxjs/toolkit');
   return {
@@ -35,6 +25,13 @@ vi.mock('@store/actions/shareRecipeActions', async () => {
 });
 
 import { StepAISuggestions } from './StepAISuggestions';
+import type { SuggestedRecipe } from './types';
+
+const MOCK_RECIPES: SuggestedRecipe[] = [
+  { title: 'Recipe A', category: 'dinner', description: 'Desc A' },
+  { title: 'Recipe B', category: 'lunch', description: 'Desc B' },
+  { title: 'Recipe C', category: 'breakfast', description: 'Desc C' },
+];
 
 describe('StepAISuggestions', () => {
   const baseProps = {
@@ -43,94 +40,86 @@ describe('StepAISuggestions', () => {
     next: vi.fn(),
     skip: vi.fn(),
     back: vi.fn(),
+    aiRecipes: MOCK_RECIPES,
+    aiLoading: false,
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders heading', async () => {
-    mockListLocalModels.mockResolvedValue([]);
+  it('renders heading', () => {
     const { wrapper } = generateTestWrapper();
     render(<StepAISuggestions {...baseProps} />, { wrapper });
-    expect(screen.getByText("Here are 3 recipes we think you'll love")).toBeInTheDocument();
+    expect(screen.getByText("Here are recipes we think you'll love")).toBeInTheDocument();
   });
 
-  it('shows fallback recipes when Ollama is unavailable', async () => {
-    mockListLocalModels.mockResolvedValue([]);
+  it('shows loading skeletons when aiLoading is true', () => {
+    const { wrapper } = generateTestWrapper();
+    render(<StepAISuggestions {...baseProps} aiLoading aiRecipes={[]} />, { wrapper });
+    expect(screen.getAllByLabelText('Loading recipe')).toHaveLength(3);
+  });
+
+  it('shows first recipe when loaded', () => {
     const { wrapper } = generateTestWrapper();
     render(<StepAISuggestions {...baseProps} />, { wrapper });
-    await waitFor(() => {
-      expect(screen.getByText('Classic Pasta Bolognese')).toBeInTheDocument();
-      expect(screen.getByText('Overnight Oats')).toBeInTheDocument();
-      expect(screen.getByText('Vegetable Stir Fry')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Recipe A')).toBeInTheDocument();
+    expect(screen.getByText('Recipe 1 of 3')).toBeInTheDocument();
   });
 
-  it('shows fallback recipes when Ollama throws an error', async () => {
-    mockListLocalModels.mockRejectedValue(new Error('Connection refused'));
+  it('navigates to next recipe with → button', () => {
     const { wrapper } = generateTestWrapper();
     render(<StepAISuggestions {...baseProps} />, { wrapper });
-    await waitFor(() => {
-      expect(screen.getByText('Classic Pasta Bolognese')).toBeInTheDocument();
-    });
+    fireEvent.click(screen.getByLabelText('Next recipe'));
+    expect(screen.getByText('Recipe B')).toBeInTheDocument();
+    expect(screen.getByText('Recipe 2 of 3')).toBeInTheDocument();
   });
 
-  it('shows AI-generated recipes when Ollama is available', async () => {
-    mockListLocalModels.mockResolvedValue(['mistral']);
-    mockOllamaChat.mockResolvedValue({
-      message: {
-        content: JSON.stringify({
-          recipes: [
-            { title: 'AI Chicken Curry', category: 'dinner', description: 'A flavorful curry.' },
-            { title: 'AI Green Salad', category: 'lunch', description: 'Light and fresh.' },
-            { title: 'AI Smoothie Bowl', category: 'breakfast', description: 'Nutritious start.' },
-          ],
-        }),
-      },
-    });
+  it('navigates back to previous recipe with ← button', () => {
     const { wrapper } = generateTestWrapper();
     render(<StepAISuggestions {...baseProps} />, { wrapper });
-    await waitFor(() => {
-      expect(screen.getByText('AI Chicken Curry')).toBeInTheDocument();
-      expect(screen.getByText('AI Green Salad')).toBeInTheDocument();
-      expect(screen.getByText('AI Smoothie Bowl')).toBeInTheDocument();
-    });
+    fireEvent.click(screen.getByLabelText('Next recipe'));
+    fireEvent.click(screen.getByLabelText('Previous recipe'));
+    expect(screen.getByText('Recipe A')).toBeInTheDocument();
   });
 
-  it('renders "Save these recipes" and "Skip" buttons', async () => {
-    mockListLocalModels.mockResolvedValue([]);
+  it('shows "Save this recipe" and "Save all recipes" buttons', () => {
     const { wrapper } = generateTestWrapper();
     render(<StepAISuggestions {...baseProps} />, { wrapper });
-    await waitFor(() => {
-      expect(screen.getByText('Save these recipes')).toBeInTheDocument();
-      expect(screen.getByText('Skip')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Save this recipe')).toBeInTheDocument();
+    expect(screen.getByText('Save all recipes')).toBeInTheDocument();
   });
 
-  it('calls skip when Skip button clicked', async () => {
-    mockListLocalModels.mockResolvedValue([]);
+  it('shows "Skip all" button', () => {
+    const { wrapper } = generateTestWrapper();
+    render(<StepAISuggestions {...baseProps} />, { wrapper });
+    expect(screen.getByText('Skip all')).toBeInTheDocument();
+  });
+
+  it('calls skip when "Skip all" is clicked', () => {
     const skip = vi.fn();
     const { wrapper } = generateTestWrapper();
     render(<StepAISuggestions {...baseProps} skip={skip} />, { wrapper });
-    await waitFor(() => {
-      expect(screen.getByText('Skip')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Skip'));
+    fireEvent.click(screen.getByText('Skip all'));
     expect(skip).toHaveBeenCalled();
   });
 
-  it('dispatches createRecipe for each recipe and calls next when Save clicked', async () => {
-    mockListLocalModels.mockResolvedValue([]);
+  it('saves all recipes and calls next when "Save all recipes" is clicked', async () => {
     const next = vi.fn();
     const { wrapper } = generateTestWrapper();
     render(<StepAISuggestions {...baseProps} next={next} />, { wrapper });
-    await waitFor(() => {
-      expect(screen.getByText('Save these recipes')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Save these recipes'));
+    fireEvent.click(screen.getByText('Save all recipes'));
     await waitFor(() => {
       expect(next).toHaveBeenCalled();
+    });
+  });
+
+  it('shows ✓ Saved after saving current recipe', async () => {
+    const { wrapper } = generateTestWrapper();
+    render(<StepAISuggestions {...baseProps} />, { wrapper });
+    fireEvent.click(screen.getByText('Save this recipe'));
+    await waitFor(() => {
+      expect(screen.getAllByText('✓ Saved').length).toBeGreaterThanOrEqual(1);
     });
   });
 });

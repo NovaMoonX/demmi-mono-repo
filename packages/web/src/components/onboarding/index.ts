@@ -9,6 +9,7 @@ export * from './StepGoalDetails';
 export * from './StepStarterIngredients';
 export * from './StepLovedMeal';
 export * from './StepDislikedMeal';
+export * from './StepProfileSummary';
 export * from './StepAISuggestions';
 export * from './StepComplete';
 export * from './types';

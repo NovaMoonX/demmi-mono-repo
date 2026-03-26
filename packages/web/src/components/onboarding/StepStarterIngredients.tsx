@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Input, Button } from '@moondreamsdev/dreamer-ui/components';
 import type { StepProps } from './types';
 
-export function StepStarterIngredients({ formData, update, next, skip }: StepProps) {
+export function StepStarterIngredients({ formData, update, next, skip, back }: StepProps) {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const items = formData._starterIngredients ?? [];
@@ -37,20 +37,6 @@ export function StepStarterIngredients({ formData, update, next, skip }: StepPro
         </p>
       </div>
 
-      <div className='flex gap-2'>
-        <Input
-          ref={inputRef}
-          id='starter-ingredient-input'
-          placeholder='e.g. eggs, olive oil…'
-          value={inputValue}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <Button variant='secondary' onClick={addItem} type='button'>
-          Add
-        </Button>
-      </div>
-
       {items.length > 0 && (
         <div className='flex flex-wrap gap-1.5'>
           {items.map((item) => (
@@ -72,7 +58,24 @@ export function StepStarterIngredients({ formData, update, next, skip }: StepPro
         </div>
       )}
 
+      <div className='flex gap-2'>
+        <Input
+          ref={inputRef}
+          id='starter-ingredient-input'
+          placeholder='e.g. eggs, olive oil…'
+          value={inputValue}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <Button variant='secondary' onClick={addItem} type='button'>
+          Add
+        </Button>
+      </div>
+
       <div className='flex items-center gap-3 pt-2'>
+        <Button variant='tertiary' onClick={back} type='button'>
+          ← Back
+        </Button>
         <Button variant='primary' onClick={next} type='button'>
           Add to my kitchen
         </Button>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import type { UserProfile } from '@lib/userProfile';
+import { listLocalModels, ollamaClient } from '@lib/ollama';
 import { useOnboardingStep } from '@hooks/useOnboardingStep';
 import { useAppDispatch } from '@store/hooks';
 import { saveUserProfile } from '@store/actions/userProfileActions';
@@ -19,12 +20,54 @@ import {
   StepStarterIngredients,
   StepLovedMeal,
   StepDislikedMeal,
+  StepProfileSummary,
   StepAISuggestions,
   StepComplete,
   type OnboardingFormData,
+  type SuggestedRecipe,
 } from '@components/onboarding';
 
 const GOAL_DETAILS_GOALS = ['track-macros', 'save-money', 'meal-prep'];
+
+const FALLBACK_RECIPES: SuggestedRecipe[] = [
+  {
+    title: 'Classic Pasta Bolognese',
+    category: 'dinner',
+    description: 'A hearty Italian meat sauce served over pasta.',
+  },
+  {
+    title: 'Overnight Oats',
+    category: 'breakfast',
+    description: 'Creamy oats prepared the night before with your choice of toppings.',
+  },
+  {
+    title: 'Vegetable Stir Fry',
+    category: 'lunch',
+    description: 'Quick and colorful mixed vegetables in a savory sauce.',
+  },
+];
+
+const SUGGESTION_SCHEMA = {
+  type: 'object',
+  required: ['recipes'],
+  properties: {
+    recipes: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['title', 'category', 'description'],
+        properties: {
+          title: { type: 'string' },
+          category: {
+            type: 'string',
+            enum: ['breakfast', 'lunch', 'dinner', 'snack', 'dessert'],
+          },
+          description: { type: 'string' },
+        },
+      },
+    },
+  },
+};
 
 function ScrollFade({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,6 +124,14 @@ export function Onboarding() {
   const dispatch = useAppDispatch();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<OnboardingFormData>({});
+  const [aiRecipes, setAiRecipes] = useState<SuggestedRecipe[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const aiStartedRef = useRef(false);
+  // Always keep formDataRef in sync so the generation effect reads the latest values
+  // at the moment it fires (not stale values from when the component first mounted).
+  const formDataRef = useRef(formData);
+  formDataRef.current = formData;
+
   const { visible } = useOnboardingStep(step);
 
   const update = (data: Partial<OnboardingFormData>) =>
@@ -121,7 +172,7 @@ export function Onboarding() {
         ),
       ),
     );
-    navigate('/');
+    navigate('/recipes');
   };
 
   const showGoalDetails = (formData.cookingGoal ?? []).some((g) =>
@@ -144,32 +195,112 @@ export function Onboarding() {
   const steps = [
     <StepWelcome key='welcome' {...stepProps} />,
     <StepGoal key='goal' {...stepProps} />,
+    ...(showGoalDetails ? [<StepGoalDetails key='goal-details' {...stepProps} />] : []),
     <StepDietary key='dietary' {...stepProps} />,
     <StepCuisines key='cuisines' {...stepProps} />,
     <StepHousehold key='household' {...stepProps} />,
     <StepSkill key='skill' {...stepProps} />,
     <StepCookTime key='cook-time' {...stepProps} />,
-    ...(showGoalDetails ? [<StepGoalDetails key='goal-details' {...stepProps} />] : []),
     <StepStarterIngredients key='starter-ingredients' {...stepProps} />,
     <StepLovedMeal key='loved-meal' {...stepProps} />,
     <StepDislikedMeal key='disliked-meal' {...stepProps} />,
-    <StepAISuggestions key='ai-suggestions' {...stepProps} />,
+    <StepProfileSummary key='profile-summary' {...stepProps} aiLoading={aiLoading} />,
+    <StepAISuggestions
+      key='ai-suggestions'
+      {...stepProps}
+      aiRecipes={aiRecipes}
+      aiLoading={aiLoading}
+    />,
     <StepComplete key='complete' {...stepProps} />,
   ];
+
+  const currentStepKey = steps[step]?.key as string | undefined;
+
+  // Start AI generation when entering the profile-summary step
+  useEffect(() => {
+    if (currentStepKey !== 'profile-summary') return;
+    if (aiStartedRef.current) return;
+    aiStartedRef.current = true;
+    setAiLoading(true);
+
+    let cancelled = false;
+    const data = formDataRef.current;
+
+    async function generate() {
+      try {
+        const models = await listLocalModels();
+        if (cancelled) return;
+        if (models.length === 0) {
+          setAiRecipes(FALLBACK_RECIPES);
+          setAiLoading(false);
+          return;
+        }
+
+        const model = models[0];
+        const goals = (data.cookingGoal ?? []).join(', ') || 'general cooking';
+        const dietary = (data.dietaryRestrictions ?? []).join(', ') || 'none';
+        const cuisines = (data.cuisinePreferences ?? []).join(', ') || 'any';
+        const skill = data.skillLevel ?? 'intermediate';
+        const cookTime = data.cookTimePreference ?? 'any';
+
+        const response = await ollamaClient.chat({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a recipe suggestion assistant. Suggest 3 recipes that match the user profile. Return valid JSON only.',
+            },
+            {
+              role: 'user',
+              content: `Cooking goals: ${goals}\nDietary restrictions: ${dietary}\nCuisine preferences: ${cuisines}\nSkill level: ${skill}\nCook time preference: ${cookTime}\n\nSuggest 3 recipes.`,
+            },
+          ],
+          stream: false,
+          format: SUGGESTION_SCHEMA,
+        });
+
+        if (cancelled) return;
+
+        // JSON.parse may throw on malformed LLM output — caught by the outer try-catch
+        const parsed = JSON.parse(response.message.content);
+        const suggested: SuggestedRecipe[] = Array.isArray(parsed.recipes)
+          ? parsed.recipes.slice(0, 3)
+          : FALLBACK_RECIPES;
+
+        setAiRecipes(suggested.length > 0 ? suggested : FALLBACK_RECIPES);
+      } catch {
+        if (!cancelled) {
+          setAiRecipes(FALLBACK_RECIPES);
+        }
+      } finally {
+        if (!cancelled) {
+          setAiLoading(false);
+        }
+      }
+    }
+
+    generate();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentStepKey]);
 
   const lastStepIndex = steps.length - 1;
   const visibleStepCount = lastStepIndex - 1; // exclude welcome (0) and complete (last)
   const progressPercent =
     step === 0 ? 0 : Math.round(((step - 1) / visibleStepCount) * 100);
 
-  const currentStepKey = steps[step]?.key as string | undefined;
   const isSelfNavigating = ['starter-ingredients', 'ai-suggestions', 'complete'].includes(
     currentStepKey ?? '',
   );
 
+  const hideSkip =
+    currentStepKey === 'goal' || currentStepKey === 'goal-details';
+
   const isNextDisabled =
-    (step === 1 && !formData.cookingGoal?.length) ||
-    (step === 4 && formData.householdSize === null);
+    (currentStepKey === 'goal' && !formData.cookingGoal?.length) ||
+    (currentStepKey === 'household' && formData.householdSize == null);
 
   const showHeader = step > 0 && step < lastStepIndex;
 
@@ -226,9 +357,11 @@ export function Onboarding() {
                 ← Previous
               </Button>
               <div className='flex items-center gap-2'>
-                <Button variant='tertiary' onClick={skip}>
-                  Skip
-                </Button>
+                {!hideSkip && (
+                  <Button variant='tertiary' onClick={skip}>
+                    Skip
+                  </Button>
+                )}
                 <Button variant='primary' onClick={next} disabled={isNextDisabled}>
                   Next →
                 </Button>
