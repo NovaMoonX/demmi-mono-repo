@@ -4,15 +4,27 @@ import { Button } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import type { UserProfile } from '@lib/userProfile';
 import { useOnboardingStep } from '@hooks/useOnboardingStep';
+import { useAppDispatch } from '@store/hooks';
+import { saveUserProfile } from '@store/actions/userProfileActions';
+import { createIngredient } from '@store/actions/ingredientActions';
 import {
   StepWelcome,
   StepGoal,
   StepDietary,
   StepCuisines,
   StepHousehold,
+  StepSkill,
+  StepCookTime,
+  StepGoalDetails,
+  StepStarterIngredients,
+  StepLovedMeal,
+  StepDislikedMeal,
+  StepAISuggestions,
+  StepComplete,
+  type OnboardingFormData,
 } from '@components/onboarding';
 
-const TOTAL_STEPS = 5;
+const GOAL_DETAILS_GOALS = ['track-macros', 'save-money', 'meal-prep'];
 
 function ScrollFade({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,15 +78,66 @@ function ScrollFade({ children }: { children: React.ReactNode }) {
 
 export function Onboarding() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<Partial<UserProfile>>({});
+  const [formData, setFormData] = useState<OnboardingFormData>({});
   const { visible } = useOnboardingStep(step);
 
-  const next = () => setStep((s) => s + 1);
+  const update = (data: Partial<OnboardingFormData>) =>
+    setFormData((prev) => ({ ...prev, ...data }));
+
+  const handleCompletion = async () => {
+    const { _starterIngredients, ...profileData } = formData;
+    dispatch(
+      saveUserProfile({
+        ...(profileData as Partial<UserProfile>),
+        onboardingCompletedAt: Date.now(),
+      }),
+    );
+    await Promise.all(
+      (_starterIngredients ?? []).map((name) =>
+        dispatch(
+          createIngredient({
+            name,
+            type: 'other',
+            imageUrl: '',
+            nutrients: {
+              protein: 0,
+              carbs: 0,
+              fat: 0,
+              fiber: 0,
+              sugar: 0,
+              sodium: 0,
+              calories: 0,
+            },
+            currentAmount: 1,
+            servingSize: 1,
+            unit: 'piece',
+            otherUnit: null,
+            products: [],
+            defaultProductId: null,
+            barcode: null,
+          }),
+        ),
+      ),
+    );
+    navigate('/');
+  };
+
+  const showGoalDetails = (formData.cookingGoal ?? []).some((g) =>
+    GOAL_DETAILS_GOALS.includes(g),
+  );
+
+  const next = () => {
+    if (step >= steps.length - 1) {
+      handleCompletion();
+    } else {
+      setStep((s) => s + 1);
+    }
+  };
+
   const previous = () => setStep((s) => s - 1);
   const skip = () => next();
-  const update = (data: Partial<UserProfile>) =>
-    setFormData((prev) => ({ ...prev, ...data }));
 
   const stepProps = { formData, update, next, skip, back: previous };
 
@@ -84,21 +147,39 @@ export function Onboarding() {
     <StepDietary key='dietary' {...stepProps} />,
     <StepCuisines key='cuisines' {...stepProps} />,
     <StepHousehold key='household' {...stepProps} />,
+    <StepSkill key='skill' {...stepProps} />,
+    <StepCookTime key='cook-time' {...stepProps} />,
+    ...(showGoalDetails ? [<StepGoalDetails key='goal-details' {...stepProps} />] : []),
+    <StepStarterIngredients key='starter-ingredients' {...stepProps} />,
+    <StepLovedMeal key='loved-meal' {...stepProps} />,
+    <StepDislikedMeal key='disliked-meal' {...stepProps} />,
+    <StepAISuggestions key='ai-suggestions' {...stepProps} />,
+    <StepComplete key='complete' {...stepProps} />,
   ];
 
-  const progressPercent = step === 0 ? 0 : Math.round((step / (TOTAL_STEPS - 1)) * 100);
+  const lastStepIndex = steps.length - 1;
+  const visibleStepCount = lastStepIndex - 1; // exclude welcome (0) and complete (last)
+  const progressPercent =
+    step === 0 ? 0 : Math.round(((step - 1) / visibleStepCount) * 100);
+
+  const currentStepKey = steps[step]?.key as string | undefined;
+  const isSelfNavigating = ['starter-ingredients', 'ai-suggestions', 'complete'].includes(
+    currentStepKey ?? '',
+  );
 
   const isNextDisabled =
     (step === 1 && !formData.cookingGoal?.length) ||
     (step === 4 && formData.householdSize === null);
 
+  const showHeader = step > 0 && step < lastStepIndex;
+
   return (
     <div className='bg-background flex h-screen flex-col'>
-      {step > 0 && (
+      {showHeader && (
         <header className='border-border shrink-0 border-b px-4 py-3'>
           <div className='mx-auto max-w-lg space-y-2'>
             <span className='text-muted-foreground text-xs'>
-              Step {step} of {TOTAL_STEPS - 1}
+              Step {step} of {visibleStepCount}
             </span>
             <div className='bg-muted h-1.5 w-full overflow-hidden rounded-full'>
               <div
@@ -113,20 +194,20 @@ export function Onboarding() {
       <div
         className={join(
           'flex min-h-0 flex-1 transition-opacity duration-300',
-          step === 0 ? 'items-center justify-center' : '',
+          step === 0 || step === lastStepIndex ? 'items-center justify-center' : '',
         )}
         style={{ opacity: visible ? 1 : 0 }}
       >
-        {step === 0 ? (
-          <div className='mx-auto max-w-lg px-4'>{steps[0]}</div>
+        {step === 0 || step === lastStepIndex ? (
+          <div className='mx-auto max-w-lg px-4'>{steps[step]}</div>
         ) : (
           <ScrollFade>{steps[step]}</ScrollFade>
         )}
       </div>
 
-      <footer className='border-border shrink-0 border-t px-4 py-3'>
-        <div className='mx-auto max-w-lg'>
-          {step === 0 ? (
+      {step === 0 ? (
+        <footer className='border-border shrink-0 border-t px-4 py-3'>
+          <div className='mx-auto max-w-lg'>
             <div className='flex items-center justify-between gap-3'>
               <Button variant='secondary' onClick={() => navigate('/')}>
                 Skip setup
@@ -135,7 +216,11 @@ export function Onboarding() {
                 Let's go
               </Button>
             </div>
-          ) : (
+          </div>
+        </footer>
+      ) : !isSelfNavigating ? (
+        <footer className='border-border shrink-0 border-t px-4 py-3'>
+          <div className='mx-auto max-w-lg'>
             <div className='flex items-center justify-between gap-3'>
               <Button variant='secondary' onClick={previous} disabled={step <= 1}>
                 ← Previous
@@ -149,9 +234,9 @@ export function Onboarding() {
                 </Button>
               </div>
             </div>
-          )}
-        </div>
-      </footer>
+          </div>
+        </footer>
+      ) : null}
     </div>
   );
 }

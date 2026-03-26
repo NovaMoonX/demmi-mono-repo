@@ -8,8 +8,29 @@ vi.mock('@hooks/useAuth', () => ({
 
 import { useAuth } from '@hooks/useAuth';
 import { ProtectedRoutes } from './ProtectedRoutes';
+import type { UserProfile } from '@lib/userProfile';
 
 const mockUseAuth = vi.mocked(useAuth);
+
+const mockProfile: UserProfile = {
+  userId: 'u1',
+  displayName: 'Test',
+  dietaryRestrictions: [],
+  customDietaryRestrictions: [],
+  avoidIngredients: [],
+  cuisinePreferences: [],
+  cookingGoal: null,
+  cookingGoalDetails: null,
+  householdSize: 1,
+  skillLevel: null,
+  cookTimePreference: null,
+  lovedMealDescription: null,
+  dislikedMealDescription: null,
+  autoPantryDeduct: null,
+  createdAt: 1000,
+  updatedAt: 1000,
+  onboardingCompletedAt: 1700000000000,
+};
 
 describe('ProtectedRoutes', () => {
   it('shows loading when auth is loading', () => {
@@ -62,6 +83,76 @@ describe('ProtectedRoutes', () => {
     const { wrapper } = generateTestWrapper({
       preloadedState: {
         demo: { isActive: true, isHydrated: true } as never,
+      },
+    });
+    render(<ProtectedRoutes />, { wrapper });
+  });
+
+  it('redirects to /onboarding when profile has onboardingCompletedAt === null', () => {
+    mockUseAuth.mockReturnValue({
+      user: { uid: 'u1', email: 'a@b.com', emailVerified: true },
+      loading: false,
+    } as never);
+
+    const incompleteProfile: UserProfile = { ...mockProfile, onboardingCompletedAt: null };
+
+    const { wrapper } = generateTestWrapper({
+      route: '/chat',
+      preloadedState: {
+        demo: { isActive: false, isHydrated: true } as never,
+        userProfile: { profile: incompleteProfile, loading: false, error: null } as never,
+      },
+    });
+    render(<ProtectedRoutes />, { wrapper });
+    // Component renders Navigate to="/onboarding" — should not crash
+  });
+
+  it('does not redirect to /onboarding when already on /onboarding', () => {
+    mockUseAuth.mockReturnValue({
+      user: { uid: 'u1', email: 'a@b.com', emailVerified: true },
+      loading: false,
+    } as never);
+
+    const incompleteProfile: UserProfile = { ...mockProfile, onboardingCompletedAt: null };
+
+    const { wrapper } = generateTestWrapper({
+      route: '/onboarding',
+      preloadedState: {
+        demo: { isActive: false, isHydrated: true } as never,
+        userProfile: { profile: incompleteProfile, loading: false, error: null } as never,
+      },
+    });
+    // Should not crash — no infinite redirect
+    render(<ProtectedRoutes />, { wrapper });
+  });
+
+  it('does not redirect when onboardingCompletedAt is a timestamp', () => {
+    mockUseAuth.mockReturnValue({
+      user: { uid: 'u1', email: 'a@b.com', emailVerified: true },
+      loading: false,
+    } as never);
+
+    const { wrapper } = generateTestWrapper({
+      route: '/chat',
+      preloadedState: {
+        demo: { isActive: false, isHydrated: true } as never,
+        userProfile: { profile: mockProfile, loading: false, error: null } as never,
+      },
+    });
+    render(<ProtectedRoutes />, { wrapper });
+  });
+
+  it('does not redirect when profile is null (not yet loaded)', () => {
+    mockUseAuth.mockReturnValue({
+      user: { uid: 'u1', email: 'a@b.com', emailVerified: true },
+      loading: false,
+    } as never);
+
+    const { wrapper } = generateTestWrapper({
+      route: '/chat',
+      preloadedState: {
+        demo: { isActive: false, isHydrated: true } as never,
+        userProfile: { profile: null, loading: false, error: null } as never,
       },
     });
     render(<ProtectedRoutes />, { wrapper });
