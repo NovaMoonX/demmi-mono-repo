@@ -21,7 +21,7 @@ describe('StepHousehold', () => {
   it('renders emoji for each option', () => {
     const { wrapper } = generateTestWrapper();
     render(<StepHousehold {...baseProps} />, { wrapper });
-    expect(screen.getByText('🧑')).toBeInTheDocument();
+    expect(screen.getByText('🧍‍♂️')).toBeInTheDocument();
     expect(screen.getByText('👫')).toBeInTheDocument();
     expect(screen.getByText('👨‍👩‍👧')).toBeInTheDocument();
   });
