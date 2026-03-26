@@ -31,7 +31,7 @@ export type WeightUnit = 'kg' | 'lbs';
 export interface CookingGoalDetails {
   'lose-weight': { currentWeight: number; goalWeight: number; weightUnit: WeightUnit } | null;
   'track-macros': { protein: number; carbs: number; fat: number } | null;
-  'save-money': { weeklyBudget: number } | null;
+  'save-money': { weeklyBudget: number; budgetCurrency: string } | null;
   'save-time': { maxCookMinutes: number } | null;
   'reduce-waste': { trackLeftovers: boolean } | null;
   'meal-prep': { daysAhead: number } | null;
