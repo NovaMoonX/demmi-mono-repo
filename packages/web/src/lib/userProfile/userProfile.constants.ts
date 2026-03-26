@@ -24,7 +24,7 @@ export const COOKING_GOAL_OPTIONS: { value: CookingGoal; label: string; descript
 ];
 
 export const HOUSEHOLD_SIZE_OPTIONS: { value: number; label: string; emoji: string }[] = [
-  { value: 1, label: 'Just me', emoji: '🧑' },
+  { value: 1, label: 'Just me', emoji: '🧍‍♂️' },
   { value: 2, label: '2 people', emoji: '👫' },
   { value: 3, label: '3–4 people', emoji: '👨‍👩‍👧' },
   { value: 5, label: '5+ people', emoji: '👨‍👩‍👧‍👦' },
