@@ -119,6 +119,16 @@ function ScrollFade({ children }: { children: React.ReactNode }) {
   );
 }
 
+type StepItem = {
+  key: string;
+  component: React.ReactElement;
+  // Optional overrides per step. `nextDisabled` can be a boolean or a function
+  // that receives the latest form data.
+  selfNavigating?: boolean;
+  hideSkip?: boolean;
+  nextDisabled?: boolean | ((data: OnboardingFormData) => boolean);
+};
+
 export function Onboarding() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -180,7 +190,7 @@ export function Onboarding() {
   );
 
   const next = () => {
-    if (step >= steps.length - 1) {
+    if (step >= stepsConfig.length - 1) {
       handleCompletion();
     } else {
       setStep((s) => s + 1);
@@ -192,29 +202,51 @@ export function Onboarding() {
 
   const stepProps = { formData, update, next, skip, back: previous };
 
-  const steps = [
-    <StepWelcome key='welcome' {...stepProps} />,
-    <StepGoal key='goal' {...stepProps} />,
-    ...(showGoalDetails ? [<StepGoalDetails key='goal-details' {...stepProps} />] : []),
-    <StepDietary key='dietary' {...stepProps} />,
-    <StepCuisines key='cuisines' {...stepProps} />,
-    <StepHousehold key='household' {...stepProps} />,
-    <StepSkill key='skill' {...stepProps} />,
-    <StepCookTime key='cook-time' {...stepProps} />,
-    <StepStarterIngredients key='starter-ingredients' {...stepProps} />,
-    <StepLovedMeal key='loved-meal' {...stepProps} />,
-    <StepDislikedMeal key='disliked-meal' {...stepProps} />,
-    <StepProfileSummary key='profile-summary' {...stepProps} aiLoading={aiLoading} />,
-    <StepAISuggestions
-      key='ai-suggestions'
-      {...stepProps}
-      aiRecipes={aiRecipes}
-      aiLoading={aiLoading}
-    />,
-    <StepComplete key='complete' {...stepProps} />,
+  const stepsConfig: StepItem[] = [
+    { key: 'welcome', component: <StepWelcome key='welcome' {...stepProps} /> },
+    { key: 'goal', component: <StepGoal key='goal' {...stepProps} /> },
+    // goal-details is conditionally inserted below when showGoalDetails is true
+    { key: 'dietary', component: <StepDietary key='dietary' {...stepProps} /> },
+    { key: 'cuisines', component: <StepCuisines key='cuisines' {...stepProps} /> },
+    { key: 'household', component: <StepHousehold key='household' {...stepProps} /> },
+    { key: 'skill', component: <StepSkill key='skill' {...stepProps} /> },
+    { key: 'cook-time', component: <StepCookTime key='cook-time' {...stepProps} /> },
+    {
+      key: 'starter-ingredients',
+      component: <StepStarterIngredients key='starter-ingredients' {...stepProps} />,
+      selfNavigating: true,
+    },
+    { key: 'loved-meal', component: <StepLovedMeal key='loved-meal' {...stepProps} /> },
+    { key: 'disliked-meal', component: <StepDislikedMeal key='disliked-meal' {...stepProps} /> },
+    {
+      key: 'profile-summary',
+      component: <StepProfileSummary key='profile-summary' {...stepProps} aiLoading={aiLoading} />,
+    },
+    {
+      key: 'ai-suggestions',
+      component: (
+        <StepAISuggestions
+          key='ai-suggestions'
+          {...stepProps}
+          aiRecipes={aiRecipes}
+          aiLoading={aiLoading}
+        />
+      ),
+      selfNavigating: true,
+    },
+    { key: 'complete', component: <StepComplete key='complete' {...stepProps} />, selfNavigating: true },
   ];
 
-  const currentStepKey = steps[step]?.key as string | undefined;
+  // Insert goal details step dynamically based on the current formData
+  if (showGoalDetails) {
+    const insertIndex = 2; // after 'goal'
+    stepsConfig.splice(insertIndex, 0, {
+      key: 'goal-details',
+      component: <StepGoalDetails key='goal-details' {...stepProps} />,
+    });
+  }
+
+  const currentStepKey = stepsConfig[step]?.key as string | undefined;
 
   // Start AI generation when entering the profile-summary step
   useEffect(() => {
@@ -286,21 +318,30 @@ export function Onboarding() {
     };
   }, [currentStepKey]);
 
-  const lastStepIndex = steps.length - 1;
+  const lastStepIndex = stepsConfig.length - 1;
   const visibleStepCount = lastStepIndex - 1; // exclude welcome (0) and complete (last)
   const progressPercent =
     step === 0 ? 0 : Math.round(((step - 1) / visibleStepCount) * 100);
 
-  const isSelfNavigating = ['starter-ingredients', 'ai-suggestions', 'complete'].includes(
-    currentStepKey ?? '',
-  );
+  const isSelfNavigating = stepsConfig[step]?.selfNavigating ?? false;
 
   const hideSkip =
-    currentStepKey === 'goal' || currentStepKey === 'goal-details';
+    stepsConfig[step]?.hideSkip ?? (currentStepKey === 'goal' || currentStepKey === 'goal-details');
 
-  const isNextDisabled =
-    (currentStepKey === 'goal' && !formData.cookingGoal?.length) ||
-    (currentStepKey === 'household' && formData.householdSize == null);
+  const computeNextDisabled = () => {
+    const cfg = stepsConfig[step];
+    if (!cfg) return false;
+    if (typeof cfg.nextDisabled === 'function') return cfg.nextDisabled(formData);
+    if (typeof cfg.nextDisabled === 'boolean') return cfg.nextDisabled;
+
+    // fallback default rules
+    return (
+      (currentStepKey === 'goal' && !formData.cookingGoal?.length) ||
+      (currentStepKey === 'household' && formData.householdSize == null)
+    );
+  };
+
+  const isNextDisabled = computeNextDisabled();
 
   const showHeader = step > 0 && step < lastStepIndex;
 
@@ -330,10 +371,10 @@ export function Onboarding() {
         style={{ opacity: visible ? 1 : 0 }}
       >
         {step === 0 || step === lastStepIndex ? (
-          <div className='mx-auto max-w-lg px-4'>{steps[step]}</div>
-        ) : (
-          <ScrollFade>{steps[step]}</ScrollFade>
-        )}
+            <div className='mx-auto max-w-lg px-4'>{stepsConfig[step]?.component}</div>
+          ) : (
+            <ScrollFade>{stepsConfig[step]?.component}</ScrollFade>
+          )}
       </div>
 
       {step === 0 ? (
