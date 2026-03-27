@@ -1,7 +1,7 @@
 import type { RecipeCategory, RecipeCuisineType } from '@lib/recipes';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 import { store } from '@store/index';
-import { ollamaClient } from '../ollama.service';
+import { ollamaChatSingle } from '../ollama.service';
 import {
   RECIPE_NAME_PROMPT,
   RECIPE_INFO_PROMPT,
@@ -105,7 +105,7 @@ export const proposeNameStep: ActionStep<RecipeResult, 'proposeName'> = {
       return { stepName: 'proposeName', data: {}, cancelled: true };
     }
 
-    const response = await ollamaClient.chat({
+    const response = await ollamaChatSingle({
       model,
       messages: [
         { role: 'system', content: RECIPE_NAME_PROMPT },
@@ -117,7 +117,6 @@ export const proposeNameStep: ActionStep<RecipeResult, 'proposeName'> = {
           ? [{ role: 'user' as const, content: `Change context: ${context.previousResults.additionalContext}` }]
           : []),
       ],
-      stream: false,
       format: RECIPE_NAME_SCHEMA,
     });
 
@@ -147,7 +146,7 @@ export const generateBasicInfoStep: ActionStep<RecipeResult, 'generateBasicInfo'
       return { stepName: 'generateBasicInfo', data: {}, cancelled: true };
     }
 
-    const response = await ollamaClient.chat({
+    const response = await ollamaChatSingle({
       model,
       messages: [
         { role: 'system', content: RECIPE_INFO_PROMPT },
@@ -157,7 +156,6 @@ export const generateBasicInfoStep: ActionStep<RecipeResult, 'generateBasicInfo'
         },
         ...formatContextMessages(context.messages),
       ],
-      stream: false,
       format: RECIPE_INFO_SCHEMA,
     });
 
@@ -192,7 +190,7 @@ export const generateDescriptionStep: ActionStep<RecipeResult, 'generateDescript
       return { stepName: 'generateDescription', data: {}, cancelled: true };
     }
 
-    const response = await ollamaClient.chat({
+    const response = await ollamaChatSingle({
       model,
       messages: [
         { role: 'system', content: RECIPE_DESCRIPTION_PROMPT },
@@ -202,7 +200,6 @@ export const generateDescriptionStep: ActionStep<RecipeResult, 'generateDescript
         },
         ...formatContextMessages(context.messages),
       ],
-      stream: false,
       format: RECIPE_DESCRIPTION_SCHEMA,
     });
 
@@ -233,7 +230,7 @@ export const generateIngredientsStep: ActionStep<RecipeResult, 'generateIngredie
       return { stepName: 'generateIngredients', data: {}, cancelled: true };
     }
 
-    const response = await ollamaClient.chat({
+    const response = await ollamaChatSingle({
       model,
       messages: [
         { role: 'system', content: RECIPE_INGREDIENTS_PROMPT },
@@ -243,7 +240,6 @@ export const generateIngredientsStep: ActionStep<RecipeResult, 'generateIngredie
         },
         ...formatContextMessages(context.messages),
       ],
-      stream: false,
       format: RECIPE_INGREDIENTS_SCHEMA,
     });
 
@@ -277,7 +273,7 @@ export const generateInstructionsStep: ActionStep<RecipeResult, 'generateInstruc
       return { stepName: 'generateInstructions', data: {}, cancelled: true };
     }
 
-    const response = await ollamaClient.chat({
+    const response = await ollamaChatSingle({
       model,
       messages: [
         { role: 'system', content: RECIPE_INSTRUCTIONS_PROMPT },
@@ -287,7 +283,6 @@ export const generateInstructionsStep: ActionStep<RecipeResult, 'generateInstruc
         },
         ...formatContextMessages(context.messages),
       ],
-      stream: false,
       format: RECIPE_INSTRUCTIONS_SCHEMA,
     });
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import type { UserProfile } from '@lib/userProfile';
-import { listLocalModels, ollamaClient } from '@lib/ollama';
+import { listLocalModels, ollamaChatSingle } from '@lib/ollama';
 import { useOnboardingStep } from '@hooks/useOnboardingStep';
 import { useAppDispatch } from '@store/hooks';
 import { saveUserProfile } from '@store/actions/userProfileActions';
@@ -275,7 +275,7 @@ export function Onboarding() {
         const skill = data.skillLevel ?? 'intermediate';
         const cookTime = data.cookTimePreference ?? 'any';
 
-        const response = await ollamaClient.chat({
+        const response = await ollamaChatSingle ({
           model,
           messages: [
             {
@@ -288,7 +288,6 @@ export function Onboarding() {
               content: `Cooking goals: ${goals}\nDietary restrictions: ${dietary}\nCuisine preferences: ${cuisines}\nSkill level: ${skill}\nCook time preference: ${cookTime}\n\nSuggest 3 recipes.`,
             },
           ],
-          stream: false,
           format: SUGGESTION_SCHEMA,
         });
 

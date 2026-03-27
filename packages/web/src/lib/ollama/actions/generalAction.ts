@@ -1,6 +1,6 @@
 import {
   extractPartialResponse,
-  ollamaClient,
+  ollamaChatStream,
   parseGeneralResponse,
 } from '../ollama.service';
 import { GENERAL_PROMPT } from '../prompts';
@@ -23,7 +23,7 @@ export const generalAction = {
     const { messages } = context;
     const { abortSignal, onProgress } = runtime;
 
-    const stream = await ollamaClient.chat({
+    const stream = await ollamaChatStream({
       model,
       messages: [
         { role: 'system', content: GENERAL_PROMPT },
@@ -32,7 +32,6 @@ export const generalAction = {
           content: m.rawContent ?? m.content,
         })),
       ],
-      stream: true,
       format: GENERAL_SCHEMA,
     });
 

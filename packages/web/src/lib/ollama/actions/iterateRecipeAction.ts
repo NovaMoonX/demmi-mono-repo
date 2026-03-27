@@ -1,7 +1,7 @@
 import type { RecipeCategory, RecipeCuisineType } from '@lib/recipes';
 import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 import { store } from '@store/index';
-import { ollamaClient } from '../ollama.service';
+import { ollamaChatSingle } from '../ollama.service';
 import {
   RECIPE_ITERATION_VALIDATION_PROMPT,
   RECIPE_ITERATION_SUMMARY_PROMPT,
@@ -234,14 +234,13 @@ export const detectFieldsToUpdateStep: ActionStep<
       const fieldForPrompt = formatFieldForPrompt(existingProposal, field);
       const systemContent = `${buildFieldDetectionPrompt(field, priorDecisionsText)}\n\nCurrent ${field}:\n${fieldForPrompt}`;
 
-      const response = await ollamaClient.chat({
+      const response = await ollamaChatSingle({
         model,
         messages: [
           { role: 'system', content: systemContent },
           ...formatContextMessages(context.messages),
         ],
-        stream: false,
-        format: RECIPE_FIELD_DETECTION_SCHEMA,
+          format: RECIPE_FIELD_DETECTION_SCHEMA,
       });
 
       if (abortSignal?.aborted) {
@@ -316,7 +315,7 @@ export const validateIterationRequestStep: ActionStep<
     const lastUserContent =
       lastMessage?.rawContent ?? lastMessage?.content ?? '';
 
-    const response = await ollamaClient.chat({
+    const response = await ollamaChatSingle({
       model,
       messages: [
         {
@@ -325,7 +324,6 @@ export const validateIterationRequestStep: ActionStep<
         },
         { role: 'user', content: lastUserContent },
       ],
-      stream: false,
       format: RECIPE_ITERATION_VALIDATION_SCHEMA,
     });
 
@@ -384,13 +382,12 @@ export const summarizeIterationStep: ActionStep<RecipeIterationResult, 'summariz
       ? `Recipe: "${recipeName}"\nChanges made:\n${changeLines}`
       : `Changes made:\n${changeLines}`;
 
-    const response = await ollamaClient.chat({
+    const response = await ollamaChatSingle({
       model,
       messages: [
         { role: 'system', content: RECIPE_ITERATION_SUMMARY_PROMPT },
         { role: 'user', content: userContent },
       ],
-      stream: false,
       format: RECIPE_ITERATION_SUMMARY_SCHEMA,
     });
 

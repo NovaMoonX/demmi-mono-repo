@@ -1,10 +1,9 @@
-import { app, BrowserWindow, protocol, net } from 'electron';
+import { app, BrowserWindow, protocol, net, ipcMain, Notification } from 'electron';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { installExtension, REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { registerIpcHandlers } from './ipc/index';
+import { OLLAMA_BASE_URL } from './ipc/handlers/ollama';
 
 const WEB_DIST_PATH = path.join(__dirname, '..', 'web-dist');
 
@@ -15,7 +14,9 @@ protocol.registerSchemesAsPrivileged([
 	},
 ]);
 
-function createWindow(): void {
+registerIpcHandlers(ipcMain);
+
+function createWindow(isPackaged: boolean): void {
 	const mainWindow = new BrowserWindow({
 		width: 1200,
 		height: 800,
@@ -25,10 +26,15 @@ function createWindow(): void {
 		webPreferences: {
 			nodeIntegration: false,
 			contextIsolation: true,
+			preload: path.join(__dirname, 'preload.js'),
 		},
 	});
 
 	mainWindow.loadURL('app://localhost/');
+
+	if (!isPackaged) {
+		mainWindow.webContents.openDevTools();
+	}
 }
 
 app.whenReady().then(() => {
@@ -58,11 +64,25 @@ app.whenReady().then(() => {
 			.catch((err: Error) => console.log('An error occurred: ', err));
 	}
 
-	createWindow();
+	createWindow(isPackaged);
+
+	// Check if Ollama is running and notify the user if it is not.
+	fetch(`${OLLAMA_BASE_URL}/api/tags`)
+		.then((res) => {
+			if (!res.ok) throw new Error('Ollama not running');
+		})
+		.catch(() => {
+			if (Notification.isSupported()) {
+				new Notification({
+					title: 'Ollama is not running',
+					body: 'AI chat is disabled. Open Ollama to enable it.',
+				}).show();
+			}
+		});
 
 	app.on('activate', () => {
 		if (BrowserWindow.getAllWindows().length === 0) {
-			createWindow();
+			createWindow(isPackaged);
 		}
 	});
 });
@@ -72,3 +92,4 @@ app.on('window-all-closed', () => {
 		app.quit();
 	}
 });
+
