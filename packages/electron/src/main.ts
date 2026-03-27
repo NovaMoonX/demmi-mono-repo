@@ -1,10 +1,7 @@
 import { app, BrowserWindow, protocol, net, ipcMain, Notification } from 'electron';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { installExtension, REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const WEB_DIST_PATH = path.join(__dirname, '..', 'web-dist');
 
@@ -15,7 +12,7 @@ protocol.registerSchemesAsPrivileged([
 	},
 ]);
 
-function createWindow(): void {
+function createWindow(isPackaged: boolean): void {
 	const mainWindow = new BrowserWindow({
 		width: 1200,
 		height: 800,
@@ -30,6 +27,10 @@ function createWindow(): void {
 	});
 
 	mainWindow.loadURL('app://localhost/');
+
+	if (!isPackaged) {
+		mainWindow.webContents.openDevTools();
+	}
 }
 
 const OLLAMA_BASE_URL = 'http://localhost:11434';
@@ -154,7 +155,7 @@ app.whenReady().then(() => {
 			.catch((err: Error) => console.log('An error occurred: ', err));
 	}
 
-	createWindow();
+	createWindow(isPackaged);
 
 	// Check if Ollama is running and notify the user if it is not.
 	fetch(`${OLLAMA_BASE_URL}/api/tags`)
@@ -172,7 +173,7 @@ app.whenReady().then(() => {
 
 	app.on('activate', () => {
 		if (BrowserWindow.getAllWindows().length === 0) {
-			createWindow();
+			createWindow(isPackaged);
 		}
 	});
 });

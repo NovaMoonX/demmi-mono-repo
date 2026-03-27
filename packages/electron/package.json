@@ -2,7 +2,6 @@
   "name": "@demmi/electron",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "main": "dist/main.js",
   "scripts": {
     "dev": "npm run build:web && npm run copy:web && npx concurrently \"npm run watch\" \"npm run electron:dev\"",

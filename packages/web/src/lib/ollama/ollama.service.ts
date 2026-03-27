@@ -10,6 +10,7 @@ const MIN_ASSISTANT_MESSAGE_LENGTH = 200;
 const MAX_RECENT_SUMMARIES = 10;
 
 export const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
+console.log('isElectron', isElectron);
 
 function getElectronAPI(): ElectronAPI {
   if (!window.electronAPI) {
