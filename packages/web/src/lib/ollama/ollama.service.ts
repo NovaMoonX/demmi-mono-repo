@@ -9,6 +9,20 @@ const MIN_USER_MESSAGE_LENGTH = 100;
 const MIN_ASSISTANT_MESSAGE_LENGTH = 200;
 const MAX_RECENT_SUMMARIES = 10;
 
+export const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
+
+function getElectronAPI(): ElectronAPI {
+  if (!window.electronAPI) {
+    throw new Error('window.electronAPI is not available outside of Electron');
+  }
+  return window.electronAPI;
+}
+
+export interface OllamaChatStream {
+  [Symbol.asyncIterator](): AsyncIterator<{ message: { content: string } }>;
+  abort(): void;
+}
+
 /**
  * Intent detection — classifies the user's current message into a supported action type.
  */
@@ -47,8 +61,14 @@ const INTENT_DETECTION_SCHEMA: Record<string, unknown> = {
 export const ollamaClient = new Ollama();
 
 export async function listLocalModels(): Promise<string[]> {
-  const response = await ollamaClient.list();
-  const allModels = response.models.map((m) => m.name);
+  let allModels: string[];
+
+  if (isElectron) {
+    allModels = await getElectronAPI().listOllamaModels();
+  } else {
+    const response = await ollamaClient.list();
+    allModels = response.models.map((m) => m.name);
+  }
 
   const textModels = allModels.filter((name) => {
     const lowerName = name.toLowerCase();
@@ -60,6 +80,119 @@ export async function listLocalModels(): Promise<string[]> {
   });
 
   return textModels;
+}
+
+/**
+ * Streams a chat completion, routing through Electron IPC when available.
+ * Returns an async iterable that yields chunks of `{ message: { content: string } }`.
+ */
+export async function ollamaChatStream(params: {
+  model: string;
+  messages: Array<{ role: string; content: string }>;
+  format?: string | object;
+  options?: Record<string, unknown>;
+}): Promise<OllamaChatStream> {
+  if (isElectron) {
+    const api = getElectronAPI();
+    const queue: Array<{ message: { content: string } }> = [];
+    let isDone = false;
+    let aborted = false;
+    let wakeUp: (() => void) | null = null;
+
+    api.onChunk((chunk) => {
+      if (!aborted) {
+        queue.push(chunk);
+        wakeUp?.();
+        wakeUp = null;
+      }
+    });
+
+    api.onDone(() => {
+      isDone = true;
+      wakeUp?.();
+      wakeUp = null;
+    });
+
+    void api.chatStream({
+      model: params.model,
+      messages: params.messages,
+      format: params.format as unknown,
+      options: params.options as unknown,
+    }).catch(() => {
+      isDone = true;
+      wakeUp?.();
+      wakeUp = null;
+    });
+
+    async function* generate() {
+      try {
+        while ((!isDone || queue.length > 0) && !aborted) {
+          if (queue.length > 0) {
+            const chunk = queue.shift();
+            if (chunk) yield chunk;
+          } else {
+            await new Promise<void>((resolve) => {
+              wakeUp = resolve;
+            });
+          }
+        }
+      } finally {
+        api.removeChunkListeners();
+      }
+    }
+
+    const iter = generate();
+    return Object.assign(iter, {
+      abort: () => {
+        aborted = true;
+        wakeUp?.();
+        wakeUp = null;
+      },
+    });
+  }
+
+  const stream = await ollamaClient.chat({ ...params, stream: true });
+  return stream as unknown as OllamaChatStream;
+}
+
+/**
+ * Performs a non-streaming chat completion, routing through Electron IPC when available.
+ */
+export async function ollamaChatSingle(params: {
+  model: string;
+  messages: Array<{ role: string; content: string }>;
+  format?: string | object;
+  options?: Record<string, unknown>;
+}): Promise<{ message: { content: string } }> {
+  if (isElectron) {
+    return getElectronAPI().chatSingle({
+      model: params.model,
+      messages: params.messages,
+      format: params.format as unknown,
+      options: params.options as unknown,
+    });
+  }
+
+  return ollamaClient.chat({ ...params, stream: false });
+}
+
+/**
+ * Performs a non-streaming generate call, routing through Electron IPC when available.
+ */
+export async function ollamaGenerate(params: {
+  model: string;
+  prompt: string;
+  format?: string | object;
+}): Promise<{ response: string }> {
+  if (isElectron) {
+    return getElectronAPI().generateOllama({
+      model: params.model,
+      prompt: params.prompt,
+      format: params.format as unknown,
+    });
+  }
+
+  return ollamaClient.generate({ ...params, stream: false });
 }
 
 /**
@@ -76,10 +209,9 @@ export async function generateSummary(
   }
 
   try {
-    const response = await ollamaClient.generate({
+    const response = await ollamaGenerate({
       model,
       prompt: `Summarize this exchange in 2-4 sentences. Include key topics, requests, and important context:\n\nUser: ${userMessage}\n\nAssistant: ${assistantMessage}\n\nSummary:`,
-      stream: false,
     });
 
     return response.response.trim();
@@ -129,11 +261,10 @@ Classify the current message intent.`;
   }
 
   try {
-    const response = await ollamaClient.generate({
+    const response = await ollamaGenerate({
       model,
       prompt,
       format: INTENT_DETECTION_SCHEMA,
-      stream: false,
     });
 
     const parsed = JSON.parse(response.response);
