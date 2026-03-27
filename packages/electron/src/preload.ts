@@ -1,38 +1,39 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  checkOllama: () =>
-    ipcRenderer.invoke('check-ollama'),
+  ollamaHealth: () =>
+    ipcRenderer.invoke('ollama:health'),
 
-  listOllamaModels: () =>
-    ipcRenderer.invoke('list-ollama-models'),
+  ollamaListModels: () =>
+    ipcRenderer.invoke('ollama:list-models'),
 
-  chatStream: (payload: {
+  ollamaChat: (payload: {
     model: string;
     messages: unknown[];
     format?: unknown;
     options?: unknown;
-  }) => ipcRenderer.invoke('proxy-ollama-chat', payload),
+    stream?: boolean;
+  }) => ipcRenderer.invoke('ollama:chat', payload),
 
-  chatSingle: (payload: {
-    model: string;
-    messages: unknown[];
-    format?: unknown;
-    options?: unknown;
-  }) => ipcRenderer.invoke('proxy-ollama-chat-single', payload),
-
-  generateOllama: (payload: {
+  ollamaGenerate: (payload: {
     model: string;
     prompt: string;
     format?: unknown;
-  }) => ipcRenderer.invoke('proxy-ollama-generate', payload),
+    stream?: boolean;
+  }) => ipcRenderer.invoke('ollama:generate', payload),
 
-  onChunk: (cb: (chunk: { message: { content: string } }) => void) =>
-    ipcRenderer.on('ollama-chunk', (_event, chunk) => cb(chunk)),
+  onOllamaChunk: (cb: (data: { type: string; content: string; done: boolean; raw: object }) => void) =>
+    ipcRenderer.on('ollama:chunk', (_event, data) => cb(data)),
 
-  onDone: (cb: () => void) =>
-    ipcRenderer.once('ollama-done', cb),
+  onOllamaDone: (cb: (data: { type: string }) => void) =>
+    ipcRenderer.once('ollama:done', (_event, data) => cb(data)),
 
-  removeChunkListeners: () =>
-    ipcRenderer.removeAllListeners('ollama-chunk'),
+  onOllamaError: (cb: (data: { type: string; error: string }) => void) =>
+    ipcRenderer.once('ollama:error', (_event, data) => cb(data)),
+
+  removeOllamaListeners: () => {
+    ipcRenderer.removeAllListeners('ollama:chunk');
+    ipcRenderer.removeAllListeners('ollama:done');
+    ipcRenderer.removeAllListeners('ollama:error');
+  },
 });

@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 
-interface OllamaStatus {
-  running: boolean;
-  models: Array<{ name: string }>;
+interface OllamaHealthResult {
+  ok: boolean;
+  models?: Array<{ name: string }>;
+  error?: string;
 }
 
 interface OllamaChatPayload {
@@ -10,15 +11,30 @@ interface OllamaChatPayload {
   messages: Array<{ role: string; content: string }>;
   format?: unknown;
   options?: unknown;
+  stream?: boolean;
 }
 
 interface OllamaGeneratePayload {
   model: string;
   prompt: string;
   format?: unknown;
+  stream?: boolean;
 }
-interface OllamaChatChunk {
-  message: { content: string };
+
+interface OllamaChunkData {
+  type: 'chat' | 'generate';
+  content: string;
+  done: boolean;
+  raw: object;
+}
+
+interface OllamaDoneData {
+  type: 'chat' | 'generate';
+}
+
+interface OllamaErrorData {
+  type: 'chat' | 'generate';
+  error: string;
 }
 
 interface OllamaElectronChatResponse {
@@ -30,14 +46,14 @@ interface OllamaElectronGenerateResponse {
 }
 
 interface ElectronAPI {
-  checkOllama: () => Promise<OllamaStatus>;
-  listOllamaModels: () => Promise<string[]>;
-  chatStream: (payload: OllamaChatPayload) => Promise<{ ok: true }>;
-  chatSingle: (payload: OllamaChatPayload) => Promise<OllamaElectronChatResponse>;
-  generateOllama: (payload: OllamaGeneratePayload) => Promise<OllamaElectronGenerateResponse>;
-  onChunk: (cb: (chunk: OllamaChatChunk) => void) => void;
-  onDone: (cb: () => void) => void;
-  removeChunkListeners: () => void;
+  ollamaHealth: () => Promise<OllamaHealthResult>;
+  ollamaListModels: () => Promise<string[]>;
+  ollamaChat: (payload: OllamaChatPayload) => Promise<OllamaElectronChatResponse | null>;
+  ollamaGenerate: (payload: OllamaGeneratePayload) => Promise<OllamaElectronGenerateResponse | null>;
+  onOllamaChunk: (cb: (data: OllamaChunkData) => void) => void;
+  onOllamaDone: (cb: (data: OllamaDoneData) => void) => void;
+  onOllamaError: (cb: (data: OllamaErrorData) => void) => void;
+  removeOllamaListeners: () => void;
 }
 
 interface Window {

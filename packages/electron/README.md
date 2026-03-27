@@ -67,7 +67,8 @@ This runs `concurrently` to:
 packages/electron/
 ├── src/
 │   ├── main.ts           # Electron main process entry
-│   └── preload.ts        # Context bridge — exposes window.electronAPI to renderer
+│   ├── preload.ts        # Context bridge — exposes window.electronAPI to renderer
+│   └── ipc/              # IPC handler modules (see src/ipc/README.md)
 ├── dist/                  # Compiled TypeScript output (gitignored)
 ├── web-dist/              # Copy of @demmi/web build output (gitignored)
 ├── release/               # Packaged app output (gitignored)
@@ -75,6 +76,10 @@ packages/electron/
 ├── tsconfig.json
 └── README.md              # You are here
 ```
+
+## IPC API
+
+All Ollama communication is routed through the Electron main process via IPC. See [`src/ipc/README.md`](src/ipc/README.md) for the full IPC API reference, handler descriptions, streaming push events, and instructions for adding new handlers.
 
 ## Configuration
 
@@ -101,119 +106,6 @@ The `build` field in `package.json` configures packaging:
 | Linux | AppImage |
 
 Output directory: `release/`
-
-## IPC API (`window.electronAPI`)
-
-All Ollama communication in packaged builds is routed through the Electron main process via IPC to avoid CSP and network sandboxing issues that prevent the renderer from calling `http://localhost:11434` directly.
-
-The preload script (`src/preload.ts`) exposes a typed `window.electronAPI` object to the renderer via `contextBridge`.
-
-### Methods
-
-#### `checkOllama(): Promise<{ running: boolean; models: Array<{ name: string }> }>`
-
-Checks whether Ollama is running by calling `GET /api/tags`.
-
-```ts
-const status = await window.electronAPI.checkOllama();
-if (!status.running) {
-  console.log('Ollama is offline');
-}
-```
-
-#### `listOllamaModels(): Promise<string[]>`
-
-Returns the list of installed model names from `GET /api/tags`.
-
-```ts
-const models = await window.electronAPI.listOllamaModels();
-// e.g. ['mistral', 'llama3']
-```
-
-#### `chatStream(payload): Promise<{ ok: true }>`
-
-Starts a **streaming** chat completion via `POST /api/chat`. Chunks are delivered through `onChunk` events; completion is signaled by `onDone`.
-
-```ts
-window.electronAPI.onChunk((chunk) => {
-  console.log(chunk.message.content);
-});
-window.electronAPI.onDone(() => {
-  console.log('Stream complete');
-  window.electronAPI.removeChunkListeners();
-});
-await window.electronAPI.chatStream({ model: 'mistral', messages: [...] });
-```
-
-**Payload:**
-
-| Field | Type | Description |
-|---|---|---|
-| `model` | `string` | Ollama model name |
-| `messages` | `Array<{ role: string; content: string }>` | Conversation messages |
-| `format` | `unknown` (optional) | JSON schema for structured output |
-| `options` | `unknown` (optional) | Ollama generation options |
-
-#### `chatSingle(payload): Promise<{ message: { content: string } }>`
-
-Performs a **non-streaming** chat completion via `POST /api/chat`.
-
-```ts
-const response = await window.electronAPI.chatSingle({
-  model: 'mistral',
-  messages: [{ role: 'user', content: 'Hello!' }],
-});
-console.log(response.message.content);
-```
-
-Same payload shape as `chatStream`.
-
-#### `generateOllama(payload): Promise<{ response: string }>`
-
-Performs a **non-streaming** generate call via `POST /api/generate`.
-
-```ts
-const result = await window.electronAPI.generateOllama({
-  model: 'mistral',
-  prompt: 'What is the capital of France?',
-});
-console.log(result.response);
-```
-
-| Field | Type | Description |
-|---|---|---|
-| `model` | `string` | Ollama model name |
-| `prompt` | `string` | Prompt text |
-| `format` | `unknown` (optional) | JSON schema for structured output |
-
-#### `onChunk(cb): void`
-
-Registers a listener for streaming chunks from `chatStream`. The callback receives `{ message: { content: string } }`.
-
-#### `onDone(cb): void`
-
-Registers a one-time listener for stream completion. Fires after all chunks have been sent.
-
-#### `removeChunkListeners(): void`
-
-Removes all `ollama-chunk` IPC listeners. Call this after `onDone` fires to clean up.
-
-### Offline Notification
-
-At startup, the main process calls `GET /api/tags` once. If Ollama is not running, a native OS notification is shown:
-
-> **Ollama is not running**  
-> AI chat is disabled. Open Ollama to enable it.
-
-### Runtime Detection in the Web Layer
-
-The web layer detects whether it is running inside Electron by checking `window.electronAPI`:
-
-```ts
-const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
-```
-
-When `isElectron` is `true`, all Ollama service functions (`listLocalModels`, `ollamaChatStream`, `ollamaChatSingle`, `ollamaGenerate`) automatically route through the IPC bridge instead of calling `localhost:11434` directly. No changes are needed in components or hooks.
 
 ## Tech Stack
 

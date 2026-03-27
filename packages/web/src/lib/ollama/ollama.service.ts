@@ -10,7 +10,6 @@ const MIN_ASSISTANT_MESSAGE_LENGTH = 200;
 const MAX_RECENT_SUMMARIES = 10;
 
 export const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
-console.log('isElectron', isElectron);
 
 function getElectronAPI(): ElectronAPI {
   if (!window.electronAPI) {
@@ -65,7 +64,7 @@ export async function listLocalModels(): Promise<string[]> {
   let allModels: string[];
 
   if (isElectron) {
-    allModels = await getElectronAPI().listOllamaModels();
+    allModels = await getElectronAPI().ollamaListModels();
   } else {
     const response = await ollamaClient.list();
     allModels = response.models.map((m) => m.name);
@@ -98,28 +97,38 @@ export async function ollamaChatStream(params: {
     const queue: Array<{ message: { content: string } }> = [];
     let isDone = false;
     let aborted = false;
+    let streamError: Error | null = null;
     let wakeUp: (() => void) | null = null;
 
-    api.onChunk((chunk) => {
+    api.onOllamaChunk((data) => {
       if (!aborted) {
-        queue.push(chunk);
+        queue.push({ message: { content: data.content } });
         wakeUp?.();
         wakeUp = null;
       }
     });
 
-    api.onDone(() => {
+    api.onOllamaDone(() => {
       isDone = true;
       wakeUp?.();
       wakeUp = null;
     });
 
-    void api.chatStream({
+    api.onOllamaError((data) => {
+      streamError = new Error(data.error);
+      isDone = true;
+      wakeUp?.();
+      wakeUp = null;
+    });
+
+    void api.ollamaChat({
       model: params.model,
       messages: params.messages,
       format: params.format as unknown,
       options: params.options as unknown,
-    }).catch(() => {
+      stream: true,
+    }).catch((err: unknown) => {
+      streamError = err instanceof Error ? err : new Error('Stream failed');
       isDone = true;
       wakeUp?.();
       wakeUp = null;
@@ -128,6 +137,9 @@ export async function ollamaChatStream(params: {
     async function* generate() {
       try {
         while ((!isDone || queue.length > 0) && !aborted) {
+          if (streamError && queue.length === 0) {
+            throw streamError;
+          }
           if (queue.length > 0) {
             const chunk = queue.shift();
             if (chunk) yield chunk;
@@ -137,8 +149,11 @@ export async function ollamaChatStream(params: {
             });
           }
         }
+        if (streamError && !aborted) {
+          throw streamError;
+        }
       } finally {
-        api.removeChunkListeners();
+        api.removeOllamaListeners();
       }
     }
 
@@ -166,12 +181,14 @@ export async function ollamaChatSingle(params: {
   options?: Record<string, unknown>;
 }): Promise<{ message: { content: string } }> {
   if (isElectron) {
-    return getElectronAPI().chatSingle({
+    const result = await getElectronAPI().ollamaChat({
       model: params.model,
       messages: params.messages,
       format: params.format as unknown,
       options: params.options as unknown,
+      stream: false,
     });
+    return result ?? { message: { content: '' } };
   }
 
   return ollamaClient.chat({ ...params, stream: false });
@@ -186,11 +203,13 @@ export async function ollamaGenerate(params: {
   format?: string | object;
 }): Promise<{ response: string }> {
   if (isElectron) {
-    return getElectronAPI().generateOllama({
+    const result = await getElectronAPI().ollamaGenerate({
       model: params.model,
       prompt: params.prompt,
       format: params.format as unknown,
+      stream: false,
     });
+    return result ?? { response: '' };
   }
 
   return ollamaClient.generate({ ...params, stream: false });
