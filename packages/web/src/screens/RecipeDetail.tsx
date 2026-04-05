@@ -301,6 +301,49 @@ export function RecipeDetail() {
     navigate('/recipes');
   };
 
+  const handleAddMissingIngredients = async () => {
+    if (!existingRecipe) return;
+
+    let added = 0;
+    for (const recipeIngredient of existingRecipe.ingredients) {
+      const ingredient = allIngredients.find((i) => i.id === recipeIngredient.ingredientId);
+      if (!ingredient) continue;
+      if (ingredient.currentAmount > 0) continue;
+
+      try {
+        await dispatch(
+          createShoppingListItem({
+            name: ingredient.name,
+            ingredientId: ingredient.id,
+            productId: null,
+            amount: recipeIngredient.servings,
+            unit: ingredient.unit,
+            category: ingredient.type,
+            note: null,
+            checked: false,
+          }),
+        ).unwrap();
+        added++;
+      } catch {
+        // Duplicate or other error — skip silently
+      }
+    }
+
+    if (added === 0) {
+      addToast({
+        title: 'Everything is already in your pantry 🎉',
+        description: 'No missing ingredients to add.',
+        type: 'success',
+      });
+    } else {
+      addToast({
+        title: 'Added to shopping list',
+        description: `${added} ingredient${added === 1 ? '' : 's'} added to your shopping list.`,
+        type: 'success',
+      });
+    }
+  };
+
   const handleDelete = async () => {
     if (!existingRecipe) return;
 
@@ -509,6 +552,15 @@ export function RecipeDetail() {
                   );
                 })}
               </ul>
+              <Button
+                type='button'
+                variant='secondary'
+                size='sm'
+                className='mt-3'
+                onClick={handleAddMissingIngredients}
+              >
+                🛒 Add missing to shopping list
+              </Button>
             </div>
           )}
 

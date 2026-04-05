@@ -123,7 +123,7 @@ src/
 │   ├── api/            # External API clients (Open Food Facts)
 │   └── slices/         # Redux slices (calendar, chats, demo, ingredients, recipes, shoppingList, user, userProfile)
 ├── ui/                 # Layout components (Layout, Loading)
-└── utils/              # Shared utilities (generatedId, capitalize, formatDate, barcodePrefill)
+└── utils/              # Shared utilities (generatedId, capitalize, formatDate, barcodePrefill, matchIngredientByName)
 ```
 
 ## Tech Stack
@@ -244,6 +244,12 @@ npm run test:ui       # Open Vitest UI in browser
 - Items grouped by category; supports free-text and ingredient-linked items
 - Check-off with progress bar, show/hide checked, clear checked, edit & delete
 - Amount, unit, and notes per item
+- **Pantry auto-deduct**: checking off an item automatically adds its quantity to the matching pantry ingredient (first-time prompt asks for preference; choice stored in user profile as `autoPantryDeduct`)
+- **"Pantry updated" indicator**: subtle fade-out confirmation shown beneath a checked item after pantry deduction
+
+### 🍽️ Recipe → Shopping List Integration
+- **"Add missing to shopping list"** button on recipe detail view: compares each recipe ingredient against the pantry (by ID) and adds any ingredient with zero stock to the shopping list
+- Toast confirms how many items were added, or indicates that the pantry is already sufficient
 
 ### 📱 Mobile-First Design
 - Fully responsive sidebar, touch-friendly interface

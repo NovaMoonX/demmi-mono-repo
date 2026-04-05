@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Button, Checkbox } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import type { ShoppingListItem } from '@lib/shoppingList';
@@ -7,14 +7,30 @@ import type { Ingredient } from '@lib/ingredients';
 export interface ItemRowProps {
   item: ShoppingListItem;
   ingredients: Ingredient[];
+  pantryUpdated?: boolean;
   onToggle: () => void | Promise<void>;
   onEdit: () => void;
   onDelete: () => void | Promise<void>;
 }
 
-export function ItemRow({ item, ingredients, onToggle, onEdit, onDelete }: ItemRowProps) {
+export function ItemRow({ item, ingredients, pantryUpdated, onToggle, onEdit, onDelete }: ItemRowProps) {
   const unitLabel = item.unit ?? null;
-  
+  const [showPantryUpdated, setShowPantryUpdated] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (pantryUpdated) {
+      setShowPantryUpdated(true);
+      setVisible(true);
+      const fadeTimer = setTimeout(() => setVisible(false), 1500);
+      const hideTimer = setTimeout(() => setShowPantryUpdated(false), 2000);
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [pantryUpdated]);
+
   // Look up product info if available
   const productInfo = useMemo(() => {
     if (!item.ingredientId || !item.productId) return null;
@@ -58,6 +74,16 @@ export function ItemRow({ item, ingredients, onToggle, onEdit, onDelete }: ItemR
         )}
         {item.note && (
           <p className='text-muted-foreground mt-0.5 text-xs'>{item.note}</p>
+        )}
+        {showPantryUpdated && (
+          <p
+            className={join(
+              'mt-0.5 text-xs text-green-600 transition-opacity duration-500',
+              visible ? 'opacity-100' : 'opacity-0',
+            )}
+          >
+            ✓ Pantry updated
+          </p>
         )}
       </div>
 
