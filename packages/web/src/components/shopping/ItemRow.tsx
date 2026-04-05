@@ -4,6 +4,9 @@ import { join } from '@moondreamsdev/dreamer-ui/utils';
 import type { ShoppingListItem } from '@lib/shoppingList';
 import type { Ingredient } from '@lib/ingredients';
 
+const PANTRY_FADE_START_MS = 1500;
+const PANTRY_HIDE_DELAY_MS = 2000;
+
 export interface ItemRowProps {
   item: ShoppingListItem;
   ingredients: Ingredient[];
@@ -22,8 +25,8 @@ export function ItemRow({ item, ingredients, pantryUpdated, onToggle, onEdit, on
     if (pantryUpdated) {
       setShowPantryUpdated(true);
       setVisible(true);
-      const fadeTimer = setTimeout(() => setVisible(false), 1500);
-      const hideTimer = setTimeout(() => setShowPantryUpdated(false), 2000);
+      const fadeTimer = setTimeout(() => setVisible(false), PANTRY_FADE_START_MS);
+      const hideTimer = setTimeout(() => setShowPantryUpdated(false), PANTRY_HIDE_DELAY_MS);
       return () => {
         clearTimeout(fadeTimer);
         clearTimeout(hideTimer);
