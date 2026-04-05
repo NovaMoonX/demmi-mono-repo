@@ -8,6 +8,7 @@ import { DotsVertical } from '@moondreamsdev/dreamer-ui/symbols';
 import { useAuth } from '@hooks/useAuth';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import { endDemoSession } from '@store/slices/demoSlice';
+import { useRuntimeEnvironment } from '@hooks/useRuntimeEnvironment';
 import { Link } from 'react-router-dom';
 
 type Tab = {
@@ -37,6 +38,7 @@ export function Sidebar() {
   const { user, logOut } = useAuth();
   const dispatch = useAppDispatch();
   const isDemoActive = useAppSelector((state) => state.demo.isActive);
+  const { isMobileWebView } = useRuntimeEnvironment();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -66,6 +68,8 @@ export function Sidebar() {
   };
 
   const currentPath = location.pathname;
+
+  const visibleTabs = isMobileWebView ? tabs.filter((tab) => tab.id !== 'chat') : tabs;
 
   return (
     <>
@@ -114,7 +118,7 @@ export function Sidebar() {
           <h2 className='text-muted-foreground mb-4 px-3 text-xs font-semibold tracking-wider uppercase'>
             Navigation
           </h2>
-          {tabs.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isCurrentTab = currentPath === tab.path;
 
             return (

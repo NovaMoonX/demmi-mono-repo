@@ -13,11 +13,28 @@ vi.mock('@hooks/useAuth', () => ({
   }),
 }));
 
+const mockUseRuntimeEnvironment = vi.fn(() => ({
+  isElectron: false,
+  isMobileWebView: false,
+  isOllamaAvailable: true,
+}));
+
+vi.mock('@hooks/useRuntimeEnvironment', () => ({
+  useRuntimeEnvironment: () => mockUseRuntimeEnvironment(),
+}));
+
 describe('Sidebar', () => {
   const demoOff = { preloadedState: { demo: { isActive: false, isHydrated: false } } };
   const demoOn = { preloadedState: { demo: { isActive: true, isHydrated: true } } };
 
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseRuntimeEnvironment.mockReturnValue({
+      isElectron: false,
+      isMobileWebView: false,
+      isOllamaAvailable: true,
+    });
+  });
 
   it('renders all navigation tabs', () => {
     const { wrapper } = generateTestWrapper(demoOff);
@@ -78,5 +95,17 @@ describe('Sidebar', () => {
     const { wrapper } = generateTestWrapper(demoOff);
     render(<Sidebar />, { wrapper });
     expect(screen.getByText('Demmi')).toBeInTheDocument();
+  });
+
+  it('hides Chat tab when isMobileWebView is true', () => {
+    mockUseRuntimeEnvironment.mockReturnValue({
+      isElectron: false,
+      isMobileWebView: true,
+      isOllamaAvailable: false,
+    });
+    const { wrapper } = generateTestWrapper(demoOff);
+    render(<Sidebar />, { wrapper });
+    expect(screen.queryByText('Chat')).not.toBeInTheDocument();
+    expect(screen.getByText('Recipes')).toBeInTheDocument();
   });
 });

@@ -26,7 +26,8 @@ export default function Index() {
         domStorageEnabled={true}
         startInLoadingState={true}
         allowsBackForwardNavigationGestures={true}
-        userAgent={`Demmi-Mobile/${Constants.expoConfig?.version ?? '1.0.0'} (${Platform.OS})`}
+        userAgent={`Demmi-Mobile/${Constants.expoConfig?.version ?? '1.0.0'} (${Platform.OS}) ExpoWebView`}
+        injectedJavaScriptBeforeContentLoaded={`window.ReactNativeWebView = true; true;`}
       />
     </SafeAreaView>
   );

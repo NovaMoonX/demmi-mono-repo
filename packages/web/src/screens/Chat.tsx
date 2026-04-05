@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Button, Label, Toggle } from '@moondreamsdev/dreamer-ui/components';
+import { Button, Callout, Label, Toggle } from '@moondreamsdev/dreamer-ui/components';
 import { Textarea } from '@moondreamsdev/dreamer-ui/components';
 import { ScrollArea } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
@@ -11,6 +11,7 @@ import { ChatMessage } from '@components/chat/ChatMessage';
 import { OllamaModelControl } from '@components/chat/OllamaModelControl';
 import { useIsMobileDevice } from '@hooks/useIsMobileDevice';
 import { useOllamaModels } from '@hooks/useOllamaModels';
+import { useRuntimeEnvironment } from '@hooks/useRuntimeEnvironment';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import { store } from '@store/index';
 import {
@@ -126,6 +127,7 @@ function buildIterationContextMessages(
 }
 
 export function Chat() {
+  const { isMobileWebView } = useRuntimeEnvironment();
   const dispatch = useAppDispatch();
   const conversations = useAppSelector((state) => state.chats.conversations);
   const currentChatId = useAppSelector((state) => state.chats.currentChatId);
@@ -1078,6 +1080,29 @@ export function Chat() {
   };
 
   const isSendDisabled = !inputValue.trim() || isSending || !selectedModel;
+
+  if (isMobileWebView) {
+    return (
+      <div className='flex h-full items-center justify-center p-6'>
+        <div className='max-w-md space-y-6 text-center'>
+          <h1 className='text-foreground text-2xl font-bold'>AI Chat requires Ollama</h1>
+          <Callout
+            variant='info'
+            description="Demi runs on a local AI model via Ollama, which needs to be installed on your desktop. Chat isn't available on mobile yet."
+          />
+          <a
+            href='https://ollama.com/download'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='inline-block'
+          >
+            <Button variant='primary'>Learn how to set up Ollama →</Button>
+          </a>
+          <p className='text-muted-foreground text-sm'>Cloud AI for mobile is coming soon.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='flex h-full overflow-hidden'>

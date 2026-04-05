@@ -120,5 +120,8 @@ const WEB_APP_URL = 'http://<your-local-ip>:5173';
 
 - The mobile app does **not** have its own UI code — it wraps the deployed `@demmi/web`
 - Firebase Auth works via the web app inside the WebView — no native Firebase SDK needed
-- Ollama (localhost) is **not** accessible from a physical device by default; use the device's network IP or a tunnel for local LLM access
+- Ollama (localhost) is **not** accessible from a mobile WebView because `localhost` inside the WebView refers to the device itself, not the user's desktop. As a result:
+  - The **Chat** tab is hidden from the navigation sidebar on mobile
+  - The **Chat screen** shows an informative message explaining that Ollama must be installed on a desktop, with a link to [https://ollama.com/download](https://ollama.com/download)
+  - This is detected at runtime via `window.ReactNativeWebView` (injected by the WebView) or the `ExpoWebView` user agent suffix
 - For production builds, use `expo prebuild` to generate native projects, then build with Xcode (iOS) or Android Studio (Android)
