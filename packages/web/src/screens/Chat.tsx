@@ -1088,7 +1088,7 @@ export function Chat() {
           <h1 className='text-foreground text-2xl font-bold'>AI Chat requires Ollama</h1>
           <Callout
             variant='info'
-            description="Demi runs on a local AI model via Ollama, which needs to be installed on your desktop. Chat isn't available on mobile yet."
+            description="Demmi runs on a local AI model via Ollama, which needs to be installed on your desktop. Chat isn't available on mobile yet."
           />
           <a
             href='https://ollama.com/download'

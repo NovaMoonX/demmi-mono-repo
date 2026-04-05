@@ -3,14 +3,12 @@ import { renderHook } from '@testing-library/react';
 import { useRuntimeEnvironment } from './useRuntimeEnvironment';
 
 describe('useRuntimeEnvironment', () => {
+  const originalUserAgent = window.navigator.userAgent;
+
   afterEach(() => {
     delete (window as unknown as { electronAPI?: unknown }).electronAPI;
     delete (window as unknown as { ReactNativeWebView?: unknown }).ReactNativeWebView;
-    Object.defineProperty(window.navigator, 'userAgent', {
-      writable: true,
-      configurable: true,
-      value: navigator.userAgent,
-    });
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(originalUserAgent);
   });
 
   it('detects a plain browser environment', () => {
