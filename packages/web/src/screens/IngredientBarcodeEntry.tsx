@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button, Input, Label } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
@@ -76,10 +76,13 @@ export function IngredientBarcodeEntry() {
   const [triggerLookup, { data, isFetching, isError }] =
     useLazyGetProductByBarcodeQuery();
 
+  const processedBarcodeRef = useRef<string | null>(null);
+
   useEffect(() => {
     const barcode = scanner.lastResult ?? scannedBarcode;
-    if (barcode == null) return;
+    if (barcode == null || barcode === processedBarcodeRef.current) return;
 
+    processedBarcodeRef.current = barcode;
     setBarcodeInput(barcode);
     setSubmittedBarcode(barcode);
     setShowScanner(false);

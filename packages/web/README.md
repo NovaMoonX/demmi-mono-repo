@@ -225,7 +225,7 @@ npm run test:ui       # Open Vitest UI in browser
 ### 🍎 Ingredients
 - Card-based inventory with search, type filter, out-of-stock toggle, and sort options
 - Barcode support with Open Food Facts API lookup for auto-fill (name, image, serving, nutrients)
-- **Camera barcode scanning**: scan barcodes using the device camera with native `BarcodeDetector` API (Chromium 88+) and `zxing-wasm` fallback for broader compatibility
+- **Camera barcode scanning**: Scan barcodes using the device camera with native `BarcodeDetector` API (Chromium 88+) and `zxing-wasm` fallback for broader compatibility
 - Manual barcode entry as a fallback when camera is unavailable
 - Comprehensive nutrition profile (calories, protein, carbs, fat, fiber, sugar, sodium per 100g/100ml)
 - 21 measurement units including custom units
