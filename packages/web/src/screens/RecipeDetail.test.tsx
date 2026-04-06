@@ -116,4 +116,28 @@ describe('RecipeDetail - View Mode', () => {
     expect(screen.getByText('Boil pasta')).toBeInTheDocument();
     expect(screen.getByText('Make sauce')).toBeInTheDocument();
   });
+
+  it('renders "Add missing to shopping list" button when recipe has ingredients', () => {
+    const recipe = createRecipe({
+      ingredients: [{ ingredientId: 'ing-1', servings: 2 }],
+    });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
+    render(<RecipeDetail />, { wrapper });
+    expect(screen.getByText('🛒 Add missing to shopping list')).toBeInTheDocument();
+  });
+
+  it('does not render "Add missing to shopping list" button when recipe has no ingredients', () => {
+    const recipe = createRecipe({ ingredients: [] });
+    const { wrapper } = generateTestWrapper({
+      route: '/recipes/rec-1',
+      path: '/recipes/:id',
+      preloadedState: { recipes: { items: [recipe] } },
+    });
+    render(<RecipeDetail />, { wrapper });
+    expect(screen.queryByText('🛒 Add missing to shopping list')).not.toBeInTheDocument();
+  });
 });

@@ -134,4 +134,14 @@ describe('ItemRow', () => {
     const nameEl = screen.getByText('Bananas');
     expect(nameEl.className).not.toContain('line-through');
   });
+
+  it('shows "Pantry updated" text when pantryUpdated is true', () => {
+    render(<ItemRow {...defaultProps} pantryUpdated={true} />);
+    expect(screen.getByText('✓ Pantry updated')).toBeInTheDocument();
+  });
+
+  it('does not show "Pantry updated" text by default', () => {
+    render(<ItemRow {...defaultProps} />);
+    expect(screen.queryByText('✓ Pantry updated')).not.toBeInTheDocument();
+  });
 });
