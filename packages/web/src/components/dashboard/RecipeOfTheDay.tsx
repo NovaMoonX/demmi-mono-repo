@@ -11,15 +11,15 @@ import {
 
 function getTodayDateHash(): number {
   const now = new Date();
-  const result = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
-  return result;
+  const dateHash = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+  return dateHash;
 }
 
 function getTodayStartTimestamp(): number {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
-  const result = d.getTime();
-  return result;
+  const timestamp = d.getTime();
+  return timestamp;
 }
 
 export function RecipeOfTheDay() {
@@ -56,8 +56,8 @@ export function RecipeOfTheDay() {
 
     const dateHash = getTodayDateHash();
     const index = dateHash % candidates.length;
-    const result = candidates[index];
-    return result;
+    const selectedRecipe = candidates[index];
+    return selectedRecipe;
   }, [recipes, plannedRecipes, userProfile]);
 
   if (recipes.length === 0) {
