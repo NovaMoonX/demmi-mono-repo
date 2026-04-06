@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Button, Badge } from '@moondreamsdev/dreamer-ui/components';
+import { Button, Badge, Callout } from '@moondreamsdev/dreamer-ui/components';
 import { useActionModal } from '@moondreamsdev/dreamer-ui/hooks';
 import { useToast } from '@moondreamsdev/dreamer-ui/hooks';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
@@ -10,9 +10,11 @@ import {
   deleteShoppingListItem as deleteShoppingListItemAsync,
   clearCheckedShoppingListItems as clearCheckedShoppingListItemsAsync,
 } from '@store/actions/shoppingListActions';
+import { updateIngredient as updateIngredientAsync } from '@store/actions/ingredientActions';
+import { saveUserProfile } from '@store/actions/userProfileActions';
 import { INGREDIENT_TYPE_COLORS, INGREDIENT_TYPE_EMOJIS, INGREDIENT_TYPES } from '@lib/ingredients';
+import type { Ingredient, IngredientType, MeasurementUnit } from '@lib/ingredients';
 import type { ShoppingListItem } from '@lib/shoppingList';
-import type { IngredientType, MeasurementUnit } from '@lib/ingredients';
 import {
   ItemRow,
   ItemFormModal,
@@ -21,6 +23,7 @@ import {
   type ItemFormState,
 } from '@components/shopping';
 import { capitalize } from '@utils/capitalize';
+import { matchIngredientByName } from '@utils/matchIngredientByName';
 import { RECIPE_CATEGORY_OPTIONS } from '@/lib/recipes';
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
@@ -31,11 +34,14 @@ export function ShoppingList() {
   const { addToast } = useToast();
   const items = useAppSelector((state) => state.shoppingList.items);
   const ingredients = useAppSelector((state) => state.ingredients.items);
+  const userProfile = useAppSelector((state) => state.userProfile.profile);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
   const [form, setForm] = useState<ItemFormState>(emptyForm());
   const [showChecked, setShowChecked] = useState(true);
+  const [pantryPromptItem, setPantryPromptItem] = useState<ShoppingListItem | null>(null);
+  const [pantryUpdatedItemId, setPantryUpdatedItemId] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(fetchShoppingList());
@@ -207,11 +213,44 @@ export function ShoppingList() {
     }
   };
 
+  const deductPantry = async (item: ShoppingListItem) => {
+    if (item.amount === null || item.unit === null) return;
+    const match = matchIngredientByName(item.name, ingredients);
+    if (!match) return;
+    if (match.unit !== item.unit) return;
+
+    const updatedIngredient: Ingredient = {
+      ...match,
+      currentAmount: match.currentAmount + item.amount,
+    };
+
+    try {
+      await dispatch(updateIngredientAsync(updatedIngredient)).unwrap();
+      setPantryUpdatedItemId(item.id);
+      setTimeout(
+        () => setPantryUpdatedItemId((current) => (current === item.id ? null : current)),
+        2000,
+      );
+    } catch (err) {
+      console.error('Failed to update pantry:', err);
+    }
+  };
+
   const handleToggle = async (item: ShoppingListItem) => {
+    const becomingChecked = !item.checked;
     try {
       await dispatch(
-        updateShoppingListItemAsync({ ...item, checked: !item.checked }),
+        updateShoppingListItemAsync({ ...item, checked: becomingChecked }),
       ).unwrap();
+
+      if (becomingChecked) {
+        const autoPantryDeduct = userProfile?.autoPantryDeduct ?? null;
+        if (autoPantryDeduct === null) {
+          setPantryPromptItem(item);
+        } else if (autoPantryDeduct === true) {
+          await deductPantry(item);
+        }
+      }
     } catch (err) {
       console.error('Failed to update item:', err);
       addToast({
@@ -222,12 +261,34 @@ export function ShoppingList() {
     }
   };
 
+  const handlePantryPromptYes = async () => {
+    const item = pantryPromptItem;
+    setPantryPromptItem(null);
+    try {
+      await dispatch(saveUserProfile({ autoPantryDeduct: true })).unwrap();
+    } catch (err) {
+      console.error('Failed to save pantry preference:', err);
+    }
+    if (item) {
+      await deductPantry(item);
+    }
+  };
+
+  const handlePantryPromptNo = async () => {
+    setPantryPromptItem(null);
+    try {
+      await dispatch(saveUserProfile({ autoPantryDeduct: false })).unwrap();
+    } catch (err) {
+      console.error('Failed to save pantry preference:', err);
+    }
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className='flex h-full flex-col mt-10 md:mt-0'>
+    <div className='flex h-full flex-col'>
       {/* Header */}
-      <div className='border-border bg-background/95 sticky top-0 z-10 border-b px-4 py-6 backdrop-blur'>
+      <div className='border-border bg-background/95 sticky top-0 z-10 border-b px-4 pt-10 pb-6 md:py-6 backdrop-blur shrink-0'>
         <div className='mx-auto max-w-2xl'>
           <div className='flex items-center justify-between gap-3'>
             <div>
@@ -263,7 +324,7 @@ export function ShoppingList() {
       </div>
 
       {/* Body */}
-      <div className='flex-1 overflow-y-auto px-4 py-4'>
+      <div className='flex-1 min-h-0 overflow-y-auto px-4 py-4'>
         <div className='mx-auto max-w-2xl space-y-6'>
           {/* Empty state */}
           {items.length === 0 && (
@@ -315,6 +376,7 @@ export function ShoppingList() {
                       key={item.id}
                       item={item}
                       ingredients={ingredients}
+                      pantryUpdated={pantryUpdatedItemId === item.id}
                       onToggle={() => handleToggle(item)}
                       onEdit={() => openEditModal(item)}
                       onDelete={() => handleDelete(item.id)}
@@ -326,6 +388,32 @@ export function ShoppingList() {
           })}
         </div>
       </div>
+
+      {/* Pantry auto-deduct preference prompt */}
+      {pantryPromptItem && (
+        <div className='border-border bg-background border-t px-4 py-4 shrink-0'>
+          <div className='mx-auto max-w-2xl'>
+            <Callout
+              title='Update your pantry automatically?'
+              description={
+                <div>
+                  <p className='text-muted-foreground mb-3 text-sm'>
+                    Would you like to automatically add checked-off quantities to your pantry?
+                  </p>
+                  <div className='flex gap-2'>
+                    <Button size='sm' onClick={handlePantryPromptYes}>
+                      Yes, always
+                    </Button>
+                    <Button variant='secondary' size='sm' onClick={handlePantryPromptNo}>
+                      No thanks
+                    </Button>
+                  </div>
+                </div>
+              }
+            />
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit modal */}
       <ItemFormModal

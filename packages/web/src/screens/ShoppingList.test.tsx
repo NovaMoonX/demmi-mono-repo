@@ -10,6 +10,7 @@ vi.mock('@components/shopping', () => ({
     onToggle: () => void;
     onEdit: () => void;
     onDelete: () => void;
+    pantryUpdated?: boolean;
   }) => (
     <div data-testid={`item-row-${item.id}`}>
       <span>{item.name}</span>

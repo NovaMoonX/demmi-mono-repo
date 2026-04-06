@@ -1,20 +1,39 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Button, Checkbox } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import type { ShoppingListItem } from '@lib/shoppingList';
 import type { Ingredient } from '@lib/ingredients';
 
+const PANTRY_FADE_START_MS = 1500;
+const PANTRY_HIDE_DELAY_MS = 2000;
+
 export interface ItemRowProps {
   item: ShoppingListItem;
   ingredients: Ingredient[];
+  pantryUpdated?: boolean;
   onToggle: () => void | Promise<void>;
   onEdit: () => void;
   onDelete: () => void | Promise<void>;
 }
 
-export function ItemRow({ item, ingredients, onToggle, onEdit, onDelete }: ItemRowProps) {
+export function ItemRow({ item, ingredients, pantryUpdated, onToggle, onEdit, onDelete }: ItemRowProps) {
   const unitLabel = item.unit ?? null;
-  
+  const [showPantryUpdated, setShowPantryUpdated] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (pantryUpdated) {
+      setShowPantryUpdated(true);
+      setVisible(true);
+      const fadeTimer = setTimeout(() => setVisible(false), PANTRY_FADE_START_MS);
+      const hideTimer = setTimeout(() => setShowPantryUpdated(false), PANTRY_HIDE_DELAY_MS);
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [pantryUpdated]);
+
   // Look up product info if available
   const productInfo = useMemo(() => {
     if (!item.ingredientId || !item.productId) return null;
@@ -58,6 +77,16 @@ export function ItemRow({ item, ingredients, onToggle, onEdit, onDelete }: ItemR
         )}
         {item.note && (
           <p className='text-muted-foreground mt-0.5 text-xs'>{item.note}</p>
+        )}
+        {showPantryUpdated && (
+          <p
+            className={join(
+              'mt-0.5 text-xs text-green-600 transition-opacity duration-500',
+              visible ? 'opacity-100' : 'opacity-0',
+            )}
+          >
+            ✓ Pantry updated
+          </p>
         )}
       </div>
 
