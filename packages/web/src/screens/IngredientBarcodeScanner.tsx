@@ -76,15 +76,6 @@ export function IngredientBarcodeScanner() {
           </div>
         )}
 
-        {isScanning && (
-          <div className='flex flex-col items-center gap-3 p-8 text-center'>
-            <span className='text-5xl'>📷</span>
-            <p className='text-muted-foreground text-sm'>
-              Scanning for barcodes…
-            </p>
-          </div>
-        )}
-
         {!isScanning && error == null && lastResult == null && (
           <div className='flex flex-col items-center gap-3 p-8 text-center'>
             <span className='text-5xl'>📷</span>

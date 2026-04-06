@@ -73,6 +73,7 @@ export function useBarcodeScanner(): UseBarcodeScanner {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const stoppedRef = useRef(false);
+  const messageListenerRef = useRef<((event: MessageEvent) => void) | null>(null);
 
   const cleanup = useCallback(() => {
     stoppedRef.current = true;
@@ -86,6 +87,10 @@ export function useBarcodeScanner(): UseBarcodeScanner {
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
+    }
+    if (messageListenerRef.current) {
+      window.removeEventListener('message', messageListenerRef.current);
+      messageListenerRef.current = null;
     }
   }, []);
 
@@ -178,12 +183,14 @@ export function useBarcodeScanner(): UseBarcodeScanner {
           setLastResult(data.barcode);
           setIsScanning(false);
           window.removeEventListener('message', handleMessage);
+          messageListenerRef.current = null;
         }
       } catch {
         // ignore non-JSON messages
       }
     };
 
+    messageListenerRef.current = handleMessage;
     window.addEventListener('message', handleMessage);
   }, []);
 

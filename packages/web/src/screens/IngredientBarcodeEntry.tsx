@@ -77,20 +77,14 @@ export function IngredientBarcodeEntry() {
     useLazyGetProductByBarcodeQuery();
 
   useEffect(() => {
-    if (scannedBarcode) {
-      setSubmittedBarcode(scannedBarcode);
-      void triggerLookup(scannedBarcode, true);
-    }
-  }, [scannedBarcode, triggerLookup]);
+    const barcode = scanner.lastResult ?? scannedBarcode;
+    if (barcode == null) return;
 
-  useEffect(() => {
-    if (scanner.lastResult != null) {
-      setBarcodeInput(scanner.lastResult);
-      setSubmittedBarcode(scanner.lastResult);
-      setShowScanner(false);
-      void triggerLookup(scanner.lastResult, true);
-    }
-  }, [scanner.lastResult, triggerLookup]);
+    setBarcodeInput(barcode);
+    setSubmittedBarcode(barcode);
+    setShowScanner(false);
+    void triggerLookup(barcode, true);
+  }, [scanner.lastResult, scannedBarcode, triggerLookup]);
 
   const handleStartScan = () => {
     setShowScanner(true);

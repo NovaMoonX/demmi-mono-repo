@@ -20,8 +20,9 @@ export default function Index() {
 
   const handleBarCodeScanned = useCallback(({ data }: { data: string }) => {
     setShowScanner(false);
+    const escaped = JSON.stringify(data);
     webViewRef.current?.injectJavaScript(
-      `window.dispatchEvent(new MessageEvent('message', { data: JSON.stringify({ type: 'barcode-result', barcode: '${data}' }) })); true;`,
+      `window.dispatchEvent(new MessageEvent('message', { data: JSON.stringify({ type: 'barcode-result', barcode: ${escaped} }) })); true;`,
     );
   }, []);
 
