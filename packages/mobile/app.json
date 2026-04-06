@@ -28,7 +28,13 @@
     },
     "scheme": "demmi",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-barcode-scanner",
+        {
+          "cameraPermission": "Demmi needs camera access to scan product barcodes."
+        }
+      ]
     ]
   }
 }

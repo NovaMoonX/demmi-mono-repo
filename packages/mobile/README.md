@@ -14,6 +14,7 @@ The mobile app uses a `WebView` component to load the hosted Demmi web applicati
 2. The main screen (`app/index.tsx`) renders a full-screen `WebView`
 3. The WebView loads the deployed Demmi web app URL
 4. A custom user agent identifies requests as coming from the mobile app
+5. A `postMessage` / `onMessage` bridge handles native features (e.g., barcode scanning via `expo-barcode-scanner`)
 
 ## Quick Start
 
@@ -112,6 +113,7 @@ const WEB_APP_URL = 'http://<your-local-ip>:5173';
 |---|---|
 | Expo ~53 | React Native framework and tooling |
 | Expo Router | File-based routing |
+| expo-barcode-scanner | Native barcode scanning via device camera |
 | React Native | Mobile runtime |
 | react-native-webview | WebView component for loading the web app |
 | TypeScript | Type-safe development |
@@ -119,6 +121,7 @@ const WEB_APP_URL = 'http://<your-local-ip>:5173';
 ## Notes
 
 - The mobile app does **not** have its own UI code — it wraps the deployed `@demmi/web`
+- **Barcode scanning bridge**: The web app can request a barcode scan via `postMessage({ type: 'scan-barcode' })`. The mobile host opens `expo-barcode-scanner`, scans the barcode, and returns the result via `injectJavaScript` dispatching a `barcode-result` message event. Camera permission is requested automatically when scanning is triggered.
 - Firebase Auth works via the web app inside the WebView — no native Firebase SDK needed
 - Ollama (localhost) is **not** accessible from a mobile WebView because `localhost` inside the WebView refers to the device itself, not the user's desktop. As a result:
   - The **Chat** tab is hidden from the navigation sidebar on mobile

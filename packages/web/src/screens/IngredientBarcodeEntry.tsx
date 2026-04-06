@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button, Input, Label } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
@@ -6,6 +6,8 @@ import { useLazyGetProductByBarcodeQuery } from '@store/api/openFoodFactsApi';
 import {
   getBarcodePrefillOptions,
 } from '@/utils';
+import { useBarcodeScanner } from '@hooks/useBarcodeScanner';
+import { BarcodeScanner } from '@components/ingredients';
 
 function SampleBarcode() {
   const bars = [
@@ -61,19 +63,47 @@ export function IngredientBarcodeEntry() {
   const location = useLocation();
   const fromRecipePath =
     (location.state as { fromRecipePath?: string } | null)?.fromRecipePath ?? null;
+  const scannedBarcode =
+    (location.state as { scannedBarcode?: string } | null)?.scannedBarcode ?? null;
 
-  const [barcodeInput, setBarcodeInput] = useState('');
+  const scanner = useBarcodeScanner();
+
+  const [showScanner, setShowScanner] = useState(false);
+  const [barcodeInput, setBarcodeInput] = useState(scannedBarcode ?? '');
   const [submittedBarcode, setSubmittedBarcode] = useState<string | null>(null);
   const [selectedPrefillOptionId, setSelectedPrefillOptionId] = useState<string | null>(null);
 
   const [triggerLookup, { data, isFetching, isError }] =
     useLazyGetProductByBarcodeQuery();
 
+  const processedBarcodeRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const barcode = scanner.lastResult ?? scannedBarcode;
+    if (barcode == null || barcode === processedBarcodeRef.current) return;
+
+    processedBarcodeRef.current = barcode;
+    setBarcodeInput(barcode);
+    setSubmittedBarcode(barcode);
+    setShowScanner(false);
+    void triggerLookup(barcode, true);
+  }, [scanner.lastResult, scannedBarcode, triggerLookup]);
+
+  const handleStartScan = () => {
+    setShowScanner(true);
+    scanner.startScan();
+  };
+
+  const handleCancelScan = () => {
+    scanner.stopScan();
+    setShowScanner(false);
+  };
+
   const handleLookup = () => {
     const cleaned = barcodeInput.replace(/\s/g, '').trim();
     if (!cleaned) return;
     setSubmittedBarcode(cleaned);
-    void triggerLookup(cleaned, true); // pull from cache if available
+    void triggerLookup(cleaned, true);
   };
 
   const handleContinue = () => {
@@ -144,7 +174,31 @@ export function IngredientBarcodeEntry() {
         </p>
       </div>
 
-      <div className='border-border bg-muted/30 mb-6 flex flex-col items-center gap-4 rounded-2xl border p-6'>
+      {showScanner && (
+        <div className='mb-6'>
+          <BarcodeScanner
+            videoRef={scanner.videoRef}
+            isScanning={scanner.isScanning}
+            error={scanner.error}
+            onCancel={handleCancelScan}
+          />
+        </div>
+      )}
+
+      {!showScanner && (
+        <div className='mb-6'>
+          <Button
+            variant='secondary'
+            onClick={handleStartScan}
+            className='w-full'
+          >
+            📷 Scan barcode with camera
+          </Button>
+        </div>
+      )}
+
+      {!showScanner && (
+        <div className='border-border bg-muted/30 mb-6 flex flex-col items-center gap-4 rounded-2xl border p-6'>
         <p className='text-foreground text-center text-sm font-semibold'>
           Sample barcode — what to look for
         </p>
@@ -161,6 +215,7 @@ export function IngredientBarcodeEntry() {
           So, for the sample barcode above, you would enter <strong>078742095226</strong>.
         </div>
       </div>
+      )}
 
       <div className='space-y-4'>
         <div>
