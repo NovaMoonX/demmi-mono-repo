@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { IngredientBarcodeEntry } from './IngredientBarcodeEntry';
 
@@ -8,6 +8,28 @@ vi.mock('@/utils', () => ({
     options: [],
     defaultOptionId: null,
     hasMultipleOptions: false,
+  }),
+}));
+
+const mockStartScan = vi.fn();
+const mockStopScan = vi.fn();
+
+vi.mock('@hooks/useBarcodeScanner', () => ({
+  useBarcodeScanner: () => ({
+    isScanning: false,
+    lastResult: null,
+    error: null,
+    videoRef: { current: null },
+    startScan: mockStartScan,
+    stopScan: mockStopScan,
+  }),
+}));
+
+vi.mock('@hooks/useRuntimeEnvironment', () => ({
+  useRuntimeEnvironment: () => ({
+    isElectron: false,
+    isMobileWebView: false,
+    canInstallOllama: true,
   }),
 }));
 
@@ -61,5 +83,18 @@ describe('IngredientBarcodeEntry', () => {
     expect(
       screen.getByText('Sample barcode — what to look for'),
     ).toBeInTheDocument();
+  });
+
+  it('renders the scan barcode button', () => {
+    const { wrapper } = generateTestWrapper();
+    render(<IngredientBarcodeEntry />, { wrapper });
+    expect(screen.getByText('📷 Scan barcode with camera')).toBeInTheDocument();
+  });
+
+  it('calls startScan when scan button is clicked', () => {
+    const { wrapper } = generateTestWrapper();
+    render(<IngredientBarcodeEntry />, { wrapper });
+    fireEvent.click(screen.getByText('📷 Scan barcode with camera'));
+    expect(mockStartScan).toHaveBeenCalledTimes(1);
   });
 });

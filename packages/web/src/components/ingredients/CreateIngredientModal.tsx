@@ -20,7 +20,7 @@ export function CreateIngredientModal({
   isOpen,
   onClose,
   onSelectManual,
-  // onSelectBarcode, // hidden until camera scanning is implemented
+  onSelectBarcode,
   onSelectBarcodeEntry,
 }: CreateIngredientModalProps) {
   const options: CreateIngredientOption[] = [
@@ -30,12 +30,12 @@ export function CreateIngredientModal({
       description: 'Know the ingredient details? Fill everything in yourself.',
       onClick: onSelectManual,
     },
-    // {
-    //   icon: '📷',
-    //   title: 'Scan Barcode',
-    //   description: 'Have a product in hand? Scan its barcode to get started.',
-    //   onClick: onSelectBarcode,
-    // },
+    {
+      icon: '📷',
+      title: 'Scan Barcode',
+      description: 'Have a product in hand? Scan its barcode to get started.',
+      onClick: onSelectBarcode,
+    },
     {
       icon: '🔢',
       title: 'Enter Barcode',

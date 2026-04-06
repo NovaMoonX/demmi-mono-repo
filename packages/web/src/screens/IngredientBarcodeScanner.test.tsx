@@ -3,24 +3,30 @@ import { render, screen } from '@testing-library/react';
 import { generateTestWrapper } from '@/__tests__/generateTestWrapper';
 import { IngredientBarcodeScanner } from './IngredientBarcodeScanner';
 
-const mockGetUserMedia = vi.fn();
-const mockPermissionsQuery = vi.fn();
+const mockStartScan = vi.fn();
+const mockStopScan = vi.fn();
+const mockUseBarcodeScanner = vi.fn(() => ({
+  isScanning: false,
+  lastResult: null as string | null,
+  error: null as string | null,
+  videoRef: { current: null },
+  startScan: mockStartScan,
+  stopScan: mockStopScan,
+}));
+
+vi.mock('@hooks/useBarcodeScanner', () => ({
+  useBarcodeScanner: () => mockUseBarcodeScanner(),
+}));
 
 beforeEach(() => {
   vi.clearAllMocks();
-
-  mockGetUserMedia.mockRejectedValue(new Error('denied'));
-  Object.defineProperty(navigator, 'mediaDevices', {
-    value: { getUserMedia: mockGetUserMedia },
-    writable: true,
-    configurable: true,
-  });
-
-  mockPermissionsQuery.mockResolvedValue({ state: 'prompt', onchange: null });
-  Object.defineProperty(navigator, 'permissions', {
-    value: { query: mockPermissionsQuery },
-    writable: true,
-    configurable: true,
+  mockUseBarcodeScanner.mockReturnValue({
+    isScanning: false,
+    lastResult: null,
+    error: null,
+    videoRef: { current: null },
+    startScan: mockStartScan,
+    stopScan: mockStopScan,
   });
 });
 
@@ -52,10 +58,23 @@ describe('IngredientBarcodeScanner', () => {
     expect(video).toBeInTheDocument();
   });
 
-  it('shows camera denied message when permission is denied', async () => {
+  it('shows camera denied callout when permission is denied', () => {
+    mockUseBarcodeScanner.mockReturnValue({
+      isScanning: false,
+      lastResult: null,
+      error: 'permission-denied',
+      videoRef: { current: null },
+      startScan: mockStartScan,
+      stopScan: mockStopScan,
+    });
     const { wrapper } = generateTestWrapper({ route: '/ingredients/new/barcode-scanner' });
     render(<IngredientBarcodeScanner />, { wrapper });
-    await new Promise((r) => setTimeout(r, 50));
-    expect(screen.getByText('Camera access denied')).toBeInTheDocument();
+    expect(screen.getByTestId('callout')).toBeInTheDocument();
+  });
+
+  it('calls startScan on mount', () => {
+    const { wrapper } = generateTestWrapper({ route: '/ingredients/new/barcode-scanner' });
+    render(<IngredientBarcodeScanner />, { wrapper });
+    expect(mockStartScan).toHaveBeenCalledTimes(1);
   });
 });

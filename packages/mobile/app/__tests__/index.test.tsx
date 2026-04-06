@@ -35,6 +35,16 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
+jest.mock('expo-barcode-scanner', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    BarCodeScanner: (props: Record<string, unknown>) =>
+      React.createElement(View, { ...props, testID: 'barcode-scanner' }),
+    requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  };
+});
+
 describe('Mobile Index Screen', () => {
   it('renders without crashing', () => {
     const { getByTestId } = render(<Index />);

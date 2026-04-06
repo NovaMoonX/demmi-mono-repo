@@ -1,54 +1,41 @@
 import { join } from '@moondreamsdev/dreamer-ui/utils';
-import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-
-type CameraPermission = 'prompt' | 'granted' | 'denied';
+import { Callout } from '@moondreamsdev/dreamer-ui/components';
+import { useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useBarcodeScanner } from '@hooks/useBarcodeScanner';
+import { useLazyGetProductByBarcodeQuery } from '@store/api/openFoodFactsApi';
 
 export function IngredientBarcodeScanner() {
+  const navigate = useNavigate();
   const location = useLocation();
   const fromRecipePath =
     (location.state as { fromRecipePath?: string } | null)?.fromRecipePath ?? null;
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const { isScanning, lastResult, error, videoRef, startScan, stopScan } =
+    useBarcodeScanner();
 
-  const [permission, setPermission] = useState<CameraPermission>('prompt');
-
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      setPermission('granted');
-    } catch {
-      setPermission('denied');
-    }
-  };
+  const [triggerLookup] = useLazyGetProductByBarcodeQuery();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void startCamera();
-
-    // Listen for camera permission changes
-    navigator.permissions
-      .query({ name: 'camera' })
-      .then((status) => {
-        status.onchange = () => {
-          if (status.state === 'granted') void startCamera();
-          if (status.state === 'denied') setPermission('denied');
-        };
-      });
-
+    startScan();
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
+      stopScan();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (lastResult == null) return;
+
+    void triggerLookup(lastResult, true);
+
+    navigate('/ingredients/new/barcode-entry', {
+      state: {
+        fromRecipePath,
+        scannedBarcode: lastResult,
+      },
+    });
+  }, [lastResult, triggerLookup, navigate, fromRecipePath]);
 
   return (
     <div className='mx-auto mt-10 max-w-2xl p-6 md:mt-0'>
@@ -76,24 +63,29 @@ export function IngredientBarcodeScanner() {
           muted
           className={join(
             'h-full w-full object-cover',
-            permission !== 'granted' && 'hidden',
+            !isScanning && 'hidden',
           )}
         />
 
-        {permission === 'denied' && (
-          <div className='flex flex-col items-center gap-4 p-8 text-center'>
-            <span className='text-5xl'>📷</span>
-            <p className='text-foreground font-semibold'>
-              Camera access denied
-            </p>
+        {error === 'permission-denied' && (
+          <div className='flex flex-col items-center gap-3 p-8 text-center'>
+            <span className='text-5xl'>🚫</span>
             <p className='text-muted-foreground text-sm'>
-              Please allow camera access in your browser settings, then try
-              again.
+              No camera access
             </p>
           </div>
         )}
 
-        {permission === 'prompt' && (
+        {isScanning && (
+          <div className='flex flex-col items-center gap-3 p-8 text-center'>
+            <span className='text-5xl'>📷</span>
+            <p className='text-muted-foreground text-sm'>
+              Scanning for barcodes…
+            </p>
+          </div>
+        )}
+
+        {!isScanning && error == null && lastResult == null && (
           <div className='flex flex-col items-center gap-3 p-8 text-center'>
             <span className='text-5xl'>📷</span>
             <p className='text-muted-foreground text-sm'>
@@ -102,6 +94,22 @@ export function IngredientBarcodeScanner() {
           </div>
         )}
       </div>
+
+      {error === 'permission-denied' && (
+        <div className='mt-4'>
+          <Callout
+            variant='destructive'
+            title='Camera access denied'
+            description='Please allow camera access in your browser settings, then try again.'
+          />
+        </div>
+      )}
+
+      {lastResult != null && (
+        <p className='text-foreground mt-4 text-center text-sm font-semibold'>
+          Barcode detected: {lastResult}
+        </p>
+      )}
     </div>
   );
 }

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "expo": "^55.0.8",
+    "expo-barcode-scanner": "^13.0.1",
     "expo-constants": "~55.0.9",
     "expo-linking": "~55.0.8",
     "expo-router": "~55.0.7",

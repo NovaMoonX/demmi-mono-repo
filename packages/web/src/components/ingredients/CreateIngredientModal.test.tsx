@@ -26,6 +26,12 @@ describe('CreateIngredientModal', () => {
     expect(screen.getByText('✍️')).toBeInTheDocument();
   });
 
+  it('renders Scan Barcode option', () => {
+    render(<CreateIngredientModal {...defaultProps} />);
+    expect(screen.getByText('Scan Barcode')).toBeInTheDocument();
+    expect(screen.getByText('📷')).toBeInTheDocument();
+  });
+
   it('renders Enter Barcode option', () => {
     render(<CreateIngredientModal {...defaultProps} />);
     expect(screen.getByText('Enter Barcode')).toBeInTheDocument();
@@ -37,6 +43,13 @@ describe('CreateIngredientModal', () => {
     fireEvent.click(screen.getByText('Manual Entry'));
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
     expect(defaultProps.onSelectManual).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onClose and onSelectBarcode when Scan Barcode is clicked', () => {
+    render(<CreateIngredientModal {...defaultProps} />);
+    fireEvent.click(screen.getByText('Scan Barcode'));
+    expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
+    expect(defaultProps.onSelectBarcode).toHaveBeenCalledTimes(1);
   });
 
   it('calls onClose and onSelectBarcodeEntry when Enter Barcode is clicked', () => {
