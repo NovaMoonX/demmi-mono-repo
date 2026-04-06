@@ -88,12 +88,12 @@ src/
 │   ├── calendar/       # DayCard, DayDetailModal, MonthView, TotalsDisplay
 │   ├── chat/           # ChatHistory, ChatMessage, OllamaModelControl, agent-action-cards/
 │   ├── cook/           # VoiceIndicator
-│   ├── ingredients/    # CreateIngredientModal
+│   ├── ingredients/    # CreateIngredientModal, BarcodeScanner
 │   ├── recipes/          # RecipeCard, CreateRecipeModal, RecipeIngredientSelector
 │   ├── shopping/       # ItemRow, ItemFormModal, shoppingUtils
 │   └── Sidebar.tsx
 ├── contexts/           # React context providers (AuthContext)
-├── hooks/              # Custom hooks (useAuth, useOllamaModels, useCookModeVoice, useIsMobileDevice)
+├── hooks/              # Custom hooks (useAuth, useOllamaModels, useCookModeVoice, useIsMobileDevice, useBarcodeScanner)
 ├── lib/                # Domain logic, types, constants, and utilities per feature
 │   ├── app/            # App-wide constants
 │   ├── calendar/       # Calendar types, utils, mock data
@@ -141,6 +141,7 @@ src/
 | [React Router](https://reactrouter.com/) 7 | Client-side routing |
 | [React Markdown](https://github.com/remarkjs/react-markdown) | Markdown rendering for AI responses |
 | [Vitest](https://vitest.dev/) | Testing framework |
+| [zxing-wasm](https://github.com/nickolcorp/zxing-wasm) | WebAssembly barcode reader (fallback for `BarcodeDetector`) |
 | [@testing-library/react](https://testing-library.com/) | Component testing utilities |
 
 ## Testing
@@ -224,6 +225,8 @@ npm run test:ui       # Open Vitest UI in browser
 ### 🍎 Ingredients
 - Card-based inventory with search, type filter, out-of-stock toggle, and sort options
 - Barcode support with Open Food Facts API lookup for auto-fill (name, image, serving, nutrients)
+- **Camera barcode scanning**: scan barcodes using the device camera with native `BarcodeDetector` API (Chromium 88+) and `zxing-wasm` fallback for broader compatibility
+- Manual barcode entry as a fallback when camera is unavailable
 - Comprehensive nutrition profile (calories, protein, carbs, fat, fiber, sugar, sodium per 100g/100ml)
 - 21 measurement units including custom units
 
