@@ -88,6 +88,7 @@ src/
 │   ├── calendar/       # DayCard, DayDetailModal, MonthView, TotalsDisplay
 │   ├── chat/           # ChatHistory, ChatMessage, OllamaModelControl, agent-action-cards/
 │   ├── cook/           # VoiceIndicator
+│   ├── dashboard/      # TodaysMeals, LowStockAlert, QuickAskDemi, RecipeOfTheDay
 │   ├── ingredients/    # CreateIngredientModal
 │   ├── recipes/          # RecipeCard, CreateRecipeModal, RecipeIngredientSelector
 │   ├── shopping/       # ItemRow, ItemFormModal, shoppingUtils
@@ -114,7 +115,7 @@ src/
 │   ├── CalendarScreen.tsx               # Meal planner
 │   ├── ShoppingList.tsx                 # Shopping list
 │   ├── SharedRecipeView.tsx               # Public shared recipe view
-│   ├── Home.tsx, About.tsx, Account.tsx
+│   ├── Home.tsx, About.tsx, Account.tsx   # Home shows dashboard (auth) or marketing (unauth)
 │   └── NotFound.tsx, ErrorFallback.tsx
 ├── store/              # Redux Toolkit state management
 │   ├── index.ts        # Store configuration
@@ -167,6 +168,14 @@ npm run test:ui       # Open Vitest UI in browser
 - `vitest.config.ts` — Vitest configuration (aliases, environment, setup)
 
 ## Features
+
+### 🏠 Personal Dashboard
+- Authenticated home screen replaced with a personal dashboard; unauthenticated and demo users still see the marketing landing page
+- **Today's Meals** — shows planned meals for the current day from the calendar slice, sorted by meal category
+- **Low Stock Alert** — warns when ingredients have a `currentAmount` of 0, with quick "Add to shopping list" buttons
+- **Quick Ask Demi** — compact input that navigates to `/chat` with the question pre-filled via navigation state (hidden on mobile WebView)
+- **Recipe of the Day** — deterministic daily recipe pick that avoids recently cooked recipes and respects cuisine preferences from the user profile
+- Responsive two-column grid on desktop, single-column stack on mobile
 
 ### 🎭 Demo Mode
 - Try the app without an account — pre-loaded mock data for all features including a demo user profile

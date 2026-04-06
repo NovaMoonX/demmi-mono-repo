@@ -115,11 +115,12 @@ export function ErrorBoundary({ children }: React.PropsWithChildren<Record<strin
   return React.createElement('div', { 'data-testid': 'error-boundary' }, children);
 }
 
-export function Callout({ children, title, ...props }: React.PropsWithChildren<{ title?: string } & Record<string, unknown>>) {
+export function Callout({ children, title, description, ...props }: React.PropsWithChildren<{ title?: string; description?: React.ReactNode } & Record<string, unknown>>) {
   return React.createElement(
     'div',
     { 'data-testid': 'callout', ...props },
     title ? React.createElement('p', { 'data-testid': 'callout-title' }, title) : null,
+    description ? React.createElement('div', { 'data-testid': 'callout-description' }, description) : null,
     children,
   );
 }

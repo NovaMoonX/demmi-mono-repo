@@ -1,25 +1,23 @@
 import { useNavigate } from 'react-router-dom';
 import { Button, Card } from '@moondreamsdev/dreamer-ui/components';
+import { join } from '@moondreamsdev/dreamer-ui/utils';
 import { APP_TITLE } from '@lib/app';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { startDemoSession } from '@store/slices/demoSlice';
 import { useAuth } from '@hooks/useAuth';
-import { join } from '@moondreamsdev/dreamer-ui/utils';
+import {
+  TodaysMeals,
+  LowStockAlert,
+  QuickAskDemi,
+  RecipeOfTheDay,
+} from '@components/dashboard';
 
-function Home() {
+function MarketingHome() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { user } = useAuth();
-  const isDemoActive = useAppSelector((state) => state.demo.isActive);
-
-  const isAuthenticated = !!user || isDemoActive;
 
   const handleGetStarted = () => {
-    if (isAuthenticated) {
-      navigate('/chat');
-    } else {
-      navigate('/auth');
-    }
+    navigate('/auth');
   };
 
   const handleTryDemo = async () => {
@@ -63,10 +61,8 @@ function Home() {
   return (
     <div className="page overflow-y-auto">
       <div className="min-h-full flex flex-col">
-        {/* Hero Section */}
         <section className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-20">
           <div className="text-center space-y-8 max-w-4xl">
-            {/* Logo */}
             <div className="flex justify-center">
               <div className="relative">
                 <img
@@ -77,7 +73,6 @@ function Home() {
               </div>
             </div>
 
-            {/* Title & Description */}
             <div className="space-y-4">
               <h1 className="text-5xl md:text-7xl font-bold bg-linear-to-r from-orange-500 to-orange-600 dark:from-orange-400 dark:to-orange-500 bg-clip-text text-transparent">
                 {APP_TITLE}
@@ -87,30 +82,26 @@ function Home() {
               </p>
             </div>
 
-            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
               <Button
                 onClick={handleGetStarted}
                 size="lg"
                 className="min-w-50"
               >
-                {isAuthenticated ? 'Enter App' : 'Get Started'}
+                Get Started
               </Button>
-              {!isAuthenticated && (
-                <Button
-                  onClick={handleTryDemo}
-                  variant="outline"
-                  size="lg"
-                  className="min-w-50"
-                >
-                  🎭 Try Demo Mode
-                </Button>
-              )}
+              <Button
+                onClick={handleTryDemo}
+                variant="outline"
+                size="lg"
+                className="min-w-50"
+              >
+                🎭 Try Demo Mode
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
         <section className="bg-muted/30 px-4 py-16 md:py-24">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
@@ -122,7 +113,6 @@ function Home() {
               </p>
             </div>
 
-            {/* Feature Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {features.map((feature, index) => (
                 <Card
@@ -143,7 +133,6 @@ function Home() {
           </div>
         </section>
 
-        {/* Final CTA Section */}
         <section className="px-4 py-16 md:py-20">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <h2 className="text-3xl md:text-4xl font-bold">
@@ -158,24 +147,55 @@ function Home() {
                 size="lg"
                 className="min-w-50"
               >
-                {isAuthenticated ? 'Enter App' : 'Sign Up Free'}
+                Sign Up Free
               </Button>
-              {!isAuthenticated && (
-                <Button
-                  href="/about"
-                  variant="outline"
-                  size="lg"
-                  className="min-w-50"
-                >
-                  Learn More
-                </Button>
-              )}
+              <Button
+                href="/about"
+                variant="outline"
+                size="lg"
+                className="min-w-50"
+              >
+                Learn More
+              </Button>
             </div>
           </div>
         </section>
       </div>
     </div>
   );
+}
+
+function Dashboard() {
+  return (
+    <div className="page overflow-y-auto">
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+        <h1 className="text-3xl font-bold">Welcome back 👋</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <TodaysMeals />
+            <LowStockAlert />
+          </div>
+          <div className="space-y-6">
+            <QuickAskDemi />
+            <RecipeOfTheDay />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Home() {
+  const { user } = useAuth();
+  const isDemoActive = useAppSelector((state) => state.demo.isActive);
+
+  const isAuthenticated = !!user || isDemoActive;
+
+  if (!isAuthenticated) {
+    return <MarketingHome />;
+  }
+
+  return <Dashboard />;
 }
 
 export default Home;
