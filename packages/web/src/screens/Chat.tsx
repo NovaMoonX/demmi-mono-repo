@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button, Callout, Label, Toggle } from '@moondreamsdev/dreamer-ui/components';
 import { Textarea } from '@moondreamsdev/dreamer-ui/components';
 import { ScrollArea } from '@moondreamsdev/dreamer-ui/components';
@@ -129,10 +130,12 @@ function buildIterationContextMessages(
 export function Chat() {
   const { isMobileWebView, canInstallOllama } = useRuntimeEnvironment();
   const dispatch = useAppDispatch();
+  const location = useLocation();
   const conversations = useAppSelector((state) => state.chats.conversations);
   const currentChatId = useAppSelector((state) => state.chats.currentChatId);
   const authUser = useAppSelector((state) => state.user.user);
-  const [inputValue, setInputValue] = useState('');
+  const prefill = (location.state as { prefill?: string } | null)?.prefill ?? '';
+  const [inputValue, setInputValue] = useState(prefill);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const isMobileDevice = useIsMobileDevice();
   const [isHistoryOpen, setIsHistoryOpen] = useState(() => !isMobileDevice);
