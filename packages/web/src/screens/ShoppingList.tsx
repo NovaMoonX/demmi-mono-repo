@@ -286,9 +286,9 @@ export function ShoppingList() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className='flex h-full flex-col mt-10 md:mt-0'>
+    <div className='flex h-full flex-col'>
       {/* Header */}
-      <div className='border-border bg-background/95 sticky top-0 z-10 border-b px-4 py-6 backdrop-blur'>
+      <div className='border-border bg-background/95 sticky top-0 z-10 border-b px-4 pt-10 pb-6 md:py-6 backdrop-blur shrink-0'>
         <div className='mx-auto max-w-2xl'>
           <div className='flex items-center justify-between gap-3'>
             <div>
@@ -324,7 +324,7 @@ export function ShoppingList() {
       </div>
 
       {/* Body */}
-      <div className='flex-1 overflow-y-auto px-4 py-4'>
+      <div className='flex-1 min-h-0 overflow-y-auto px-4 py-4'>
         <div className='mx-auto max-w-2xl space-y-6'>
           {/* Empty state */}
           {items.length === 0 && (
@@ -391,7 +391,7 @@ export function ShoppingList() {
 
       {/* Pantry auto-deduct preference prompt */}
       {pantryPromptItem && (
-        <div className='border-border bg-background border-t px-4 py-4'>
+        <div className='border-border bg-background border-t px-4 py-4 shrink-0'>
           <div className='mx-auto max-w-2xl'>
             <Callout
               title='Update your pantry automatically?'
