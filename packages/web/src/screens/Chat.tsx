@@ -127,7 +127,7 @@ function buildIterationContextMessages(
 }
 
 export function Chat() {
-  const { isMobileWebView } = useRuntimeEnvironment();
+  const { isMobileWebView, canInstallOllama } = useRuntimeEnvironment();
   const dispatch = useAppDispatch();
   const conversations = useAppSelector((state) => state.chats.conversations);
   const currentChatId = useAppSelector((state) => state.chats.currentChatId);
@@ -146,7 +146,7 @@ export function Chat() {
   const { confirm } = useActionModal();
   const { addToast } = useToast();
 
-  const { selectedModel } = useOllamaModels();
+  const { selectedModel, error: ollamaError, isLoading: ollamaLoading } = useOllamaModels();
 
   const currentChat = useMemo(() => {
     const result = conversations.find((c) => c.id === currentChatId) ?? null;
@@ -1081,24 +1081,34 @@ export function Chat() {
 
   const isSendDisabled = !inputValue.trim() || isSending || !selectedModel;
 
-  if (isMobileWebView) {
+  const ollamaOffline = isMobileWebView || (!ollamaLoading && !!ollamaError);
+
+  if (ollamaOffline) {
     return (
       <div className='flex h-full items-center justify-center p-6'>
         <div className='max-w-md space-y-6 text-center'>
           <h1 className='text-foreground text-2xl font-bold'>AI Chat requires Ollama</h1>
           <Callout
             variant='info'
-            description="Demmi runs on a local AI model via Ollama, which needs to be installed on your desktop. Chat isn't available on mobile yet."
+            description={
+              canInstallOllama
+                ? 'Demmi runs on a local AI model via Ollama, which needs to be running on your desktop.'
+                : "Demmi's AI runs via Ollama, which needs to be installed on your desktop. Chat isn't available on mobile yet."
+            }
           />
-          <a
-            href='https://ollama.com/download'
-            target='_blank'
-            rel='noopener noreferrer'
-            className='inline-block'
-          >
-            <Button variant='primary'>Learn how to set up Ollama →</Button>
-          </a>
-          <p className='text-muted-foreground text-sm'>Cloud AI for mobile is coming soon.</p>
+          {canInstallOllama && (
+            <a
+              href='https://ollama.com/download'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='inline-block'
+            >
+              <Button variant='primary'>Download Ollama →</Button>
+            </a>
+          )}
+          {!canInstallOllama && (
+            <p className='text-muted-foreground text-sm'>Cloud AI for mobile is coming soon.</p>
+          )}
         </div>
       </div>
     );

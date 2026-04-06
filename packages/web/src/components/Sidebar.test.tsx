@@ -16,7 +16,7 @@ vi.mock('@hooks/useAuth', () => ({
 const mockUseRuntimeEnvironment = vi.fn(() => ({
   isElectron: false,
   isMobileWebView: false,
-  isOllamaAvailable: true,
+  canInstallOllama: true,
 }));
 
 vi.mock('@hooks/useRuntimeEnvironment', () => ({
@@ -32,7 +32,7 @@ describe('Sidebar', () => {
     mockUseRuntimeEnvironment.mockReturnValue({
       isElectron: false,
       isMobileWebView: false,
-      isOllamaAvailable: true,
+      canInstallOllama: true,
     });
   });
 
@@ -101,7 +101,7 @@ describe('Sidebar', () => {
     mockUseRuntimeEnvironment.mockReturnValue({
       isElectron: false,
       isMobileWebView: true,
-      isOllamaAvailable: false,
+      canInstallOllama: false,
     });
     const { wrapper } = generateTestWrapper(demoOff);
     render(<Sidebar />, { wrapper });
