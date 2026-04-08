@@ -4,7 +4,7 @@ import { Skeleton, Callout } from '@moondreamsdev/dreamer-ui/components';
 import { useAppSelector, useAppDispatch } from '@store/hooks';
 import { saveUserProfile } from '@store/actions/userProfileActions';
 import type { UserProfile } from '@lib/userProfile';
-import { ProfileViewMode, ProfileEditForm } from '@components/account';
+import { ProfileViewMode, ProfileEditForm, AgentMemorySection } from '@components/account';
 
 export function Account() {
   const dispatch = useAppDispatch();
@@ -62,11 +62,16 @@ export function Account() {
   }
 
   return (
-    <ProfileViewMode
-      profile={profile}
-      onEdit={() => setIsViewMode(false)}
-      onResetOnboarding={handleResetOnboarding}
-    />
+    <div className='space-y-8'>
+      <ProfileViewMode
+        profile={profile}
+        onEdit={() => setIsViewMode(false)}
+        onResetOnboarding={handleResetOnboarding}
+      />
+      <div className='mx-auto max-w-2xl px-6'>
+        <AgentMemorySection />
+      </div>
+    </div>
   );
 }
 
