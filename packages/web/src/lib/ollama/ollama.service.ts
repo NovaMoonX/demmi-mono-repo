@@ -196,6 +196,45 @@ export async function ollamaChatSingle(params: {
 }
 
 /**
+ * Performs a non-streaming chat completion with tool definitions, routing through Electron IPC when available.
+ * Returns a response that may contain tool_calls alongside text content.
+ */
+export async function ollamaChatWithTools(params: {
+  model: string;
+  messages: Array<{ role: string; content: string }>;
+  tools: import('ollama/browser').Tool[];
+  options?: Record<string, unknown>;
+}): Promise<{
+  message: {
+    content: string;
+    tool_calls?: Array<{
+      function: { name: string; arguments: Record<string, unknown> };
+    }>;
+  };
+}> {
+  if (isElectron) {
+    const result = await getElectronAPI().ollamaChat({
+      model: params.model,
+      messages: params.messages,
+      tools: params.tools as unknown,
+      options: params.options as unknown,
+      stream: false,
+    });
+    return result ?? { message: { content: '' } };
+  }
+
+  const response = await ollamaClient.chat({ ...params, stream: false });
+  return response as unknown as {
+    message: {
+      content: string;
+      tool_calls?: Array<{
+        function: { name: string; arguments: Record<string, unknown> };
+      }>;
+    };
+  };
+}
+
+/**
  * Performs a non-streaming generate call, routing through Electron IPC when available.
  */
 export async function ollamaGenerate(params: {

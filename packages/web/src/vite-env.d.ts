@@ -11,6 +11,7 @@ interface OllamaChatPayload {
   messages: Array<{ role: string; content: string }>;
   format?: unknown;
   options?: unknown;
+  tools?: unknown;
   stream?: boolean;
 }
 
