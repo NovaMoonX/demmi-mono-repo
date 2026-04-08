@@ -29,6 +29,8 @@ import {
   setRecipeActionShoppingListDecision,
   deleteConversation,
   togglePinConversation,
+  initToolCalls,
+  updateToolCallStatus,
 } from '@store/slices/chatsSlice';
 import { createIngredient } from '@store/actions/ingredientActions';
 import { createRecipe } from '@store/actions/recipeActions';
@@ -40,9 +42,12 @@ import {
   generateSummary,
   getActionHandler,
   iterateRecipeAction,
+  toolCallAction,
 } from '@lib/ollama';
 import type { RecipeIterableField } from '@lib/ollama/action-types/createRecipeAction.types';
 import type { RecipeStep } from '@lib/ollama/action-types/createRecipeAction.types';
+import type { ToolCallRuntime, ToolCallResult } from '@lib/ollama/actions/toolCallAction';
+import type { ToolCallResultInfo } from '@lib/ollama/action-types/toolCallAction.types';
 import { generatedId } from '@utils/generatedId';
 
 const SCROLL_DELAY_MS = 100;
@@ -930,12 +935,11 @@ export function Chat() {
         return;
       }
 
-      const handler = getActionHandler(intent);
-
-      if (handler.isMultiStep) {
+      if (intent === 'createRecipe') {
+        const recipeHandler = getActionHandler('createRecipe');
         firstTokenReceivedRef.current = true;
 
-        const stepResult = await handler.executeStep(
+        const stepResult = await recipeHandler.executeStep(
           modelUsed,
           'proposeName',
           { messages: allMessagesForIntent },
@@ -975,15 +979,89 @@ export function Chat() {
             },
           }),
         );
-      } else {
+      } else if (intent === 'toolCall') {
         firstTokenReceivedRef.current = true;
 
-        const result = await handler.execute(
+        const toolResult = await toolCallAction.execute(
           modelUsed,
           { messages: allMessagesForIntent },
           {
             abortSignal: abortController.signal,
-            // The handler streams partial content via this callback; the consumer owns the dispatch.
+            getState: store.getState,
+            dispatch,
+            userId: authUser?.uid ?? '',
+            onProgress: (content: string) => {
+              dispatch(
+                updateMessageContent({
+                  chatId: chatIdForStream,
+                  messageId: assistantMessageId,
+                  content,
+                }),
+              );
+            },
+            onToolCallStart: (toolCalls: ToolCallResultInfo[]) => {
+              dispatch(
+                initToolCalls({
+                  chatId: chatIdForStream,
+                  messageId: assistantMessageId,
+                  toolCalls,
+                }),
+              );
+            },
+            onToolCallComplete: (index: number, toolResult: ToolCallResultInfo) => {
+              dispatch(
+                updateToolCallStatus({
+                  chatId: chatIdForStream,
+                  messageId: assistantMessageId,
+                  toolIndex: index,
+                  status: toolResult.status,
+                  result: toolResult.result,
+                }),
+              );
+            },
+          } as ToolCallRuntime,
+        );
+
+        if (!abortController.signal.aborted && !toolResult.cancelled) {
+          const messageContentUpdates =
+            toolCallAction.getUpdatedMessageContentFromResult!(toolResult.data as ToolCallResult);
+
+          dispatch(
+            updateMessageContent({
+              chatId: chatIdForStream,
+              messageId: assistantMessageId,
+              model: modelUsed,
+              ...messageContentUpdates,
+            }),
+          );
+
+          generateSummary(
+            modelUsed,
+            messageContent,
+            messageContentUpdates.content,
+          )
+            .then((summary) => {
+              if (summary) {
+                dispatch(
+                  updateMessageSummary({
+                    chatId: chatIdForStream,
+                    messageId: assistantMessageId,
+                    summary,
+                  }),
+                );
+              }
+            })
+            .catch((err) => console.warn('Summary generation failed', err));
+        }
+      } else {
+        const generalHandler = getActionHandler('general');
+        firstTokenReceivedRef.current = true;
+
+        const result = await generalHandler.execute(
+          modelUsed,
+          { messages: allMessagesForIntent },
+          {
+            abortSignal: abortController.signal,
             onProgress: (content) => {
               dispatch(
                 updateMessageContent({
@@ -998,7 +1076,7 @@ export function Chat() {
 
         if (!abortController.signal.aborted && !result.cancelled) {
           const messageContentUpdates =
-            handler.getUpdatedMessageContentFromResult(result.data);
+            generalHandler.getUpdatedMessageContentFromResult(result.data);
 
           dispatch(
             updateMessageContent({

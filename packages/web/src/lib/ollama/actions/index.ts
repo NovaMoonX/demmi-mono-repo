@@ -14,4 +14,6 @@ export { createRecipeAction } from './createRecipeAction';
 export type { RecipeResult, RecipeStepName } from './createRecipeAction';
 export { iterateRecipeAction } from './iterateRecipeAction';
 export type { RecipeIterationResult, RecipeIterationStepName } from './iterateRecipeAction';
+export { toolCallAction } from './toolCallAction';
+export type { ToolCallResult, ToolCallRuntime } from './toolCallAction';
 export { getActionHandler } from './registry';
