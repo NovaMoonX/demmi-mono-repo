@@ -84,7 +84,7 @@ The Chat feature requires [Ollama](https://ollama.com) running locally.
 ```
 src/
 ├── components/         # Reusable UI components (organized by feature)
-│   ├── account/        # ProfileViewMode, ProfileEditForm
+│   ├── account/        # ProfileViewMode, ProfileEditForm, AgentMemorySection
 │   ├── calendar/       # DayCard, DayDetailModal, MonthView, TotalsDisplay
 │   ├── chat/           # ChatHistory, ChatMessage, OllamaModelControl, agent-action-cards/
 │   ├── cook/           # VoiceIndicator
@@ -101,8 +101,9 @@ src/
 │   ├── firebase/       # Firebase config and auth service
 │   ├── ingredients/    # Ingredient types, constants, utils, mock data
 │   ├── recipes/          # Recipe types, constants, shared-recipe types, mock data
-│   ├── ollama/         # Ollama service, action types, prompts, schemas
-│   └── shoppingList/   # Shopping list types, mock data
+│   ├── memory/         # AgentMemory types, constants
+│   ├── ollama/         # Ollama service, action types, prompts, schemas, tools/
+│   ├── shoppingList/   # Shopping list types, mock data
 │   └── userProfile/    # UserProfile types, constants, mock data
 ├── routes/             # Router config (AppRoutes, ProtectedRoutes)
 ├── screens/            # Page-level components
@@ -119,9 +120,9 @@ src/
 ├── store/              # Redux Toolkit state management
 │   ├── index.ts        # Store configuration
 │   ├── hooks.ts        # Typed hooks (useAppDispatch, useAppSelector)
-│   ├── actions/        # Async Firestore thunks (calendar, chat, ingredient, recipe, shoppingList, shareRecipe, userProfile)
+│   ├── actions/        # Async Firestore thunks (calendar, chat, ingredient, memory, recipe, shoppingList, shareRecipe, userProfile)
 │   ├── api/            # External API clients (Open Food Facts)
-│   └── slices/         # Redux slices (calendar, chats, demo, ingredients, recipes, shoppingList, user, userProfile)
+│   └── slices/         # Redux slices (calendar, chats, demo, ingredients, memory, recipes, shoppingList, user, userProfile)
 ├── ui/                 # Layout components (Layout, Loading)
 └── utils/              # Shared utilities (generatedId, capitalize, formatDate, barcodePrefill, matchIngredientByName)
 ```
@@ -211,6 +212,27 @@ npm run test:ui       # Open Vitest UI in browser
 - Copy, edit & re-send messages; pinned chats; conversation history sidebar
 - Summary-based intent detection using last 10 message summaries for efficient context
 - Modular action registry — add new AI actions without touching the chat component
+
+### 🔧 Tool-Calling Agent
+- Native Ollama tool calling via the `tools` parameter on `chat()` — the LLM decides which tools to invoke
+- Intent detection supports 3 intents: `general` (plain chat), `createRecipe` (recipe generation flow), and `toolCall` (agent tool use)
+- **6 tool domains** with a registry pattern for easy extensibility:
+  - **Recipes** — `search_recipes`, `get_recipe`, `create_recipe`, `update_recipe`, `delete_recipe`
+  - **Ingredients** — `search_ingredients`, `get_ingredient`, `create_ingredient`, `update_ingredient`, `delete_ingredient`
+  - **Calendar** — `get_meal_plan`, `plan_recipe`, `update_planned_recipe`, `remove_planned_recipe`
+  - **Shopping** — `get_shopping_list`, `add_to_shopping_list`, `check_shopping_items`, `remove_shopping_items`, `clear_checked_items`
+  - **Memory** — `get_memories`, `save_memory`, `update_memory`, `delete_memory`
+  - **Profile** — `get_user_profile` (read-only)
+- **Confirmation model**: reads and creates execute immediately; updates and deletes always show a proposal card requiring explicit user approval
+- Multi-tool chaining with progressive UI updates and a max of 10 tool-call rounds per turn
+- `ToolCallActionCard` component renders tool results as list displays or confirmation cards
+
+### 🧠 Agent Memory
+- The AI automatically saves user preferences, context, goals, and household details across conversations
+- Memories are stored in the `agentMemories` Firestore collection with categories: `preference`, `context`, `goal`, `household`, `other`
+- Full CRUD via Redux async thunks — memories are fetched on auth alongside other user data
+- Memory management UI in the Account screen lets users view and delete saved memories
+- The tool-calling agent reads memories at the start of each conversation for personalized responses
 
 ### 🍽️ AI Recipe & Ingredient Creation
 - Create recipes via chat with intent confirmation and 5-step generation (name → info → description → ingredients → instructions)
@@ -418,6 +440,23 @@ interface UserProfile {
 }
 ```
 
+### Agent Memory
+
+Stored in the `agentMemories` Firestore collection.
+
+```typescript
+type AgentMemoryCategory = 'preference' | 'context' | 'goal' | 'household' | 'other';
+
+interface AgentMemory {
+  id: string;
+  userId: string;
+  content: string;
+  category: AgentMemoryCategory;
+  createdAt: number; // ms timestamp
+  updatedAt: number; // ms timestamp
+}
+```
+
 ## Design & Visual Aesthetic
 
 ### Color Palette
@@ -447,6 +486,7 @@ Redux Toolkit with typed hooks (`useAppDispatch`, `useAppSelector`). The store i
 | `shoppingListSlice` | Shopping list items |
 | `userSlice` | Authentication state |
 | `demoSlice` | Demo mode session management |
+| `memorySlice` | Agent memory CRUD (preferences, context, goals) |
 | `userProfileSlice` | User profile (dietary, preferences, goals) |
 
 All Firestore async thunks read the user from Redux state (never accept `userId` as a parameter) and use the `condition` option to skip execution when demo mode is active.

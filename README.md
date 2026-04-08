@@ -34,6 +34,8 @@ Demmi solves a real problem: generic AI tools (ChatGPT, Gemini, etc.) don't know
 | 🛒 **Shopping List** | Auto-generate grocery lists from planned recipes or add items manually |
 | 🔗 **Recipe Sharing** | Share recipes via public link — no account required for viewers |
 | 🤖 **AI Recipe Creation** | Chat-driven multi-step recipe generation with ingredient matching and approval flow |
+| 🧠 **Agent Memory** | The AI remembers your preferences, context, and goals across conversations |
+| 🔧 **Tool-Calling Agent** | The AI can search, create, update, and delete recipes, ingredients, calendar entries, and shopping items on your behalf |
 | 🎨 **Light & Dark Mode** | Full theme support with a warm, cooking-inspired orange accent palette |
 
 ## Use Cases
@@ -43,6 +45,9 @@ Demmi solves a real problem: generic AI tools (ChatGPT, Gemini, etc.) don't know
 - *"Create a pasta carbonara recipe"* — The AI generates a full recipe with ingredients, instructions, and nutrition, then adds it to your collection on approval
 - *"Generate my shopping list"* — Pull ingredients from planned recipes into a grocery checklist
 - *"Share this recipe with a friend"* — One-click shareable link, viewable without an account
+- *"What's on my meal plan this week?"* — The AI calls tools to read your calendar and summarize upcoming meals
+- *"Add milk and eggs to my shopping list"* — The AI directly adds items without you leaving the chat
+- *"Remember that I don't like cilantro"* — The AI saves a memory and recalls it in future conversations
 
 ## Tech Stack
 
