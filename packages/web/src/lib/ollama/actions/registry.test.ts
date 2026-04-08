@@ -12,6 +12,11 @@ describe('registry', () => {
     expect(handler.type).toBe('createRecipe');
   });
 
+  it('returns toolCallAction for toolCall type', () => {
+    const handler = getActionHandler('toolCall');
+    expect(handler.type).toBe('toolCall');
+  });
+
   it('throws for unknown action type', () => {
     expect(() => getActionHandler('unknown' as never)).toThrow('Unknown action type');
   });
