@@ -3,7 +3,6 @@ import {
   ollamaClient,
   listLocalModels,
   generateSummary,
-  detectIntent,
   parseGeneralResponse,
   extractPartialResponse,
 } from './ollama.service';
@@ -58,28 +57,6 @@ describe('ollama.service', () => {
       const longAssistant = 'b'.repeat(201);
       const result = await generateSummary('mistral', longUser, longAssistant);
       expect(result).toBe('User asked about pasta. Assistant provided a recipe.');
-    });
-  });
-
-  describe('detectIntent', () => {
-    it('returns general by default on error', async () => {
-      vi.mocked(ollamaClient.generate).mockRejectedValue(new Error('fail'));
-
-      const result = await detectIntent('mistral', [
-        { id: '1', role: 'user', content: 'Hello', timestamp: 1, model: null, rawContent: null, agentAction: null, summary: null, iterationInvalid: null },
-      ]);
-      expect(result).toBe('general');
-    });
-
-    it('detects createRecipe intent', async () => {
-      vi.mocked(ollamaClient.generate).mockResolvedValue(mock<GenerateResponse>({
-        response: JSON.stringify({ action: 'createRecipe' }),
-      }));
-
-      const result = await detectIntent('mistral', [
-        { id: '1', role: 'user', content: 'Make me a pasta recipe', timestamp: 1, model: null, rawContent: null, agentAction: null, summary: null, iterationInvalid: null },
-      ]);
-      expect(result).toBe('createRecipe');
     });
   });
 

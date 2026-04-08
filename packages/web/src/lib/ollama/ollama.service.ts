@@ -1,13 +1,9 @@
-import type { ChatMessage } from '@lib/chat';
-import type { ActionType } from '@lib/ollama/actions/types';
 import type { AbortableAsyncIterator } from 'ollama';
 import type { ProgressResponse } from 'ollama/browser';
 import { Ollama } from 'ollama/browser';
-import { INTENT_ACTION_PROMPT_DESCRIPTION, INTENT_ACTION_SHORT_DESCRIPTIONS, INTENT_ACTIONS } from './ollama.constants';
 
 const MIN_USER_MESSAGE_LENGTH = 100;
 const MIN_ASSISTANT_MESSAGE_LENGTH = 200;
-const MAX_RECENT_SUMMARIES = 10;
 
 export const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
 console.log('isElectron', isElectron); // KEEP THIS LOG FOR DEBUGGING PURPOSES
@@ -23,41 +19,6 @@ export interface OllamaChatStream {
   [Symbol.asyncIterator](): AsyncIterator<{ message: { content: string } }>;
   abort(): void;
 }
-
-/**
- * Intent detection — classifies the user's current message into a supported action type.
- */
-const INTENT_DETECTION_PROMPT = `
-You are Demmi's AI assistant, specialized in cooking, recipes, meal planning, and nutrition.
-
-Your task: Classify the user's CURRENT message intent.
-
-Select ONE action that best matches what the user wants RIGHT NOW:
-${INTENT_ACTIONS.map((a) => `- "${a}": ${INTENT_ACTION_PROMPT_DESCRIPTION[a]}`).join('\n')}
-
-IMPORTANT CLASSIFICATION RULES:
-- Re-evaluate intent with EVERY message — users can transition between action types at any time
-- Focus ONLY on the user's CURRENT request, ignoring previous conversation context
-
-TRANSITION EXAMPLES (users can switch at any time):
-- Previous: "What's a good protein for breakfast?" (general) → Current: "Create an egg benedict recipe" (createRecipe)
-- Previous: "Make me a pasta dish" (createRecipe) → Current: "What's the difference between penne and rigatoni?" (general)
-
-Each message is independent — classify based on what the user wants NOW.
-`;
-
-const INTENT_DETECTION_SCHEMA: Record<string, unknown> = {
-  type: 'object',
-  required: ['action'],
-  properties: {
-    action: {
-      type: 'string',
-      enum: INTENT_ACTIONS,
-      description:
-        `The type of user intent:\n{${INTENT_ACTIONS.map((a) => `— "${a}": ${INTENT_ACTION_SHORT_DESCRIPTIONS[a]}`).join('\n')}}`,
-    },
-  },
-};
 
 export const ollamaClient = new Ollama();
 
@@ -277,66 +238,6 @@ export async function generateSummary(
     return response.response.trim();
   } catch {
     return '';
-  }
-}
-
-/**
- * Detect the user's action type using summaries for context when available.
- * Uses generate() API for classification. Falls back to full messages if no summaries exist.
- * Returns the ActionType: 'general' | 'createRecipe'.
- */
-export async function detectIntent(
-  model: string,
-  messages: ChatMessage[],
-): Promise<ActionType> {
-  const recentSummaries = messages
-    .slice(-MAX_RECENT_SUMMARIES)
-    .filter((m) => m.summary)
-    .map((m) => m.summary)
-    .join('\n');
-
-  const lastMessage = messages[messages.length - 1];
-  const currentMessage = lastMessage?.rawContent ?? lastMessage?.content ?? '';
-
-  let prompt: string;
-
-  if (recentSummaries) {
-    prompt = `${INTENT_DETECTION_PROMPT}
-Recent context:
-${recentSummaries}
-
-Current user message:
-${currentMessage}
-
-Classify the current message intent.`;
-  } else {
-    const conversationText = messages
-      .map((m) => `${m.role}: ${m.rawContent ?? m.content}`)
-      .join('\n');
-    prompt = `${INTENT_DETECTION_PROMPT}
-Conversation:
-${conversationText}
-
-Classify the current message intent.`;
-  }
-
-  try {
-    const response = await ollamaGenerate({
-      model,
-      prompt,
-      format: INTENT_DETECTION_SCHEMA,
-    });
-
-    const parsed = JSON.parse(response.response);
-    const action = parsed?.action;
-
-    if (action === 'general' || action === 'createRecipe') {
-      return action;
-    }
-
-    return 'general';
-  } catch {
-    return 'general';
   }
 }
 

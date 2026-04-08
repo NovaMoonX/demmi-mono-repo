@@ -39,7 +39,12 @@ interface OllamaErrorData {
 }
 
 interface OllamaElectronChatResponse {
-  message: { content: string };
+  message: {
+    content: string;
+    tool_calls?: Array<{
+      function: { name: string; arguments: Record<string, unknown> };
+    }>;
+  };
 }
 
 interface OllamaElectronGenerateResponse {

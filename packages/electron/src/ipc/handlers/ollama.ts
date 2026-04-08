@@ -6,6 +6,7 @@ interface OllamaChatPayload {
 	model: string;
 	messages: Array<{ role: string; content: string }>;
 	format?: string | object;
+	tools?: unknown;
 	options?: Record<string, unknown>;
 	stream?: boolean;
 }
@@ -54,8 +55,18 @@ async function handleOllamaChat(
 			if (!res.ok) {
 				throw new Error(`Ollama responded with ${res.status}: ${res.statusText}`);
 			}
-			const data = await res.json() as { message?: { content?: string } };
-			return { message: { content: data.message?.content ?? '' } };
+			const data = await res.json() as {
+				message?: {
+					content?: string;
+					tool_calls?: Array<{ function: { name: string; arguments: Record<string, unknown> } }>;
+				};
+			};
+			return {
+				message: {
+					content: data.message?.content ?? '',
+					tool_calls: data.message?.tool_calls,
+				},
+			};
 		} catch (err) {
 			throw new Error(err instanceof Error ? err.message : 'Ollama chat request failed');
 		}

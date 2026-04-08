@@ -1,5 +1,6 @@
 import type { ToolDefinition, ToolContext, ToolResult } from './tool.types';
 import type { Ingredient } from '@lib/ingredients';
+import { createIngredient } from '@store/actions/ingredientActions';
 
 export const searchIngredientsTool: ToolDefinition = {
   name: 'search_ingredients',
@@ -196,9 +197,101 @@ export const deleteIngredientTool: ToolDefinition = {
   },
 };
 
+export const createIngredientTool: ToolDefinition = {
+  name: 'create_ingredient',
+  description: 'Add a new ingredient to the user\'s pantry with the given details.',
+  parameters: {
+    type: 'object',
+    required: ['name', 'type'],
+    properties: {
+      name: { type: 'string', description: 'Ingredient name' },
+      type: {
+        type: 'string',
+        description: 'Ingredient type/category',
+        enum: ['meat', 'produce', 'dairy', 'grains', 'legumes', 'oils', 'spices', 'nuts', 'seafood', 'other'],
+      },
+      currentAmount: { type: 'number', description: 'Current amount on hand' },
+      servingSize: { type: 'number', description: 'Portion size per serving' },
+      unit: {
+        type: 'string',
+        description: 'Measurement unit',
+        enum: ['lb', 'oz', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'piece', 'ml', 'l', 'other'],
+      },
+    },
+  },
+  requiresConfirmation: false,
+  execute: async (args: Record<string, unknown>, context: ToolContext): Promise<ToolResult> => {
+    const name = String(args.name ?? '');
+    const type = String(args.type ?? 'other') as Ingredient['type'];
+    const currentAmount = Number(args.currentAmount) || 0;
+    const servingSize = Number(args.servingSize) || 1;
+    const unit = String(args.unit ?? 'piece') as Ingredient['unit'];
+
+    if (!name.trim()) {
+      return {
+        success: false,
+        data: null,
+        displayType: 'error',
+        message: 'Ingredient name is required.',
+      };
+    }
+
+    try {
+      const ingredientData: Omit<Ingredient, 'id' | 'userId'> = {
+        name,
+        type,
+        imageUrl: '',
+        nutrients: {
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+          fiber: 0,
+          sugar: 0,
+          sodium: 0,
+          calories: 0,
+        },
+        currentAmount,
+        servingSize,
+        unit,
+        otherUnit: null,
+        products: [],
+        defaultProductId: null,
+        barcode: null,
+      };
+
+      const result = await context.dispatch(createIngredient(ingredientData));
+
+      if (createIngredient.fulfilled.match(result)) {
+        const newIngredient = result.payload;
+        return {
+          success: true,
+          data: newIngredient,
+          displayType: 'success',
+          message: `Ingredient "${newIngredient.name}" added to your pantry.`,
+        };
+      }
+
+      return {
+        success: false,
+        data: null,
+        displayType: 'error',
+        message: 'Failed to add ingredient.',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        data: null,
+        displayType: 'error',
+        message: `Failed to add ingredient: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      };
+    }
+  },
+};
+
 export const ingredientTools: ToolDefinition[] = [
   searchIngredientsTool,
   getIngredientTool,
+  createIngredientTool,
   updateIngredientTool,
   deleteIngredientTool,
 ];

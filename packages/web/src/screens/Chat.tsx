@@ -38,7 +38,6 @@ import { createShoppingListItem } from '@store/actions/shoppingListActions';
 import { ChatMessage as ChatMessageType } from '@lib/chat';
 import type { Recipe, RecipeIngredient } from '@lib/recipes';
 import {
-  detectIntent,
   generateSummary,
   getActionHandler,
   iterateRecipeAction,
@@ -921,190 +920,78 @@ export function Chat() {
     activeMessageIdRef.current = assistantMessageId;
 
     try {
-      const intent = await detectIntent(modelUsed, allMessagesForIntent);
+      firstTokenReceivedRef.current = true;
 
-      if (abortController.signal.aborted) {
-        if (!firstTokenReceivedRef.current) {
-          dispatch(
-            removeMessage({
-              chatId: chatIdForStream,
-              messageId: assistantMessageId,
-            }),
-          );
-        }
-        return;
-      }
-
-      if (intent === 'createRecipe') {
-        const recipeHandler = getActionHandler('createRecipe');
-        firstTokenReceivedRef.current = true;
-
-        const stepResult = await recipeHandler.executeStep(
-          modelUsed,
-          'proposeName',
-          { messages: allMessagesForIntent },
-          {
-            abortSignal: abortController.signal,
+      const toolResult = await toolCallAction.execute(
+        modelUsed,
+        { messages: allMessagesForIntent },
+        {
+          abortSignal: abortController.signal,
+          getState: store.getState,
+          dispatch,
+          userId: authUser?.uid ?? '',
+          onProgress: (content: string) => {
+            dispatch(
+              updateMessageContent({
+                chatId: chatIdForStream,
+                messageId: assistantMessageId,
+                content,
+              }),
+            );
           },
-        );
+          onToolCallStart: (toolCalls: ToolCallResultInfo[]) => {
+            dispatch(
+              initToolCalls({
+                chatId: chatIdForStream,
+                messageId: assistantMessageId,
+                toolCalls,
+              }),
+            );
+          },
+          onToolCallComplete: (index: number, toolResult: ToolCallResultInfo) => {
+            dispatch(
+              updateToolCallStatus({
+                chatId: chatIdForStream,
+                messageId: assistantMessageId,
+                toolIndex: index,
+                status: toolResult.status,
+                result: toolResult.result,
+              }),
+            );
+          },
+        } as ToolCallRuntime,
+      );
 
-        if (stepResult.cancelled) return;
-
-        const proposedNameFromStep = stepResult.data.name;
-        const proposedName =
-          typeof proposedNameFromStep === 'string' &&
-          proposedNameFromStep.trim().length > 0
-            ? proposedNameFromStep
-            : null;
-
-        if (abortController.signal.aborted) return;
+      if (!abortController.signal.aborted && !toolResult.cancelled) {
+        const messageContentUpdates =
+          toolCallAction.getUpdatedMessageContentFromResult!(toolResult.data as ToolCallResult);
 
         dispatch(
           updateMessageContent({
             chatId: chatIdForStream,
             messageId: assistantMessageId,
-            content: proposedName
-              ? `I can help you create a recipe for **${proposedName}**! Shall I go ahead?`
-              : "I'd like to help you create a recipe! I wasn't able to detect the dish name — could you confirm what you'd like me to make?",
-            agentAction: {
-              type: 'create_recipe',
-              status: 'pending_confirmation',
-              proposedName: proposedName ?? '',
-              recipes: [],
-              recipe: null,
-              completedSteps: null,
-              updatingFields: null,
-              shoppingListDecision: null,
-              shoppingListItemsAdded: null,
-            },
+            model: modelUsed,
+            ...messageContentUpdates,
           }),
         );
-      } else if (intent === 'toolCall') {
-        firstTokenReceivedRef.current = true;
 
-        const toolResult = await toolCallAction.execute(
+        generateSummary(
           modelUsed,
-          { messages: allMessagesForIntent },
-          {
-            abortSignal: abortController.signal,
-            getState: store.getState,
-            dispatch,
-            userId: authUser?.uid ?? '',
-            onProgress: (content: string) => {
+          messageContent,
+          messageContentUpdates.content,
+        )
+          .then((summary) => {
+            if (summary) {
               dispatch(
-                updateMessageContent({
+                updateMessageSummary({
                   chatId: chatIdForStream,
                   messageId: assistantMessageId,
-                  content,
+                  summary,
                 }),
               );
-            },
-            onToolCallStart: (toolCalls: ToolCallResultInfo[]) => {
-              dispatch(
-                initToolCalls({
-                  chatId: chatIdForStream,
-                  messageId: assistantMessageId,
-                  toolCalls,
-                }),
-              );
-            },
-            onToolCallComplete: (index: number, toolResult: ToolCallResultInfo) => {
-              dispatch(
-                updateToolCallStatus({
-                  chatId: chatIdForStream,
-                  messageId: assistantMessageId,
-                  toolIndex: index,
-                  status: toolResult.status,
-                  result: toolResult.result,
-                }),
-              );
-            },
-          } as ToolCallRuntime,
-        );
-
-        if (!abortController.signal.aborted && !toolResult.cancelled) {
-          const messageContentUpdates =
-            toolCallAction.getUpdatedMessageContentFromResult!(toolResult.data as ToolCallResult);
-
-          dispatch(
-            updateMessageContent({
-              chatId: chatIdForStream,
-              messageId: assistantMessageId,
-              model: modelUsed,
-              ...messageContentUpdates,
-            }),
-          );
-
-          generateSummary(
-            modelUsed,
-            messageContent,
-            messageContentUpdates.content,
-          )
-            .then((summary) => {
-              if (summary) {
-                dispatch(
-                  updateMessageSummary({
-                    chatId: chatIdForStream,
-                    messageId: assistantMessageId,
-                    summary,
-                  }),
-                );
-              }
-            })
-            .catch((err) => console.warn('Summary generation failed', err));
-        }
-      } else {
-        const generalHandler = getActionHandler('general');
-        firstTokenReceivedRef.current = true;
-
-        const result = await generalHandler.execute(
-          modelUsed,
-          { messages: allMessagesForIntent },
-          {
-            abortSignal: abortController.signal,
-            onProgress: (content) => {
-              dispatch(
-                updateMessageContent({
-                  chatId: chatIdForStream,
-                  messageId: assistantMessageId,
-                  content,
-                }),
-              );
-            },
-          },
-        );
-
-        if (!abortController.signal.aborted && !result.cancelled) {
-          const messageContentUpdates =
-            generalHandler.getUpdatedMessageContentFromResult(result.data);
-
-          dispatch(
-            updateMessageContent({
-              chatId: chatIdForStream,
-              messageId: assistantMessageId,
-              model: modelUsed,
-              ...messageContentUpdates,
-            }),
-          );
-
-          generateSummary(
-            modelUsed,
-            messageContent,
-            messageContentUpdates.content,
-          )
-            .then((summary) => {
-              if (summary) {
-                dispatch(
-                  updateMessageSummary({
-                    chatId: chatIdForStream,
-                    messageId: assistantMessageId,
-                    summary,
-                  }),
-                );
-              }
-            })
-            .catch((err) => console.warn('Summary generation failed', err));
-        }
+            }
+          })
+          .catch((err) => console.warn('Summary generation failed', err));
       }
     } catch (err) {
       if (!abortController.signal.aborted) {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { searchRecipesTool, getRecipeTool, deleteRecipeTool } from './recipe.tools';
+import { searchRecipesTool, getRecipeTool, createRecipeTool, deleteRecipeTool } from './recipe.tools';
 import type { ToolContext } from './tool.types';
 import type { RootState, AppDispatch } from '@store/index';
 
@@ -78,6 +78,60 @@ describe('recipe.tools', () => {
 
       expect(result.success).toBe(false);
       expect(result.displayType).toBe('error');
+    });
+  });
+
+  describe('create_recipe', () => {
+    it('returns error when title is missing', async () => {
+      const result = await createRecipeTool.execute({
+        category: 'dinner',
+        cuisine: 'italian',
+        instructions: ['Cook it'],
+      }, mockContext);
+
+      expect(result.success).toBe(false);
+      expect(result.displayType).toBe('error');
+      expect(result.message).toContain('title is required');
+    });
+
+    it('dispatches createRecipe thunk on success', async () => {
+      const mockNewRecipe = {
+        id: 'new-r1', userId: 'user-1', title: 'Spaghetti Bolognese',
+        description: 'Hearty meat sauce', category: 'dinner', cuisine: 'italian',
+        prepTime: 10, cookTime: 30, servingSize: 4,
+        instructions: ['Cook pasta', 'Make sauce'], imageUrl: '',
+        ingredients: [], share: null,
+      };
+
+      const mockDispatch = vi.fn().mockResolvedValue({
+        type: 'recipes/createRecipeAsync/fulfilled',
+        payload: mockNewRecipe,
+        meta: { requestId: '1', arg: {} },
+      });
+
+      const createContext: ToolContext = {
+        getState: vi.fn(() => mockState),
+        dispatch: mockDispatch as unknown as AppDispatch,
+        userId: 'user-1',
+      };
+
+      const result = await createRecipeTool.execute({
+        title: 'Spaghetti Bolognese',
+        description: 'Hearty meat sauce',
+        category: 'dinner',
+        cuisine: 'italian',
+        prepTime: 10,
+        cookTime: 30,
+        servingSize: 4,
+        instructions: ['Cook pasta', 'Make sauce'],
+      }, createContext);
+
+      expect(mockDispatch).toHaveBeenCalled();
+      expect(result.displayType).toBe('success');
+    });
+
+    it('does not require confirmation', () => {
+      expect(createRecipeTool.requiresConfirmation).toBe(false);
     });
   });
 

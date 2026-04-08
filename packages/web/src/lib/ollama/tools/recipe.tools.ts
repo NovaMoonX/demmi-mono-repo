@@ -1,5 +1,6 @@
 import type { ToolDefinition, ToolContext, ToolResult } from './tool.types';
 import type { Recipe } from '@lib/recipes';
+import { createRecipe } from '@store/actions/recipeActions';
 
 export const searchRecipesTool: ToolDefinition = {
   name: 'search_recipes',
@@ -218,9 +219,101 @@ export const deleteRecipeTool: ToolDefinition = {
   },
 };
 
+export const createRecipeTool: ToolDefinition = {
+  name: 'create_recipe',
+  description: 'Create a new recipe with the given details. Provide as much information as possible including title, description, category, cuisine, prep/cook times, serving size, and instructions.',
+  parameters: {
+    type: 'object',
+    required: ['title', 'category', 'cuisine', 'instructions'],
+    properties: {
+      title: { type: 'string', description: 'Recipe title' },
+      description: { type: 'string', description: 'Short description of the recipe' },
+      category: {
+        type: 'string',
+        description: 'Meal category',
+        enum: ['breakfast', 'lunch', 'dinner', 'snack', 'dessert', 'drink'],
+      },
+      cuisine: { type: 'string', description: 'Cuisine type (e.g. italian, mexican, chinese)' },
+      prepTime: { type: 'number', description: 'Prep time in minutes' },
+      cookTime: { type: 'number', description: 'Cook time in minutes' },
+      servingSize: { type: 'number', description: 'Number of servings' },
+      instructions: {
+        type: 'array',
+        description: 'Step-by-step cooking instructions',
+        items: { type: 'string' },
+      },
+    },
+  },
+  requiresConfirmation: false,
+  execute: async (args: Record<string, unknown>, context: ToolContext): Promise<ToolResult> => {
+    const title = String(args.title ?? '');
+    const description = String(args.description ?? '');
+    const category = String(args.category ?? 'dinner') as Recipe['category'];
+    const cuisine = String(args.cuisine ?? '');
+    const prepTime = Number(args.prepTime) || 0;
+    const cookTime = Number(args.cookTime) || 0;
+    const servingSize = Number(args.servingSize) || 4;
+    const instructions = Array.isArray(args.instructions)
+      ? args.instructions.map(String)
+      : [];
+
+    if (!title.trim()) {
+      return {
+        success: false,
+        data: null,
+        displayType: 'error',
+        message: 'Recipe title is required.',
+      };
+    }
+
+    try {
+      const recipeData: Omit<Recipe, 'id' | 'userId'> = {
+        title,
+        description,
+        category,
+        cuisine,
+        prepTime,
+        cookTime,
+        servingSize,
+        instructions,
+        imageUrl: '',
+        ingredients: [],
+        share: null,
+      };
+
+      const result = await context.dispatch(createRecipe(recipeData));
+
+      if (createRecipe.fulfilled.match(result)) {
+        const newRecipe = result.payload;
+        return {
+          success: true,
+          data: newRecipe,
+          displayType: 'success',
+          message: `Recipe "${newRecipe.title}" created successfully.`,
+        };
+      }
+
+      return {
+        success: false,
+        data: null,
+        displayType: 'error',
+        message: 'Failed to create recipe.',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        data: null,
+        displayType: 'error',
+        message: `Failed to create recipe: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      };
+    }
+  },
+};
+
 export const recipeTools: ToolDefinition[] = [
   searchRecipesTool,
   getRecipeTool,
+  createRecipeTool,
   updateRecipeTool,
   deleteRecipeTool,
 ];
