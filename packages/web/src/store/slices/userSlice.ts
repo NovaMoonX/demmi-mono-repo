@@ -7,12 +7,14 @@ import { fetchChats } from '@store/actions/chatActions';
 import { fetchPlannedRecipes } from '@store/actions/calendarActions';
 import { fetchShoppingList } from '@store/actions/shoppingListActions';
 import { fetchUserProfile } from '@store/actions/userProfileActions';
+import { fetchMemories } from '@store/actions/memoryActions';
 import { resetIngredients } from './ingredientsSlice';
 import { resetRecipes } from './recipesSlice';
 import { resetChats } from './chatsSlice';
 import { resetCalendar } from './calendarSlice';
 import { resetShoppingList } from './shoppingListSlice';
 import { clearProfile } from './userProfileSlice';
+import { resetMemories } from './memorySlice';
 
 interface UserState {
   user: AuthUser | null;
@@ -52,6 +54,7 @@ const loadUserData = createAsyncThunk<void, void, { dispatch: AppDispatch }>(
       dispatch(fetchPlannedRecipes()).unwrap(),
       dispatch(fetchShoppingList()).unwrap(),
       dispatch(fetchUserProfile()).unwrap(),
+      dispatch(fetchMemories()).unwrap(),
     ]);
   },
 );
@@ -65,6 +68,7 @@ const clearUserData = createAsyncThunk<void, void, { dispatch: AppDispatch }>(
     dispatch(resetCalendar());
     dispatch(resetShoppingList());
     dispatch(clearProfile());
+    dispatch(resetMemories());
   },
 );
 
