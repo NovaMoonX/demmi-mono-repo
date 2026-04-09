@@ -28,30 +28,32 @@ function statusBadge(status: ToolCallResultInfo['status']): { label: string; var
   }
 }
 
+const RECIPE_TOOLS = ['search_recipes', 'get_recipe', 'create_recipe'];
+const INGREDIENT_TOOLS = ['search_ingredients', 'get_ingredient', 'create_ingredient'];
+const CALENDAR_TOOLS = ['get_meal_plan', 'plan_recipe', 'update_planned_recipe', 'remove_planned_recipe'];
+const SHOPPING_LIST_TOOLS = ['get_shopping_list', 'add_to_shopping_list', 'check_shopping_items', 'remove_shopping_items', 'clear_checked_items'];
+
 function getItemLink(toolName: string, item: Record<string, unknown>): string | null {
-  if (toolName === 'search_recipes' || toolName === 'get_recipe' || toolName === 'create_recipe') {
-    if (item.id) return `/recipes/${item.id}?from=chat`;
+  if (RECIPE_TOOLS.includes(toolName) && item.id) {
+    return `/recipes/${item.id}?from=chat`;
   }
-  if (toolName === 'search_ingredients' || toolName === 'get_ingredient' || toolName === 'create_ingredient') {
-    if (item.id) return `/ingredients/${item.id}?from=chat`;
+  if (INGREDIENT_TOOLS.includes(toolName) && item.id) {
+    return `/ingredients/${item.id}?from=chat`;
   }
-  if (toolName === 'get_meal_plan' || toolName === 'plan_recipe') {
+  if (CALENDAR_TOOLS.includes(toolName)) {
     return '/calendar?from=chat';
   }
-  if (toolName === 'get_shopping_list' || toolName === 'add_to_shopping_list') {
+  if (SHOPPING_LIST_TOOLS.includes(toolName)) {
     return '/shopping-list?from=chat';
   }
   return null;
 }
 
 function getToolActionLink(toolName: string): { path: string; label: string } | null {
-  if (toolName === 'get_shopping_list' || toolName === 'add_to_shopping_list' ||
-    toolName === 'check_shopping_items' || toolName === 'remove_shopping_items' ||
-    toolName === 'clear_checked_items') {
+  if (SHOPPING_LIST_TOOLS.includes(toolName)) {
     return { path: '/shopping-list?from=chat', label: 'View Shopping List →' };
   }
-  if (toolName === 'get_meal_plan' || toolName === 'plan_recipe' ||
-    toolName === 'update_planned_recipe' || toolName === 'remove_planned_recipe') {
+  if (CALENDAR_TOOLS.includes(toolName)) {
     return { path: '/calendar?from=chat', label: 'View Calendar →' };
   }
   return null;

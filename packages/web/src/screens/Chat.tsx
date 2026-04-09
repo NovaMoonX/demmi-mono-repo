@@ -944,7 +944,7 @@ export function Chat() {
             },
             onToolCallStart: (toolCalls: ToolCallResultInfo[]) => {
               const toolNames = toolCalls.map((tc) =>
-                tc.toolName.replace(/_/g, ' '),
+                tc.toolName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
               );
               dispatch(
                 updateMessageContent({

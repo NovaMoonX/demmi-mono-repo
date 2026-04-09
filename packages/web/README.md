@@ -214,8 +214,8 @@ npm run test:ui       # Open Vitest UI in browser
 - Modular action registry — add new AI actions without touching the chat component
 
 ### 🔧 Tool-Calling Agent
-- Native Ollama tool calling via the `tools` parameter on `chat()` — the LLM decides which tools to invoke
-- Intent detection supports 3 intents: `general` (plain chat), `createRecipe` (recipe generation flow), and `toolCall` (agent tool use)
+- Native Ollama tool calling via the `tools` parameter on `chat()` — the LLM autonomously decides which tools to invoke or responds conversationally
+- **Toggle between tool-calling and legacy handler modes** — a "Tool calling" toggle in the chat header lets you switch between the new agent-based tool flow and the previous intent-detection flow (`detectIntent` → `getActionHandler`)
 - **6 tool domains** with a registry pattern for easy extensibility:
   - **Recipes** — `search_recipes`, `get_recipe`, `create_recipe`, `update_recipe`, `delete_recipe`
   - **Ingredients** — `search_ingredients`, `get_ingredient`, `create_ingredient`, `update_ingredient`, `delete_ingredient`
@@ -225,7 +225,9 @@ npm run test:ui       # Open Vitest UI in browser
   - **Profile** — `get_user_profile` (read-only)
 - **Confirmation model**: reads and creates execute immediately; updates and deletes always show a proposal card requiring explicit user approval
 - Multi-tool chaining with progressive UI updates and a max of 10 tool-call rounds per turn
+- **Tool call progress indicator** — the UI shows "🔧 Using tool_name…" with a processing animation while tools execute, keeping the interaction responsive
 - `ToolCallActionCard` component renders tool results as list displays or confirmation cards
+- **Entity links** — tool results include clickable links to recipe/ingredient detail pages, shopping list, and calendar; links include `?from=chat` query param so detail page back buttons return to the chat
 
 ### 🧠 Agent Memory
 - The AI automatically saves user preferences, context, goals, and household details across conversations

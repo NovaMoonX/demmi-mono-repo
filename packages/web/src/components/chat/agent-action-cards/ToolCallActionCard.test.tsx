@@ -55,6 +55,26 @@ const confirmationAction: AgentToolCallAction = {
   ],
 };
 
+const shoppingListAction: AgentToolCallAction = {
+  type: 'tool_call',
+  status: 'completed',
+  currentToolIndex: 0,
+  toolCalls: [
+    {
+      toolName: 'get_shopping_list',
+      args: {},
+      status: 'completed',
+      requiresConfirmation: false,
+      result: {
+        success: true,
+        data: { items: [{ id: 's1', name: 'Milk', category: 'dairy' }], total: 1 },
+        displayType: 'list',
+        message: 'Shopping list has 1 item.',
+      },
+    },
+  ],
+};
+
 describe('ToolCallActionCard', () => {
   it('renders tool results', () => {
     const { wrapper } = generateTestWrapper();
@@ -100,5 +120,53 @@ describe('ToolCallActionCard', () => {
       { wrapper },
     );
     expect(screen.getByText(/Are you sure you want to delete "Pasta Carbonara"\?/)).toBeInTheDocument();
+  });
+
+  it('renders links for recipe results', () => {
+    const { wrapper } = generateTestWrapper();
+    render(
+      <ToolCallActionCard action={completedAction} />,
+      { wrapper },
+    );
+    const links = screen.getAllByRole('link');
+    const recipeLinks = links.filter((l) => l.getAttribute('href')?.includes('/recipes/'));
+    expect(recipeLinks.length).toBe(2);
+    expect(recipeLinks[0]).toHaveAttribute('href', '/recipes/r1?from=chat');
+    expect(recipeLinks[1]).toHaveAttribute('href', '/recipes/r2?from=chat');
+  });
+
+  it('renders action link for shopping list tool', () => {
+    const { wrapper } = generateTestWrapper();
+    render(
+      <ToolCallActionCard action={shoppingListAction} />,
+      { wrapper },
+    );
+    const link = screen.getByText('View Shopping List →');
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/shopping-list?from=chat');
+  });
+
+  it('shows processing indicator for executing tools', () => {
+    const executingAction: AgentToolCallAction = {
+      type: 'tool_call',
+      status: 'calling_tools',
+      currentToolIndex: 0,
+      toolCalls: [
+        {
+          toolName: 'search_ingredients',
+          args: { query: 'chicken' },
+          status: 'executing',
+          requiresConfirmation: false,
+          result: null,
+        },
+      ],
+    };
+    const { wrapper } = generateTestWrapper();
+    render(
+      <ToolCallActionCard action={executingAction} />,
+      { wrapper },
+    );
+    expect(screen.getByText('Processing…')).toBeInTheDocument();
+    expect(screen.getByText('Running…')).toBeInTheDocument();
   });
 });

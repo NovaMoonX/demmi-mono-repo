@@ -337,7 +337,7 @@ Classify the current message intent.`;
     const parsed = JSON.parse(response.response);
     const action = parsed?.action;
 
-    if (action === 'general' || action === 'createRecipe') {
+    if (LEGACY_INTENT_ACTIONS.includes(action)) {
       return action;
     }
 

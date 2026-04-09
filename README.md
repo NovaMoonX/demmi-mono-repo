@@ -35,7 +35,7 @@ Demmi solves a real problem: generic AI tools (ChatGPT, Gemini, etc.) don't know
 | 🔗 **Recipe Sharing** | Share recipes via public link — no account required for viewers |
 | 🤖 **AI Recipe Creation** | Chat-driven multi-step recipe generation with ingredient matching and approval flow |
 | 🧠 **Agent Memory** | The AI remembers your preferences, context, and goals across conversations |
-| 🔧 **Tool-Calling Agent** | The AI can search, create, update, and delete recipes, ingredients, calendar entries, and shopping items on your behalf |
+| 🔧 **Tool-Calling Agent** | The AI can search, create, update, and delete recipes, ingredients, calendar entries, and shopping items — with clickable links back to detail pages |
 | 🎨 **Light & Dark Mode** | Full theme support with a warm, cooking-inspired orange accent palette |
 
 ## Use Cases
