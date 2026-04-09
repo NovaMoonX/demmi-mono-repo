@@ -1,8 +1,13 @@
 import type { ToolContext } from './tool.types';
 import type { ToolCallRequest, ToolExecutionResult } from './toolExecutor';
 import { executeToolCalls } from './toolExecutor';
-import { getToolsForOllama } from './tool.registry';
-import { ollamaChatWithTools, ollamaChatSingle } from '../ollama.service';
+import { ollamaChatStream, ollamaChatSingle } from '../ollama.service';
+import { SIMULATED_TOOL_CALL_SCHEMA } from '../prompts/toolCalling.prompts';
+import {
+  parseToolCallResponse,
+  extractPartialToolResponse,
+  extractToolCallsFromPartialJson,
+} from './streamParser';
 
 const MAX_TOOL_CALL_ROUNDS = 10;
 
@@ -20,64 +25,74 @@ export interface ToolCallLoopResult {
   hasPendingConfirmation: boolean;
 }
 
-interface OllamaToolCallMessage {
-  role: string;
-  content: string;
-  tool_calls?: Array<{
-    function: {
-      name: string;
-      arguments: Record<string, unknown>;
-    };
-  }>;
-}
-
 export async function runToolCallLoop(
   model: string,
   messages: Array<{ role: string; content: string }>,
   toolContext: ToolContext,
   callbacks?: ToolCallLoopCallbacks,
+  abortSignal?: AbortSignal,
 ): Promise<ToolCallLoopResult> {
-  const tools = getToolsForOllama();
   const allToolResults: ToolExecutionResult[] = [];
   let round = 0;
   let hasPendingConfirmation = false;
   let finalContent = '';
 
-  const conversationMessages: Array<{ role: string; content: string; tool_calls?: unknown }> = [
+  const conversationMessages: Array<{ role: string; content: string }> = [
     ...messages,
   ];
 
   while (round < MAX_TOOL_CALL_ROUNDS) {
     round++;
 
-    const response = await ollamaChatWithTools({
+    let rawContent = '';
+    let toolCallsDetected = false;
+
+    const stream = await ollamaChatStream({
       model,
-      messages: conversationMessages as Array<{ role: string; content: string }>,
-      tools,
+      messages: conversationMessages,
+      format: SIMULATED_TOOL_CALL_SCHEMA,
       options: { temperature: 0.7 },
-    }) as unknown as { message: OllamaToolCallMessage };
+    });
 
-    const responseMessage = response.message;
-    const toolCalls = responseMessage.tool_calls;
+    for await (const chunk of stream) {
+      if (abortSignal?.aborted) break;
 
-    if (!toolCalls || toolCalls.length === 0) {
-      finalContent = responseMessage.content ?? '';
+      rawContent += chunk.message.content;
+
+      if (!toolCallsDetected) {
+        const partialCalls = extractToolCallsFromPartialJson(rawContent);
+        if (partialCalls && partialCalls.length > 0) {
+          toolCallsDetected = true;
+        }
+      }
+
+      const partialResponse = extractPartialToolResponse(rawContent);
+      if (partialResponse) {
+        callbacks?.onStreamProgress?.(partialResponse);
+      }
+    }
+
+    if (abortSignal?.aborted) break;
+
+    const parsed = parseToolCallResponse(rawContent);
+
+    if (!parsed || parsed.toolCalls.length === 0) {
+      finalContent = parsed?.response ?? extractPartialToolResponse(rawContent) ?? rawContent;
       callbacks?.onStreamProgress?.(finalContent);
       break;
     }
 
-    conversationMessages.push({
-      role: 'assistant',
-      content: responseMessage.content ?? '',
-      tool_calls: toolCalls,
-    });
-
-    const toolCallRequests: ToolCallRequest[] = toolCalls.map((tc) => ({
-      name: tc.function.name,
-      arguments: tc.function.arguments,
+    const toolCallRequests: ToolCallRequest[] = parsed.toolCalls.map((tc) => ({
+      name: tc.name,
+      arguments: tc.arguments ?? {},
     }));
 
     callbacks?.onToolCallStart?.(toolCallRequests);
+
+    conversationMessages.push({
+      role: 'assistant',
+      content: rawContent,
+    });
 
     const results = await executeToolCalls(
       toolCallRequests,
@@ -93,31 +108,33 @@ export async function runToolCallLoop(
 
       for (const result of results) {
         conversationMessages.push({
-          role: 'tool',
-          content: result.requiresConfirmation
+          role: 'user',
+          content: `[Tool Result: ${result.toolName}] ${result.requiresConfirmation
             ? `[PENDING USER CONFIRMATION] ${result.result.message}`
-            : JSON.stringify({ success: result.result.success, message: result.result.message, data: result.result.data }),
+            : JSON.stringify({ success: result.result.success, message: result.result.message, data: result.result.data })}`,
         });
       }
 
       const summaryResponse = await ollamaChatSingle({
         model,
-        messages: conversationMessages as Array<{ role: string; content: string }>,
+        messages: conversationMessages,
+        format: SIMULATED_TOOL_CALL_SCHEMA,
       });
 
-      finalContent = summaryResponse.message.content ?? '';
+      const summaryParsed = parseToolCallResponse(summaryResponse.message.content);
+      finalContent = summaryParsed?.response ?? summaryResponse.message.content ?? '';
       callbacks?.onStreamProgress?.(finalContent);
       break;
     }
 
     for (const result of results) {
       conversationMessages.push({
-        role: 'tool',
-        content: JSON.stringify({
+        role: 'user',
+        content: `[Tool Result: ${result.toolName}] ${JSON.stringify({
           success: result.result.success,
           message: result.result.message,
           data: result.result.data,
-        }),
+        })}`,
       });
     }
 

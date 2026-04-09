@@ -30,3 +30,20 @@ export function getToolsForOllama(): OllamaTool[] {
 export function clearToolRegistry(): void {
   TOOL_REGISTRY.clear();
 }
+
+export function getAllToolsPromptDescription(): string {
+  const tools = getAllToolDefinitions();
+  const lines = tools.map((tool) => {
+    const params = Object.entries(tool.parameters.properties)
+      .map(([key, prop]) => {
+        const req = tool.parameters.required.includes(key) ? ' (required)' : ' (optional)';
+        const enumStr = prop.enum ? ` — one of: ${prop.enum.join(', ')}` : '';
+        return `    - ${key}: ${prop.type}${req}${enumStr} — ${prop.description}`;
+      })
+      .join('\n');
+    const paramsBlock = params ? `\n  Parameters:\n${params}` : '\n  Parameters: none';
+    const result = `- **${tool.name}**: ${tool.description}${paramsBlock}`;
+    return result;
+  });
+  return lines.join('\n\n');
+}

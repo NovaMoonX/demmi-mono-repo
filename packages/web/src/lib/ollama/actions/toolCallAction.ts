@@ -95,7 +95,7 @@ export const toolCallAction: ActionHandler<ToolCallResult> = {
         toolRuntime.onToolCallComplete?.(index, info);
       },
       onStreamProgress: toolRuntime.onProgress,
-    });
+    }, toolRuntime.abortSignal);
 
     const allResults: ToolCallResultInfo[] = loopResult.toolResults.map((tr) => ({
       toolName: tr.toolName,

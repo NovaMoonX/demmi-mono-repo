@@ -6,6 +6,7 @@ import {
   getAllToolDefinitions,
   getToolsForOllama,
   clearToolRegistry,
+  getAllToolsPromptDescription,
 } from './tool.registry';
 import type { ToolDefinition } from './tool.types';
 
@@ -104,5 +105,35 @@ describe('tool.registry', () => {
 
     const afterClear = getAllToolDefinitions();
     expect(afterClear).toHaveLength(0);
+  });
+
+  it('getAllToolsPromptDescription generates tool descriptions', () => {
+    registerTool(mockTool);
+
+    const result = getAllToolsPromptDescription();
+
+    expect(result).toContain('test_tool');
+    expect(result).toContain('A test tool');
+    expect(result).toContain('arg1');
+    expect(result).toContain('(required)');
+  });
+
+  it('getAllToolsPromptDescription shows optional params', () => {
+    const toolWithOptional: ToolDefinition = {
+      ...mockTool,
+      name: 'opt_tool',
+      parameters: {
+        type: 'object',
+        required: [],
+        properties: {
+          opt1: { type: 'string', description: 'Optional param' },
+        },
+      },
+    };
+    registerTool(toolWithOptional);
+
+    const result = getAllToolsPromptDescription();
+
+    expect(result).toContain('(optional)');
   });
 });
