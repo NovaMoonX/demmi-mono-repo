@@ -1,5 +1,6 @@
 import { Badge, Button } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
+import { Link } from 'react-router-dom';
 import type { ToolCallActionCardProps } from './types';
 import type { ToolCallResultInfo } from '@lib/ollama/action-types/toolCallAction.types';
 
@@ -27,6 +28,35 @@ function statusBadge(status: ToolCallResultInfo['status']): { label: string; var
   }
 }
 
+function getItemLink(toolName: string, item: Record<string, unknown>): string | null {
+  if (toolName === 'search_recipes' || toolName === 'get_recipe' || toolName === 'create_recipe') {
+    if (item.id) return `/recipes/${item.id}?from=chat`;
+  }
+  if (toolName === 'search_ingredients' || toolName === 'get_ingredient' || toolName === 'create_ingredient') {
+    if (item.id) return `/ingredients/${item.id}?from=chat`;
+  }
+  if (toolName === 'get_meal_plan' || toolName === 'plan_recipe') {
+    return '/calendar?from=chat';
+  }
+  if (toolName === 'get_shopping_list' || toolName === 'add_to_shopping_list') {
+    return '/shopping-list?from=chat';
+  }
+  return null;
+}
+
+function getToolActionLink(toolName: string): { path: string; label: string } | null {
+  if (toolName === 'get_shopping_list' || toolName === 'add_to_shopping_list' ||
+    toolName === 'check_shopping_items' || toolName === 'remove_shopping_items' ||
+    toolName === 'clear_checked_items') {
+    return { path: '/shopping-list?from=chat', label: 'View Shopping List →' };
+  }
+  if (toolName === 'get_meal_plan' || toolName === 'plan_recipe' ||
+    toolName === 'update_planned_recipe' || toolName === 'remove_planned_recipe') {
+    return { path: '/calendar?from=chat', label: 'View Calendar →' };
+  }
+  return null;
+}
+
 export function ToolCallActionCard({
   action,
   onConfirmToolCall,
@@ -44,6 +74,7 @@ export function ToolCallActionCard({
       {action.toolCalls.map((tc, idx) => {
         const badge = statusBadge(tc.status);
         const needsConfirmation = tc.requiresConfirmation && tc.status === 'pending';
+        const actionLink = tc.status === 'completed' ? getToolActionLink(tc.toolName) : null;
 
         return (
           <div
@@ -62,6 +93,13 @@ export function ToolCallActionCard({
               </div>
             </div>
 
+            {tc.status === 'executing' && (
+              <div className='mt-1 flex items-center gap-1.5'>
+                <span className='text-primary animate-pulse text-xs'>●</span>
+                <span className='text-muted-foreground text-xs'>Processing…</span>
+              </div>
+            )}
+
             {tc.result && (
               <p className='text-muted-foreground mt-1 text-sm'>
                 {tc.result.message}
@@ -69,7 +107,14 @@ export function ToolCallActionCard({
             )}
 
             {tc.result?.displayType === 'list' && tc.result.data != null && (
-              <ToolResultList data={tc.result.data as { items: Array<Record<string, unknown>>; total: number }} />
+              <ToolResultList
+                toolName={tc.toolName}
+                data={tc.result.data as { items: Array<Record<string, unknown>>; total: number }}
+              />
+            )}
+
+            {tc.result?.displayType === 'success' && tc.result.data != null && (
+              <ToolSuccessLink toolName={tc.toolName} data={tc.result.data as Record<string, unknown>} />
             )}
 
             {tc.result?.displayType === 'confirmation' && tc.result.data != null && (
@@ -94,6 +139,17 @@ export function ToolCallActionCard({
                 </Button>
               </div>
             )}
+
+            {actionLink && !needsConfirmation && (
+              <div className='mt-2'>
+                <Link
+                  to={actionLink.path}
+                  className='text-primary hover:text-primary/80 text-xs font-medium'
+                >
+                  {actionLink.label}
+                </Link>
+              </div>
+            )}
           </div>
         );
       })}
@@ -101,7 +157,7 @@ export function ToolCallActionCard({
   );
 }
 
-function ToolResultList({ data }: { data: { items: Array<Record<string, unknown>>; total: number } }) {
+function ToolResultList({ toolName, data }: { toolName: string; data: { items: Array<Record<string, unknown>>; total: number } }) {
   if (!data.items || data.items.length === 0) return null;
 
   const displayItems = data.items.slice(0, 10);
@@ -112,10 +168,18 @@ function ToolResultList({ data }: { data: { items: Array<Record<string, unknown>
       <ul className='space-y-1'>
         {displayItems.map((item, idx) => {
           const label = (item.title ?? item.name ?? item.content ?? item.recipeName ?? `Item ${idx + 1}`) as string;
+          const link = getItemLink(toolName, item);
+
           return (
             <li key={String(item.id ?? idx)} className='text-foreground flex items-center gap-2 text-sm'>
               <span className='text-muted-foreground'>•</span>
-              <span>{label}</span>
+              {link ? (
+                <Link to={link} className='text-primary hover:text-primary/80 hover:underline'>
+                  {label}
+                </Link>
+              ) : (
+                <span>{label}</span>
+              )}
               {item.category != null && (
                 <span className='text-muted-foreground text-xs'>({String(item.category)})</span>
               )}
@@ -128,6 +192,22 @@ function ToolResultList({ data }: { data: { items: Array<Record<string, unknown>
           …and {data.total - 10} more
         </p>
       )}
+    </div>
+  );
+}
+
+function ToolSuccessLink({ toolName, data }: { toolName: string; data: Record<string, unknown> }) {
+  const link = getItemLink(toolName, data);
+  if (!link) return null;
+
+  const label = (data.title ?? data.name) as string | undefined;
+  if (!label) return null;
+
+  return (
+    <div className='mt-1'>
+      <Link to={link} className='text-primary hover:text-primary/80 text-xs font-medium hover:underline'>
+        View {label} →
+      </Link>
     </div>
   );
 }

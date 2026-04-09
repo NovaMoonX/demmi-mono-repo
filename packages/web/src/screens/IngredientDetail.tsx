@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Input,
   Select,
@@ -32,6 +32,7 @@ export function IngredientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const ingredients = useAppSelector((state) => state.ingredients.items);
   const { confirm } = useActionModal();
@@ -44,6 +45,8 @@ export function IngredientDetail() {
 
   const [isViewMode, setIsViewMode] = useState(isEditing);
 
+  const fromChat = searchParams.get('from') === 'chat';
+
   // Navigation state set by RecipeDetail when the user comes here to create an ingredient for a recipe
   const fromRecipePath =
     (location.state as { fromRecipePath?: string } | null)?.fromRecipePath ?? null;
@@ -51,12 +54,14 @@ export function IngredientDetail() {
   const fromBarcodeEntry =
     (location.state as { fromBarcodeEntry?: boolean } | null)?.fromBarcodeEntry ?? false;
 
-  const backLinkTo =
-    fromRecipePath ?? (fromBarcodeEntry ? '/ingredients/new/barcode-entry' : '/ingredients');
+  const backLinkTo = fromChat
+    ? '/chat'
+    : fromRecipePath ?? (fromBarcodeEntry ? '/ingredients/new/barcode-entry' : '/ingredients');
   const backLinkState =
     fromBarcodeEntry && fromRecipePath ? { fromRecipePath } : undefined;
-  const backLinkText =
-    fromRecipePath
+  const backLinkText = fromChat
+    ? '← Back to Chat'
+    : fromRecipePath
       ? '← Back to Recipe'
       : fromBarcodeEntry
         ? '← Back to Barcode Entry'
@@ -288,10 +293,12 @@ export function IngredientDetail() {
       if (isEditing && existingIngredient) {
         const updatedIngredient: Ingredient = { ...ingredientData, id: existingIngredient.id, userId: existingIngredient.userId };
         await dispatch(updateIngredientAsync(updatedIngredient)).unwrap();
-        navigate(fromRecipePath ?? '/ingredients');
+        navigate(fromChat ? '/chat' : fromRecipePath ?? '/ingredients');
       } else {
         const newIngredient = await dispatch(createIngredientAsync(ingredientData)).unwrap();
-        if (fromRecipePath) {
+        if (fromChat) {
+          navigate('/chat');
+        } else if (fromRecipePath) {
           navigate(fromRecipePath, { state: { newIngredientId: newIngredient.id } });
         } else {
           navigate('/ingredients');
@@ -322,7 +329,7 @@ export function IngredientDetail() {
 
     try {
       await dispatch(deleteIngredientAsync(existingIngredient.id)).unwrap();
-      navigate('/ingredients');
+      navigate(fromChat ? '/chat' : '/ingredients');
     } catch (err) {
       console.error('Failed to delete ingredient:', err);
       addToast({
@@ -337,7 +344,7 @@ export function IngredientDetail() {
     if (isEditing) {
       setIsViewMode(true);
     } else {
-      navigate(fromRecipePath ?? '/ingredients');
+      navigate(fromChat ? '/chat' : fromRecipePath ?? '/ingredients');
     }
   };
 
