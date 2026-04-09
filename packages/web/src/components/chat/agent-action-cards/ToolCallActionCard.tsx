@@ -64,15 +64,10 @@ export function ToolCallActionCard({
   onConfirmToolCall,
   onRejectToolCall,
 }: ToolCallActionCardProps) {
+  const isExecuting = action.status === 'calling_tools';
+
   return (
     <div className='border-border bg-card/50 mt-3 flex flex-col gap-2 rounded-xl border p-4'>
-      <div className='flex items-center gap-2'>
-        <span className='text-sm'>🔧</span>
-        <p className='text-foreground text-sm font-medium'>
-          {action.status === 'calling_tools' ? 'Calling tools…' : 'Tool Results'}
-        </p>
-      </div>
-
       {action.toolCalls.map((tc, idx) => {
         const badge = statusBadge(tc.status);
         const needsConfirmation = tc.requiresConfirmation && tc.status === 'pending';
@@ -88,7 +83,8 @@ export function ToolCallActionCard({
           >
             <div className='flex items-center justify-between gap-2'>
               <div className='flex items-center gap-2'>
-                <span className='text-muted-foreground font-mono text-xs'>
+                <span className='text-sm'>🔧</span>
+                <span className='text-foreground text-sm font-medium'>
                   {toolDisplayName(tc.toolName)}
                 </span>
                 <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -96,7 +92,7 @@ export function ToolCallActionCard({
             </div>
 
             {tc.status === 'executing' && (
-              <div className='mt-1 flex items-center gap-1.5'>
+              <div className='mt-2 flex items-center gap-1.5'>
                 <span className='text-primary animate-pulse text-xs'>●</span>
                 <span className='text-muted-foreground text-xs'>Processing…</span>
               </div>
@@ -155,6 +151,13 @@ export function ToolCallActionCard({
           </div>
         );
       })}
+
+      {isExecuting && (
+        <div className='flex items-center gap-1.5 px-1'>
+          <span className='text-primary animate-pulse text-xs'>●</span>
+          <span className='text-muted-foreground text-xs'>Working…</span>
+        </div>
+      )}
     </div>
   );
 }

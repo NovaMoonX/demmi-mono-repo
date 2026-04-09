@@ -48,6 +48,8 @@ export function ChatMessage({
   const showActions = !isStreaming && messageContent !== '';
 
   const displayAgentAction = message.agentAction && !isUser;
+  const hasToolCallAction = message.agentAction?.type === 'tool_call';
+  const isToolsExecuting = hasToolCallAction && isStreaming;
   return (
     <div
       className={join(
@@ -64,7 +66,7 @@ export function ChatMessage({
             : 'w-full max-w-[85%] items-start md:max-w-[75%]',
         )}
       >
-        {(isStreaming || messageContent !== '') && (
+        {(isStreaming || messageContent !== '') && !isToolsExecuting && (
           <div
             className={join(
               'min-w-fit rounded-2xl px-4 py-3',
@@ -91,6 +93,19 @@ export function ChatMessage({
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {messageContent !== '' && isToolsExecuting && (
+          <div
+            className={join(
+              'min-w-fit rounded-2xl px-4 py-3',
+              'bg-muted text-foreground',
+            )}
+          >
+            <div className='prose prose-sm dark:prose-invert max-w-none'>
+              <ReactMarkdown>{messageContent}</ReactMarkdown>
+            </div>
           </div>
         )}
 
