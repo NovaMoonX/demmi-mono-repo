@@ -1,5 +1,6 @@
 export type {
   ActionType,
+  LegacyActionType,
   ActionContext,
   ActionRuntime,
   MultiStepActionRuntime,

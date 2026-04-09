@@ -1,7 +1,7 @@
 import type { AbortableAsyncIterator } from 'ollama';
 import type { ProgressResponse } from 'ollama/browser';
 import { Ollama } from 'ollama/browser';
-import type { ActionType } from './actions';
+import type { LegacyActionType } from './actions';
 import type { ChatMessage } from '@lib/chat';
 import {
   LEGACY_INTENT_ACTIONS,
@@ -295,7 +295,7 @@ const INTENT_DETECTION_SCHEMA: Record<string, unknown> = {
 export async function detectIntent(
   model: string,
   messages: ChatMessage[],
-): Promise<ActionType> {
+): Promise<LegacyActionType> {
   const recentSummaries = messages
     .slice(-MAX_RECENT_SUMMARIES)
     .filter((m) => m.summary)
@@ -337,8 +337,8 @@ Classify the current message intent.`;
     const parsed = JSON.parse(response.response);
     const action = parsed?.action;
 
-    if (LEGACY_INTENT_ACTIONS.includes(action)) {
-      return action;
+    if (LEGACY_INTENT_ACTIONS.includes(action as LegacyActionType)) {
+      return action as LegacyActionType;
     }
 
     return 'general';

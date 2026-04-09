@@ -1,8 +1,8 @@
-import { ActionType } from './actions';
+import { ActionType, LegacyActionType } from './actions';
 
 export const INTENT_ACTIONS: ActionType[] = ['general', 'createRecipe', 'toolCall'];
 
-export const LEGACY_INTENT_ACTIONS: ActionType[] = ['general', 'createRecipe'];
+export const LEGACY_INTENT_ACTIONS: LegacyActionType[] = ['general', 'createRecipe'];
 
 export const INTENT_ACTION_PROMPT_DESCRIPTION: Record<ActionType, string> = {
   general: 'User is asking questions, requesting tips, or having a discussion about cooking/nutrition',
