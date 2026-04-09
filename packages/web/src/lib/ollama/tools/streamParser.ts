@@ -35,8 +35,23 @@ export function extractToolCallsFromPartialJson(
 
   let depth = 0;
   let endIdx = -1;
+  let inString = false;
+  let escaped = false;
   for (let i = startIdx; i < partialJson.length; i++) {
     const char = partialJson[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === '\\' && inString) {
+      escaped = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
     if (char === '[') depth++;
     else if (char === ']') {
       depth--;

@@ -37,8 +37,9 @@ export function getAllToolsPromptDescription(): string {
     const params = Object.entries(tool.parameters.properties)
       .map(([key, prop]) => {
         const req = tool.parameters.required.includes(key) ? ' (required)' : ' (optional)';
+        const typeStr = prop.type ?? 'any';
         const enumStr = prop.enum ? ` — one of: ${prop.enum.join(', ')}` : '';
-        return `    - ${key}: ${prop.type}${req}${enumStr} — ${prop.description}`;
+        return `    - ${key}: ${typeStr}${req}${enumStr} — ${prop.description}`;
       })
       .join('\n');
     const paramsBlock = params ? `\n  Parameters:\n${params}` : '\n  Parameters: none';

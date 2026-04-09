@@ -66,6 +66,13 @@ describe('streamParser', () => {
       expect(result![0].name).toBe('search_ingredients');
       expect(result![1].name).toBe('search_recipes');
     });
+
+    it('handles brackets inside JSON string values', () => {
+      const json = '{"tool_calls": [{"name": "search_recipes", "arguments": {"query": "find [pasta] recipes"}}], "response": ""}';
+      const result = extractToolCallsFromPartialJson(json);
+      expect(result).toHaveLength(1);
+      expect(result![0].arguments).toEqual({ query: 'find [pasta] recipes' });
+    });
   });
 
   describe('parseToolCallResponse', () => {
