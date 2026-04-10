@@ -188,6 +188,7 @@ async function generateResponseFromResults(
 ): Promise<string> {
   const responsePrompt = getResponseGenerationPrompt();
 
+  // Replace the tool-selection system prompt (index 0) with the response-generation prompt
   const responseMessages: Array<{ role: string; content: string }> = [
     { role: 'system', content: responsePrompt },
     ...conversationMessages.slice(1),
