@@ -214,6 +214,7 @@ npm run test:ui       # Open Vitest UI in browser
 - Modular action registry — add new AI actions without touching the chat component
 
 ### 🔧 Tool-Calling Agent
+- **Two-phase architecture** — Phase 1: LLM selects tools via structured JSON + posts a brief pre-message; Phase 2: after tools complete, a separate streaming LLM call generates the natural language response with actual data from tool results
 - **Simulated tool calling** — the LLM generates structured JSON with `tool_calls` and `response` fields; the app parses tool calls from the streamed response and executes them
 - All responses stream in real time with progressive rendering
 - **Copy chat history** — a Dreamer UI `CopyButton` (tertiary variant) in the header copies the full conversation to clipboard for debugging
@@ -229,7 +230,7 @@ npm run test:ui       # Open Vitest UI in browser
 - Multi-tool chaining with progressive UI updates and a max of 3 tool-call rounds per turn
 - **Tool call progress indicator** — tool cards render immediately with "Running…" badges while tools execute, keeping the interaction responsive
 - Unknown tool names are silently skipped; duplicate tool calls are deduplicated
-- **Summary fallback** — if all tool-call rounds are exhausted without a final response, a summary call generates the answer so the chat never shows empty
+- **Response generation** — after tool execution, a dedicated streaming LLM call (no JSON format constraint) produces the final response with actual data from results
 - `ToolCallActionCard` component renders tool results as list displays, success links, or confirmation cards
 - **Entity links** — tool results include clickable links to recipe/ingredient detail pages, shopping list, and calendar; links include `?from=chat` query param so detail page back buttons return to the chat
 - **Streaming JSON parser** — extracts tool calls from partial JSON as it streams, enabling tool execution to start before the full response is received

@@ -2,8 +2,11 @@ import type { ToolContext } from './tool.types';
 import type { ToolCallRequest, ToolExecutionResult } from './toolExecutor';
 import { executeToolCalls } from './toolExecutor';
 import { getToolByName } from './tool.registry';
-import { ollamaChatStream, ollamaChatSingle } from '../ollama.service';
-import { SIMULATED_TOOL_CALL_SCHEMA } from '../prompts/toolCalling.prompts';
+import { ollamaChatStream } from '../ollama.service';
+import {
+  SIMULATED_TOOL_CALL_SCHEMA,
+  getResponseGenerationPrompt,
+} from '../prompts/toolCalling.prompts';
 import {
   parseToolCallResponse,
   extractPartialToolResponse,
@@ -143,15 +146,9 @@ export async function runToolCallLoop(
         });
       }
 
-      const summaryResponse = await ollamaChatSingle({
-        model,
-        messages: conversationMessages,
-        format: SIMULATED_TOOL_CALL_SCHEMA,
-      });
-
-      const summaryParsed = parseToolCallResponse(summaryResponse.message.content);
-      finalContent = summaryParsed?.response ?? summaryResponse.message.content ?? '';
-      callbacks?.onStreamProgress?.(finalContent);
+      finalContent = await generateResponseFromResults(
+        model, conversationMessages, callbacks, abortSignal,
+      );
       break;
     }
 
@@ -166,32 +163,13 @@ export async function runToolCallLoop(
       });
     }
 
-    conversationMessages.push({
-      role: 'user',
-      content: '[System] Tool results are above. Now respond to the user with the actual data from the results. Include specific details. Set tool_calls to an empty array unless you truly need more data.',
-    });
-
     callbacks?.onRoundComplete?.(round);
   }
 
   if (!finalContent && allToolResults.length > 0) {
-    const summaryMessages = [
-      ...conversationMessages,
-      {
-        role: 'user',
-        content: '[System] All tool calls are complete. Now respond to the user with the actual results. Include specific data from the tool results above. Do NOT call any more tools — set tool_calls to an empty array.',
-      },
-    ];
-
-    const summaryResponse = await ollamaChatSingle({
-      model,
-      messages: summaryMessages,
-      format: SIMULATED_TOOL_CALL_SCHEMA,
-    });
-
-    const summaryParsed = parseToolCallResponse(summaryResponse.message.content);
-    finalContent = summaryParsed?.response ?? summaryResponse.message.content ?? '';
-    if (finalContent) callbacks?.onStreamProgress?.(finalContent);
+    finalContent = await generateResponseFromResults(
+      model, conversationMessages, callbacks, abortSignal,
+    );
   }
 
   return {
@@ -200,6 +178,36 @@ export async function runToolCallLoop(
     rounds: round,
     hasPendingConfirmation,
   };
+}
+
+async function generateResponseFromResults(
+  model: string,
+  conversationMessages: Array<{ role: string; content: string }>,
+  callbacks?: ToolCallLoopCallbacks,
+  abortSignal?: AbortSignal,
+): Promise<string> {
+  const responsePrompt = getResponseGenerationPrompt();
+
+  const responseMessages: Array<{ role: string; content: string }> = [
+    { role: 'system', content: responsePrompt },
+    ...conversationMessages.slice(1),
+  ];
+
+  let responseContent = '';
+
+  const responseStream = await ollamaChatStream({
+    model,
+    messages: responseMessages,
+    options: { temperature: 0.7 },
+  });
+
+  for await (const chunk of responseStream) {
+    if (abortSignal?.aborted) break;
+    responseContent += chunk.message.content;
+    callbacks?.onStreamProgress?.(responseContent);
+  }
+
+  return responseContent;
 }
 
 export function buildToolCallMessages(
