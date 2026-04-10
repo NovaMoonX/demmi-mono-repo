@@ -46,7 +46,7 @@ import {
 import type { RecipeIterableField } from '@lib/ollama/action-types/createRecipeAction.types';
 import type { RecipeStep } from '@lib/ollama/action-types/createRecipeAction.types';
 import type { ToolCallRuntime, ToolCallResult } from '@lib/ollama/actions/toolCallAction';
-import type { ToolCallResultInfo } from '@lib/ollama/action-types/toolCallAction.types';
+import type { ToolCallResultInfo, AgentToolCallAction } from '@lib/ollama/action-types/toolCallAction.types';
 import { generatedId } from '@utils/generatedId';
 
 const SCROLL_DELAY_MS = 100;
@@ -1041,9 +1041,12 @@ export function Chat() {
     if (!currentChat) return;
     const lines = currentChat.messages.map((m) => {
       const role = m.role === 'user' ? 'User' : 'Assistant';
-      const toolInfo = m.agentAction?.type === 'tool_call'
-        ? ` [tools: ${(m.agentAction as { toolCalls?: { toolName?: string }[] }).toolCalls?.map((t) => t.toolName).join(', ') ?? 'none'}]`
-        : '';
+      let toolInfo = '';
+      if (m.agentAction?.type === 'tool_call') {
+        const toolAction = m.agentAction as AgentToolCallAction;
+        const toolNames = toolAction.toolCalls.map((t) => t.toolName).join(', ');
+        toolInfo = ` [tools: ${toolNames}]`;
+      }
       return `[${role}]${toolInfo}\n${m.content}`;
     });
     const text = lines.join('\n\n---\n\n');

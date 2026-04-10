@@ -93,7 +93,13 @@ export async function runToolCallLoop(
     const seen = new Set<string>();
     const toolCallRequests = rawToolCalls.filter((tc) => {
       if (!getToolByName(tc.name)) return false;
-      const key = `${tc.name}:${JSON.stringify(tc.arguments)}`;
+      const sortedArgs = JSON.stringify(
+        Object.keys(tc.arguments).sort().reduce<Record<string, unknown>>((acc, k) => {
+          acc[k] = tc.arguments[k];
+          return acc;
+        }, {}),
+      );
+      const key = `${tc.name}:${sortedArgs}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
