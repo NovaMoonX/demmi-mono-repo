@@ -216,7 +216,7 @@ npm run test:ui       # Open Vitest UI in browser
 ### 🔧 Tool-Calling Agent
 - **Simulated tool calling** — the LLM generates structured JSON with `tool_calls` and `response` fields; the app parses tool calls from the streamed response and executes them
 - All responses stream in real time with progressive rendering
-- **Copy chat history** — a CopyButton in the header copies the full conversation to clipboard for debugging
+- **Copy chat history** — a Dreamer UI `CopyButton` (tertiary variant) in the header copies the full conversation to clipboard for debugging
 - **Pre-message before tools** — agent always posts a brief message explaining what it is about to do before tool cards appear
 - **6 tool domains** with a registry pattern for easy extensibility:
   - **Recipes** — `search_recipes`, `get_recipe`, `create_recipe`, `update_recipe`, `delete_recipe`
