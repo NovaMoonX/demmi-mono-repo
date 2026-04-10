@@ -70,7 +70,7 @@ export async function runToolCallLoop(
         }
       }
 
-      if (!toolCallsDetected) {
+      if (!toolCallsDetected && allToolResults.length === 0) {
         const partialResponse = extractPartialToolResponse(rawContent);
         if (partialResponse) {
           callbacks?.onStreamProgress?.(partialResponse);
@@ -83,8 +83,10 @@ export async function runToolCallLoop(
     const parsed = parseToolCallResponse(rawContent);
 
     if (!parsed || parsed.toolCalls.length === 0) {
-      finalContent = parsed?.response ?? extractPartialToolResponse(rawContent) ?? rawContent;
-      callbacks?.onStreamProgress?.(finalContent);
+      if (allToolResults.length === 0) {
+        finalContent = parsed?.response ?? extractPartialToolResponse(rawContent) ?? rawContent;
+        callbacks?.onStreamProgress?.(finalContent);
+      }
       break;
     }
 
@@ -109,8 +111,10 @@ export async function runToolCallLoop(
     });
 
     if (toolCallRequests.length === 0) {
-      finalContent = parsed.response ?? '';
-      if (finalContent) callbacks?.onStreamProgress?.(finalContent);
+      if (allToolResults.length === 0) {
+        finalContent = parsed.response ?? '';
+        if (finalContent) callbacks?.onStreamProgress?.(finalContent);
+      }
       break;
     }
 
@@ -166,7 +170,7 @@ export async function runToolCallLoop(
     callbacks?.onRoundComplete?.(round);
   }
 
-  if (!finalContent && allToolResults.length > 0) {
+  if (allToolResults.length > 0 && !hasPendingConfirmation) {
     finalContent = await generateResponseFromResults(
       model, conversationMessages, callbacks, abortSignal,
     );
