@@ -47,6 +47,7 @@ export async function runToolCallLoop(
 
   while (round < MAX_TOOL_CALL_ROUNDS) {
     round++;
+    const hasExecutedTools = allToolResults.length > 0;
 
     let rawContent = '';
     let toolCallsDetected = false;
@@ -70,7 +71,7 @@ export async function runToolCallLoop(
         }
       }
 
-      if (!toolCallsDetected && allToolResults.length === 0) {
+      if (!toolCallsDetected && !hasExecutedTools) {
         const partialResponse = extractPartialToolResponse(rawContent);
         if (partialResponse) {
           callbacks?.onStreamProgress?.(partialResponse);
@@ -83,7 +84,7 @@ export async function runToolCallLoop(
     const parsed = parseToolCallResponse(rawContent);
 
     if (!parsed || parsed.toolCalls.length === 0) {
-      if (allToolResults.length === 0) {
+      if (!hasExecutedTools) {
         finalContent = parsed?.response ?? extractPartialToolResponse(rawContent) ?? rawContent;
         callbacks?.onStreamProgress?.(finalContent);
       }
@@ -111,7 +112,7 @@ export async function runToolCallLoop(
     });
 
     if (toolCallRequests.length === 0) {
-      if (allToolResults.length === 0) {
+      if (!hasExecutedTools) {
         finalContent = parsed.response ?? '';
         if (finalContent) callbacks?.onStreamProgress?.(finalContent);
       }
