@@ -166,13 +166,26 @@ export async function runToolCallLoop(
       });
     }
 
+    conversationMessages.push({
+      role: 'user',
+      content: '[System] Tool results are above. Now respond to the user with the actual data from the results. Include specific details. Set tool_calls to an empty array unless you truly need more data.',
+    });
+
     callbacks?.onRoundComplete?.(round);
   }
 
   if (!finalContent && allToolResults.length > 0) {
+    const summaryMessages = [
+      ...conversationMessages,
+      {
+        role: 'user',
+        content: '[System] All tool calls are complete. Now respond to the user with the actual results. Include specific data from the tool results above. Do NOT call any more tools — set tool_calls to an empty array.',
+      },
+    ];
+
     const summaryResponse = await ollamaChatSingle({
       model,
-      messages: conversationMessages,
+      messages: summaryMessages,
       format: SIMULATED_TOOL_CALL_SCHEMA,
     });
 
