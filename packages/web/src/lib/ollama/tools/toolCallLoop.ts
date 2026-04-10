@@ -111,6 +111,10 @@ export async function runToolCallLoop(
       break;
     }
 
+    if (parsed.response) {
+      callbacks?.onStreamProgress?.(parsed.response);
+    }
+
     callbacks?.onToolCallStart?.(toolCallRequests);
 
     conversationMessages.push({
@@ -163,6 +167,18 @@ export async function runToolCallLoop(
     }
 
     callbacks?.onRoundComplete?.(round);
+  }
+
+  if (!finalContent && allToolResults.length > 0) {
+    const summaryResponse = await ollamaChatSingle({
+      model,
+      messages: conversationMessages,
+      format: SIMULATED_TOOL_CALL_SCHEMA,
+    });
+
+    const summaryParsed = parseToolCallResponse(summaryResponse.message.content);
+    finalContent = summaryParsed?.response ?? summaryResponse.message.content ?? '';
+    if (finalContent) callbacks?.onStreamProgress?.(finalContent);
   }
 
   return {

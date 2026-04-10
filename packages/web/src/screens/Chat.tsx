@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Button, Callout, Label, Toggle } from '@moondreamsdev/dreamer-ui/components';
+import { Button, Callout, CopyButton, Label, Toggle } from '@moondreamsdev/dreamer-ui/components';
 import { Textarea } from '@moondreamsdev/dreamer-ui/components';
 import { ScrollArea } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
@@ -1037,8 +1037,8 @@ export function Chat() {
     dispatch(deleteConversation(chatId));
   };
 
-  const handleCopyChatHistory = () => {
-    if (!currentChat) return;
+  const chatHistoryText = useMemo(() => {
+    if (!currentChat) return '';
     const lines = currentChat.messages.map((m) => {
       const role = m.role === 'user' ? 'User' : 'Assistant';
       let toolInfo = '';
@@ -1047,15 +1047,12 @@ export function Chat() {
         const toolNames = toolAction.toolCalls.map((t) => t.toolName).join(', ');
         toolInfo = ` [tools: ${toolNames}]`;
       }
-      return `[${role}]${toolInfo}\n${m.content}`;
+      const result = `[${role}]${toolInfo}\n${m.content}`;
+      return result;
     });
-    const text = lines.join('\n\n---\n\n');
-    navigator.clipboard.writeText(text).then(() => {
-      addToast({ title: 'Copied', description: 'Chat history copied to clipboard', type: 'success' });
-    }).catch(() => {
-      addToast({ title: 'Failed', description: 'Could not copy to clipboard', type: 'error' });
-    });
-  };
+    const result = lines.join('\n\n---\n\n');
+    return result;
+  }, [currentChat]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1164,14 +1161,14 @@ export function Chat() {
                 {currentChat && currentChat.messages.length > 0 && (
                   <>
                     <div className='bg-border mx-1 h-4 w-px' />
-                    <Button
-                      variant='secondary'
+                    <CopyButton
+                      variant='tertiary'
                       size='sm'
-                      onClick={handleCopyChatHistory}
+                      textToCopy={chatHistoryText}
                       aria-label='Copy chat history'
                     >
-                      📋 Copy chat
-                    </Button>
+                      Copy chat
+                    </CopyButton>
                   </>
                 )}
 
