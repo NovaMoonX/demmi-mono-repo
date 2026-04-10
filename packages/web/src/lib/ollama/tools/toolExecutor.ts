@@ -11,6 +11,7 @@ export interface ToolExecutionResult {
   args: Record<string, unknown>;
   requiresConfirmation: boolean;
   result: ToolResult;
+  skipped?: boolean;
 }
 
 export async function executeToolCall(
@@ -27,9 +28,10 @@ export async function executeToolCall(
       result: {
         success: false,
         data: null,
-        displayType: 'error',
-        message: `Unknown tool: ${toolCall.name}`,
+        displayType: 'text',
+        message: '',
       },
+      skipped: true,
     };
   }
 
@@ -75,8 +77,9 @@ export async function executeToolCalls(
 
   for (let i = 0; i < toolCalls.length; i++) {
     const result = await executeToolCall(toolCalls[i], context);
+    if (result.skipped) continue;
     results.push(result);
-    onToolComplete?.(i, result);
+    onToolComplete?.(results.length - 1, result);
   }
 
   return results;

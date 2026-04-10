@@ -216,7 +216,7 @@ npm run test:ui       # Open Vitest UI in browser
 ### 🔧 Tool-Calling Agent
 - **Simulated tool calling** — the LLM generates structured JSON with `tool_calls` and `response` fields; the app parses tool calls from the streamed response and executes them
 - All responses stream in real time with progressive rendering
-- **Toggle between tool-calling and legacy handler modes** — a "Tool calling" toggle in the chat header lets you switch between the agent-based tool flow and the previous intent-detection flow (`detectIntent` → `getActionHandler`)
+- **Copy chat history** — a "📋 Copy chat" button in the header copies the full conversation to clipboard for debugging
 - **6 tool domains** with a registry pattern for easy extensibility:
   - **Recipes** — `search_recipes`, `get_recipe`, `create_recipe`, `update_recipe`, `delete_recipe`
   - **Ingredients** — `search_ingredients`, `get_ingredient`, `create_ingredient`, `update_ingredient`, `delete_ingredient`
@@ -225,8 +225,10 @@ npm run test:ui       # Open Vitest UI in browser
   - **Memory** — `get_memories`, `save_memory`, `update_memory`, `delete_memory`
   - **Profile** — `get_user_profile` (read-only)
 - **Confirmation model**: reads and creates execute immediately; updates and deletes always show a proposal card requiring explicit user approval
-- Multi-tool chaining with progressive UI updates and a max of 10 tool-call rounds per turn
-- **Tool call progress indicator** — the UI shows "🔧 Using tool_name…" with a processing animation while tools execute, keeping the interaction responsive
+- Multi-tool chaining with progressive UI updates and a max of 3 tool-call rounds per turn
+- **Tool call progress indicator** — tool cards render immediately with "Running…" badges while tools execute, keeping the interaction responsive
+- Unknown tool names are silently skipped; duplicate tool calls are deduplicated
+- Message body is suppressed while tool calls are in progress — text appears only before or after tools complete
 - `ToolCallActionCard` component renders tool results as list displays, success links, or confirmation cards
 - **Entity links** — tool results include clickable links to recipe/ingredient detail pages, shopping list, and calendar; links include `?from=chat` query param so detail page back buttons return to the chat
 - **Streaming JSON parser** — extracts tool calls from partial JSON as it streams, enabling tool execution to start before the full response is received

@@ -38,7 +38,6 @@ import { createShoppingListItem } from '@store/actions/shoppingListActions';
 import { ChatMessage as ChatMessageType } from '@lib/chat';
 import type { Recipe, RecipeIngredient } from '@lib/recipes';
 import {
-  detectIntent,
   generateSummary,
   getActionHandler,
   iterateRecipeAction,
@@ -143,7 +142,6 @@ export function Chat() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(() => !isMobileDevice);
   const [isSending, setIsSending] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [useToolCalling, setUseToolCalling] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const firstTokenReceivedRef = useRef(false);
@@ -922,192 +920,78 @@ export function Chat() {
     activeMessageIdRef.current = assistantMessageId;
 
     try {
-      if (useToolCalling) {
-        firstTokenReceivedRef.current = true;
+      firstTokenReceivedRef.current = true;
 
-        const toolResult = await toolCallAction.execute(
-          modelUsed,
-          { messages: allMessagesForIntent },
-          {
-            abortSignal: abortController.signal,
-            getState: store.getState,
-            dispatch,
-            userId: authUser?.uid ?? '',
-            onProgress: (content: string) => {
-              dispatch(
-                updateMessageContent({
-                  chatId: chatIdForStream,
-                  messageId: assistantMessageId,
-                  content,
-                }),
-              );
-            },
-            onToolCallStart: (toolCalls: ToolCallResultInfo[]) => {
-              dispatch(
-                initToolCalls({
-                  chatId: chatIdForStream,
-                  messageId: assistantMessageId,
-                  toolCalls,
-                }),
-              );
-            },
-            onToolCallComplete: (index: number, toolResult: ToolCallResultInfo) => {
-              dispatch(
-                updateToolCallStatus({
-                  chatId: chatIdForStream,
-                  messageId: assistantMessageId,
-                  toolIndex: index,
-                  status: toolResult.status,
-                  result: toolResult.result,
-                }),
-              );
-            },
-          } as ToolCallRuntime,
-        );
-
-        if (!abortController.signal.aborted && !toolResult.cancelled) {
-          const messageContentUpdates =
-            toolCallAction.getUpdatedMessageContentFromResult!(toolResult.data as ToolCallResult);
-
-          dispatch(
-            updateMessageContent({
-              chatId: chatIdForStream,
-              messageId: assistantMessageId,
-              model: modelUsed,
-              ...messageContentUpdates,
-            }),
-          );
-
-          generateSummary(
-            modelUsed,
-            messageContent,
-            messageContentUpdates.content,
-          )
-            .then((summary) => {
-              if (summary) {
-                dispatch(
-                  updateMessageSummary({
-                    chatId: chatIdForStream,
-                    messageId: assistantMessageId,
-                    summary,
-                  }),
-                );
-              }
-            })
-            .catch((err) => console.warn('Summary generation failed', err));
-        }
-      } else {
-        const intent = await detectIntent(modelUsed, allMessagesForIntent);
-
-        if (abortController.signal.aborted) {
-          if (!firstTokenReceivedRef.current) {
-            dispatch(
-              removeMessage({
-                chatId: chatIdForStream,
-                messageId: assistantMessageId,
-              }),
-            );
-          }
-          return;
-        }
-
-        const handler = getActionHandler(intent);
-
-        if (handler.isMultiStep) {
-          firstTokenReceivedRef.current = true;
-
-          const stepResult = await handler.executeStep(
-            modelUsed,
-            'proposeName',
-            { messages: allMessagesForIntent },
-            {
-              abortSignal: abortController.signal,
-            },
-          );
-
-          if (stepResult.cancelled) return;
-
-          const proposedNameFromStep = stepResult.data.name;
-          const proposedName =
-            typeof proposedNameFromStep === 'string' &&
-            proposedNameFromStep.trim().length > 0
-              ? proposedNameFromStep
-              : null;
-
-          if (abortController.signal.aborted) return;
-
-          dispatch(
-            updateMessageContent({
-              chatId: chatIdForStream,
-              messageId: assistantMessageId,
-              content: proposedName
-                ? `I can help you create a recipe for **${proposedName}**! Shall I go ahead?`
-                : "I'd like to help you create a recipe! I wasn't able to detect the dish name — could you confirm what you'd like me to make?",
-              agentAction: {
-                type: 'create_recipe',
-                status: 'pending_confirmation',
-                proposedName: proposedName ?? '',
-                recipes: [],
-                recipe: null,
-                completedSteps: null,
-                updatingFields: null,
-                shoppingListDecision: null,
-                shoppingListItemsAdded: null,
-              },
-            }),
-          );
-        } else {
-          firstTokenReceivedRef.current = true;
-
-          const result = await handler.execute(
-            modelUsed,
-            { messages: allMessagesForIntent },
-            {
-              abortSignal: abortController.signal,
-              onProgress: (content: string) => {
-                dispatch(
-                  updateMessageContent({
-                    chatId: chatIdForStream,
-                    messageId: assistantMessageId,
-                    content,
-                  }),
-                );
-              },
-            },
-          );
-
-          if (!abortController.signal.aborted && !result.cancelled) {
-            const messageContentUpdates =
-              handler.getUpdatedMessageContentFromResult(result.data);
-
+      const toolResult = await toolCallAction.execute(
+        modelUsed,
+        { messages: allMessagesForIntent },
+        {
+          abortSignal: abortController.signal,
+          getState: store.getState,
+          dispatch,
+          userId: authUser?.uid ?? '',
+          onProgress: (content: string) => {
             dispatch(
               updateMessageContent({
                 chatId: chatIdForStream,
                 messageId: assistantMessageId,
-                model: modelUsed,
-                ...messageContentUpdates,
+                content,
               }),
             );
+          },
+          onToolCallStart: (toolCalls: ToolCallResultInfo[]) => {
+            dispatch(
+              initToolCalls({
+                chatId: chatIdForStream,
+                messageId: assistantMessageId,
+                toolCalls,
+              }),
+            );
+          },
+          onToolCallComplete: (index: number, toolResult: ToolCallResultInfo) => {
+            dispatch(
+              updateToolCallStatus({
+                chatId: chatIdForStream,
+                messageId: assistantMessageId,
+                toolIndex: index,
+                status: toolResult.status,
+                result: toolResult.result,
+              }),
+            );
+          },
+        } as ToolCallRuntime,
+      );
 
-            generateSummary(
-              modelUsed,
-              messageContent,
-              messageContentUpdates.content,
-            )
-              .then((summary) => {
-                if (summary) {
-                  dispatch(
-                    updateMessageSummary({
-                      chatId: chatIdForStream,
-                      messageId: assistantMessageId,
-                      summary,
-                    }),
-                  );
-                }
-              })
-              .catch((err) => console.warn('Summary generation failed', err));
-          }
-        }
+      if (!abortController.signal.aborted && !toolResult.cancelled) {
+        const messageContentUpdates =
+          toolCallAction.getUpdatedMessageContentFromResult!(toolResult.data as ToolCallResult);
+
+        dispatch(
+          updateMessageContent({
+            chatId: chatIdForStream,
+            messageId: assistantMessageId,
+            model: modelUsed,
+            ...messageContentUpdates,
+          }),
+        );
+
+        generateSummary(
+          modelUsed,
+          messageContent,
+          messageContentUpdates.content,
+        )
+          .then((summary) => {
+            if (summary) {
+              dispatch(
+                updateMessageSummary({
+                  chatId: chatIdForStream,
+                  messageId: assistantMessageId,
+                  summary,
+                }),
+              );
+            }
+          })
+          .catch((err) => console.warn('Summary generation failed', err));
       }
     } catch (err) {
       if (!abortController.signal.aborted) {
@@ -1151,6 +1035,23 @@ export function Chat() {
 
   const handleDeleteChat = (chatId: string) => {
     dispatch(deleteConversation(chatId));
+  };
+
+  const handleCopyChatHistory = () => {
+    if (!currentChat) return;
+    const lines = currentChat.messages.map((m) => {
+      const role = m.role === 'user' ? 'User' : 'Assistant';
+      const toolInfo = m.agentAction?.type === 'tool_call'
+        ? ` [tools: ${(m.agentAction as { toolCalls?: { toolName?: string }[] }).toolCalls?.map((t) => t.toolName).join(', ') ?? 'none'}]`
+        : '';
+      return `[${role}]${toolInfo}\n${m.content}`;
+    });
+    const text = lines.join('\n\n---\n\n');
+    navigator.clipboard.writeText(text).then(() => {
+      addToast({ title: 'Copied', description: 'Chat history copied to clipboard', type: 'success' });
+    }).catch(() => {
+      addToast({ title: 'Failed', description: 'Could not copy to clipboard', type: 'error' });
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1257,22 +1158,19 @@ export function Chat() {
                   aria-label='Toggle message details'
                 />
 
-                <div className='bg-border mx-1 h-4 w-px' />
-
-                <Label
-                  htmlFor='toggle-tool-calling'
-                  className='text-muted-foreground text-sm'
-                >
-                  Tool calling
-                </Label>
-                <Toggle
-                  id='toggle-tool-calling'
-                  checked={useToolCalling}
-                  size='sm'
-                  onCheckedChange={() => setUseToolCalling((v) => !v)}
-                  disabled={isSending}
-                  aria-label='Toggle tool calling mode'
-                />
+                {currentChat && currentChat.messages.length > 0 && (
+                  <>
+                    <div className='bg-border mx-1 h-4 w-px' />
+                    <Button
+                      variant='secondary'
+                      size='sm'
+                      onClick={handleCopyChatHistory}
+                      aria-label='Copy chat history'
+                    >
+                      📋 Copy chat
+                    </Button>
+                  </>
+                )}
 
                 <OllamaModelControl disabled={isSending} />
               </div>

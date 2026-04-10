@@ -1,6 +1,7 @@
 import type { ToolContext } from './tool.types';
 import type { ToolCallRequest, ToolExecutionResult } from './toolExecutor';
 import { executeToolCalls } from './toolExecutor';
+import { getToolByName } from './tool.registry';
 import { ollamaChatStream, ollamaChatSingle } from '../ollama.service';
 import { SIMULATED_TOOL_CALL_SCHEMA } from '../prompts/toolCalling.prompts';
 import {
@@ -9,7 +10,7 @@ import {
   extractToolCallsFromPartialJson,
 } from './streamParser';
 
-const MAX_TOOL_CALL_ROUNDS = 10;
+const MAX_TOOL_CALL_ROUNDS = 3;
 
 export interface ToolCallLoopCallbacks {
   onToolCallStart?: (toolCalls: ToolCallRequest[]) => void;
@@ -66,9 +67,11 @@ export async function runToolCallLoop(
         }
       }
 
-      const partialResponse = extractPartialToolResponse(rawContent);
-      if (partialResponse) {
-        callbacks?.onStreamProgress?.(partialResponse);
+      if (!toolCallsDetected) {
+        const partialResponse = extractPartialToolResponse(rawContent);
+        if (partialResponse) {
+          callbacks?.onStreamProgress?.(partialResponse);
+        }
       }
     }
 
@@ -82,10 +85,25 @@ export async function runToolCallLoop(
       break;
     }
 
-    const toolCallRequests: ToolCallRequest[] = parsed.toolCalls.map((tc) => ({
+    const rawToolCalls: ToolCallRequest[] = parsed.toolCalls.map((tc) => ({
       name: tc.name,
       arguments: tc.arguments ?? {},
     }));
+
+    const seen = new Set<string>();
+    const toolCallRequests = rawToolCalls.filter((tc) => {
+      if (!getToolByName(tc.name)) return false;
+      const key = `${tc.name}:${JSON.stringify(tc.arguments)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (toolCallRequests.length === 0) {
+      finalContent = parsed.response ?? '';
+      if (finalContent) callbacks?.onStreamProgress?.(finalContent);
+      break;
+    }
 
     callbacks?.onToolCallStart?.(toolCallRequests);
 

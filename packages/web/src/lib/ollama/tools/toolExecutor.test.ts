@@ -48,7 +48,7 @@ describe('toolExecutor', () => {
     expect(tool.execute).toHaveBeenCalledWith({ foo: 'bar' }, mockContext);
   });
 
-  it('executeToolCall with an unknown tool returns error', async () => {
+  it('executeToolCall with an unknown tool returns skipped result', async () => {
     const result = await executeToolCall(
       { name: 'unknown_tool', arguments: {} },
       mockContext,
@@ -56,7 +56,7 @@ describe('toolExecutor', () => {
 
     expect(result.toolName).toBe('unknown_tool');
     expect(result.result.success).toBe(false);
-    expect(result.result.displayType).toBe('error');
+    expect(result.skipped).toBe(true);
   });
 
   it('executeToolCall with a confirmation tool returns requiresConfirmation true', async () => {
@@ -113,5 +113,25 @@ describe('toolExecutor', () => {
     expect(onToolComplete).toHaveBeenCalledTimes(2);
     expect(onToolComplete).toHaveBeenCalledWith(0, expect.objectContaining({ toolName: 'tool_a' }));
     expect(onToolComplete).toHaveBeenCalledWith(1, expect.objectContaining({ toolName: 'tool_b' }));
+  });
+
+  it('executeToolCalls skips unknown tools silently', async () => {
+    const tool = createMockTool({ name: 'real_tool' });
+    registerTool(tool);
+
+    const onToolComplete = vi.fn();
+
+    const results = await executeToolCalls(
+      [
+        { name: 'real_tool', arguments: {} },
+        { name: 'fake_tool', arguments: {} },
+      ],
+      mockContext,
+      onToolComplete,
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0].toolName).toBe('real_tool');
+    expect(onToolComplete).toHaveBeenCalledTimes(1);
   });
 });
