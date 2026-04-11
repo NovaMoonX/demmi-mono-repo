@@ -304,7 +304,7 @@ function RecipeResultCard({ result }: { toolName: string; result: NonNullable<To
   return <GenericResultCard result={result} />;
 }
 
-function IngredientResultCard({ toolName, result }: { toolName: string; result: NonNullable<ToolCallResultInfo['result']> }) {
+function IngredientResultCard({ result }: { toolName: string; result: NonNullable<ToolCallResultInfo['result']> }) {
   if (result.displayType === 'list') {
     const data = result.data as ListData | null;
     if (!data?.items || data.items.length === 0) {
@@ -336,9 +336,7 @@ function IngredientResultCard({ toolName, result }: { toolName: string; result: 
               return (
                 <Link
                   key={String(item.id ?? idx)}
-                  to={toolName === 'search_ingredients' || toolName === 'get_ingredient'
-                    ? `/ingredients/${item.id}?from=chat`
-                    : '#'}
+                  to={`/ingredients/${String(item.id)}?from=chat`}
                   className={join(
                     'flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors',
                     colorClass || 'bg-muted text-muted-foreground',
@@ -699,7 +697,9 @@ function ToolConfirmationDetail({ data, message }: { data: Record<string, unknow
 
   return (
     <div className='mt-2'>
-      <p className='text-muted-foreground text-sm'>{message}</p>
+      {message && (
+        <p className='text-muted-foreground text-sm'>{message}</p>
+      )}
       {proposedChanges && (
         <div className='mt-2 space-y-1'>
           {Object.entries(proposedChanges).map(([key, change]) => (

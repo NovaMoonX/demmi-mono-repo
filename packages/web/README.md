@@ -231,7 +231,13 @@ npm run test:ui       # Open Vitest UI in browser
 - **Tool call progress indicator** — tool cards render immediately with "Running…" badges while tools execute, keeping the interaction responsive
 - Unknown tool names are silently skipped; duplicate tool calls are deduplicated
 - **Response generation** — after tool execution, a dedicated streaming LLM call (no JSON format constraint) produces the final response with actual data from results
-- `ToolCallActionCard` component renders tool results as list displays, success links, or confirmation cards
+- `ToolCallActionCard` component renders rich, interactive result cards for each tool domain:
+  - **Recipe results** — cards with title, category/cuisine badges, cook time, serving size, and clickable links to detail pages; created recipes show full card with "View Recipe →" link
+  - **Ingredient results** — colored pills with type emoji, name, amount/unit, and clickable links; created ingredients show card with type badge and "View →" link
+  - **Shopping list results** — items with checked/unchecked status, amounts, and "Open Shopping List →" link
+  - **Calendar results** — planned meals with date, category badge, recipe name, and links to recipes; planned actions show "View Calendar →" link
+  - **Empty results** — clear empty-state messages with contextual emoji
+  - **Confirmations** — proposed changes displayed inline with approve/reject buttons
 - **Entity links** — tool results include clickable links to recipe/ingredient detail pages, shopping list, and calendar; links include `?from=chat` query param so detail page back buttons return to the chat
 - **Streaming JSON parser** — extracts tool calls from partial JSON as it streams, enabling tool execution to start before the full response is received
 
