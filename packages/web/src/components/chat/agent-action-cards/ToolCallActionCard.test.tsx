@@ -18,8 +18,8 @@ const completedAction: AgentToolCallAction = {
         success: true,
         data: {
           items: [
-            { id: 'r1', title: 'Pasta Carbonara', category: 'dinner' },
-            { id: 'r2', title: 'Spaghetti Bolognese', category: 'dinner' },
+            { id: 'r1', title: 'Pasta Carbonara', category: 'dinner', cuisine: 'italian', prepTime: 10, cookTime: 20, servingSize: 2 },
+            { id: 'r2', title: 'Spaghetti Bolognese', category: 'dinner', cuisine: 'italian', prepTime: 15, cookTime: 30, servingSize: 4 },
           ],
           total: 2,
         },
@@ -67,7 +67,7 @@ const shoppingListAction: AgentToolCallAction = {
       requiresConfirmation: false,
       result: {
         success: true,
-        data: { items: [{ id: 's1', name: 'Milk', category: 'dairy' }], total: 1 },
+        data: { items: [{ id: 's1', name: 'Milk', category: 'dairy', checked: false }], total: 1 },
         displayType: 'list',
         message: 'Shopping list has 1 item.',
       },
@@ -76,16 +76,16 @@ const shoppingListAction: AgentToolCallAction = {
 };
 
 describe('ToolCallActionCard', () => {
-  it('renders tool results', () => {
+  it('renders recipe result card with items', () => {
     const { wrapper } = generateTestWrapper();
     render(
       <ToolCallActionCard action={completedAction} />,
       { wrapper },
     );
     expect(screen.getByText('Search Recipes')).toBeInTheDocument();
-    expect(screen.getByText('Found 2 recipes.')).toBeInTheDocument();
     expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument();
     expect(screen.getByText('Spaghetti Bolognese')).toBeInTheDocument();
+    expect(screen.getByText('Recipes (2)')).toBeInTheDocument();
   });
 
   it('shows Done badge for completed tools', () => {
@@ -135,15 +135,14 @@ describe('ToolCallActionCard', () => {
     expect(recipeLinks[1]).toHaveAttribute('href', '/recipes/r2?from=chat');
   });
 
-  it('renders action link for shopping list tool', () => {
+  it('renders shopping list result card with items', () => {
     const { wrapper } = generateTestWrapper();
     render(
       <ToolCallActionCard action={shoppingListAction} />,
       { wrapper },
     );
-    const link = screen.getByText('View Shopping List →');
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/shopping-list?from=chat');
+    expect(screen.getByText('Milk')).toBeInTheDocument();
+    expect(screen.getByText('Open Shopping List →')).toBeInTheDocument();
   });
 
   it('shows processing indicator for executing tools', () => {
@@ -168,5 +167,143 @@ describe('ToolCallActionCard', () => {
     );
     expect(screen.getByText('Processing…')).toBeInTheDocument();
     expect(screen.getByText('Running…')).toBeInTheDocument();
+  });
+
+  it('renders ingredient result card with pills', () => {
+    const ingredientAction: AgentToolCallAction = {
+      type: 'tool_call',
+      status: 'completed',
+      currentToolIndex: 0,
+      toolCalls: [
+        {
+          toolName: 'search_ingredients',
+          args: {},
+          status: 'completed',
+          requiresConfirmation: false,
+          result: {
+            success: true,
+            data: {
+              items: [
+                { id: 'i1', name: 'Chicken', type: 'meat', currentAmount: 2, unit: 'lb' },
+                { id: 'i2', name: 'Garlic', type: 'produce', currentAmount: 5, unit: 'piece' },
+              ],
+              total: 2,
+            },
+            displayType: 'list',
+            message: 'Found 2 ingredients.',
+          },
+        },
+      ],
+    };
+    const { wrapper } = generateTestWrapper();
+    render(
+      <ToolCallActionCard action={ingredientAction} />,
+      { wrapper },
+    );
+    expect(screen.getByText('Chicken')).toBeInTheDocument();
+    expect(screen.getByText('Garlic')).toBeInTheDocument();
+    expect(screen.getByText('Ingredients (2)')).toBeInTheDocument();
+  });
+
+  it('renders recipe created success card', () => {
+    const createAction: AgentToolCallAction = {
+      type: 'tool_call',
+      status: 'completed',
+      currentToolIndex: 0,
+      toolCalls: [
+        {
+          toolName: 'create_recipe',
+          args: { title: 'Turkey Burger' },
+          status: 'completed',
+          requiresConfirmation: false,
+          result: {
+            success: true,
+            data: {
+              id: 'r-new',
+              title: 'Turkey Burger',
+              category: 'dinner',
+              cuisine: 'american',
+              prepTime: 10,
+              cookTime: 15,
+              servingSize: 4,
+              instructions: ['Mix ingredients', 'Form patties', 'Grill'],
+            },
+            displayType: 'success',
+            message: 'Recipe "Turkey Burger" created successfully.',
+          },
+        },
+      ],
+    };
+    const { wrapper } = generateTestWrapper();
+    render(
+      <ToolCallActionCard action={createAction} />,
+      { wrapper },
+    );
+    expect(screen.getByText('Turkey Burger')).toBeInTheDocument();
+    expect(screen.getByText('Created')).toBeInTheDocument();
+    expect(screen.getByText('View Recipe →')).toBeInTheDocument();
+  });
+
+  it('renders calendar meal plan result card', () => {
+    const calendarAction: AgentToolCallAction = {
+      type: 'tool_call',
+      status: 'completed',
+      currentToolIndex: 0,
+      toolCalls: [
+        {
+          toolName: 'get_meal_plan',
+          args: {},
+          status: 'completed',
+          requiresConfirmation: false,
+          result: {
+            success: true,
+            data: {
+              items: [
+                { id: 'p1', date: '2026-04-11', category: 'dinner', recipeName: 'Pasta', recipeId: 'r1' },
+              ],
+              total: 1,
+            },
+            displayType: 'list',
+            message: 'Found 1 planned meal.',
+          },
+        },
+      ],
+    };
+    const { wrapper } = generateTestWrapper();
+    render(
+      <ToolCallActionCard action={calendarAction} />,
+      { wrapper },
+    );
+    expect(screen.getByText('Pasta')).toBeInTheDocument();
+    expect(screen.getByText('2026-04-11')).toBeInTheDocument();
+    expect(screen.getByText('Open Calendar →')).toBeInTheDocument();
+  });
+
+  it('renders empty state card when no results', () => {
+    const emptyAction: AgentToolCallAction = {
+      type: 'tool_call',
+      status: 'completed',
+      currentToolIndex: 0,
+      toolCalls: [
+        {
+          toolName: 'search_recipes',
+          args: { query: 'nonexistent' },
+          status: 'completed',
+          requiresConfirmation: false,
+          result: {
+            success: true,
+            data: { items: [], total: 0 },
+            displayType: 'list',
+            message: 'No recipes found matching your criteria.',
+          },
+        },
+      ],
+    };
+    const { wrapper } = generateTestWrapper();
+    render(
+      <ToolCallActionCard action={emptyAction} />,
+      { wrapper },
+    );
+    expect(screen.getByText('No recipes found matching your criteria.')).toBeInTheDocument();
   });
 });
