@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Input,
   Textarea,
@@ -28,6 +28,7 @@ export function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const recipes = useAppSelector((state) => state.recipes.items);
   const allIngredients = useAppSelector((state) => state.ingredients.items);
@@ -36,6 +37,10 @@ export function RecipeDetail() {
 
   const isEditing = id !== 'new';
   const existingRecipe = isEditing ? recipes.find((m) => m.id === id) : undefined;
+
+  const fromChat = searchParams.get('from') === 'chat';
+  const backPath = fromChat ? '/chat' : '/recipes';
+  const backLabel = fromChat ? '← Back to Chat' : '← Back to Recipes';
 
   const [isViewMode, setIsViewMode] = useState(isEditing);
   const [pendingShoppingListIngredients, setPendingShoppingListIngredients] =
@@ -236,14 +241,14 @@ export function RecipeDetail() {
       if (isEditing && existingRecipe) {
         const updatedRecipe: Recipe = { ...existingRecipe, ...recipeData };
         await dispatch(updateRecipeAsync(updatedRecipe)).unwrap();
-        navigate('/recipes');
+        navigate(backPath);
       } else {
         await dispatch(createRecipeAsync(recipeData)).unwrap();
         if (ingredientsList.length > 0) {
           setPendingShoppingListIngredients(ingredientsList);
           setShoppingListPhase('prompt');
         } else {
-          navigate('/recipes');
+          navigate(backPath);
         }
       }
     } catch (err) {
@@ -293,12 +298,12 @@ export function RecipeDetail() {
     }
 
     setShoppingListPhase('done');
-    navigate('/recipes');
+    navigate(backPath);
   };
 
   const handleSkipShoppingList = () => {
     setShoppingListPhase('done');
-    navigate('/recipes');
+    navigate(backPath);
   };
 
   const handleAddMissingIngredients = async () => {
@@ -359,7 +364,7 @@ export function RecipeDetail() {
 
     try {
       await dispatch(deleteRecipeAsync(existingRecipe.id)).unwrap();
-      navigate('/recipes');
+      navigate(backPath);
     } catch (err) {
       console.error('Failed to delete recipe:', err);
       addToast({
@@ -374,7 +379,7 @@ export function RecipeDetail() {
     if (isEditing) {
       setIsViewMode(true);
     } else {
-      navigate('/recipes');
+      navigate(backPath);
     }
   };
 
@@ -383,10 +388,10 @@ export function RecipeDetail() {
       <div className='mx-auto mt-10 max-w-4xl p-6 md:mt-0'>
         <div className='mb-8'>
           <Link
-            to='/recipes'
+            to={backPath}
             className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
           >
-            ← Back to Recipes
+            {backLabel}
           </Link>
           <div className='flex items-start justify-between gap-4'>
             <div>
@@ -618,10 +623,10 @@ export function RecipeDetail() {
     <div className='mx-auto mt-10 max-w-4xl p-6 md:mt-0'>
       <div className='mb-8'>
         <Link
-          to='/recipes'
+          to={backPath}
           className='text-muted-foreground hover:text-foreground mb-4 inline-block text-sm'
         >
-          ← Back to Recipes
+          {backLabel}
         </Link>
         <h1 className='text-foreground mb-2 text-4xl font-bold'>
           {isEditing ? 'Edit Recipe' : 'Create New Recipe'}

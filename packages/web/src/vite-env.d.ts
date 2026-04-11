@@ -11,6 +11,7 @@ interface OllamaChatPayload {
   messages: Array<{ role: string; content: string }>;
   format?: unknown;
   options?: unknown;
+  tools?: unknown;
   stream?: boolean;
 }
 
@@ -38,7 +39,12 @@ interface OllamaErrorData {
 }
 
 interface OllamaElectronChatResponse {
-  message: { content: string };
+  message: {
+    content: string;
+    tool_calls?: Array<{
+      function: { name: string; arguments: Record<string, unknown> };
+    }>;
+  };
 }
 
 interface OllamaElectronGenerateResponse {

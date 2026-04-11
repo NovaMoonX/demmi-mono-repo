@@ -9,6 +9,7 @@ import recipesReducer from '@store/slices/recipesSlice';
 import chatsReducer from '@store/slices/chatsSlice';
 import calendarReducer from '@store/slices/calendarSlice';
 import shoppingListReducer from '@store/slices/shoppingListSlice';
+import memoryReducer from '@store/slices/memorySlice';
 import { openFoodFactsApi } from '@store/api/openFoodFactsApi';
 import { fetchUserProfile, saveUserProfile } from './userProfileActions';
 import type { UserProfile } from '@lib/userProfile';
@@ -46,6 +47,7 @@ function createTestStore(preloadedState?: Partial<RootState>) {
       demo: demoReducer,
       shoppingList: shoppingListReducer,
       userProfile: userProfileReducer,
+      memory: memoryReducer,
       [openFoodFactsApi.reducerPath]: openFoodFactsApi.reducer,
     },
     preloadedState: preloadedState as RootState,

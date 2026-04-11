@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Button, Callout, Label, Toggle } from '@moondreamsdev/dreamer-ui/components';
+import { Button, Callout, CopyButton, Label, Toggle } from '@moondreamsdev/dreamer-ui/components';
 import { Textarea } from '@moondreamsdev/dreamer-ui/components';
 import { ScrollArea } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
@@ -29,6 +29,8 @@ import {
   setRecipeActionShoppingListDecision,
   deleteConversation,
   togglePinConversation,
+  initToolCalls,
+  updateToolCallStatus,
 } from '@store/slices/chatsSlice';
 import { createIngredient } from '@store/actions/ingredientActions';
 import { createRecipe } from '@store/actions/recipeActions';
@@ -36,13 +38,15 @@ import { createShoppingListItem } from '@store/actions/shoppingListActions';
 import { ChatMessage as ChatMessageType } from '@lib/chat';
 import type { Recipe, RecipeIngredient } from '@lib/recipes';
 import {
-  detectIntent,
   generateSummary,
   getActionHandler,
   iterateRecipeAction,
+  toolCallAction,
 } from '@lib/ollama';
 import type { RecipeIterableField } from '@lib/ollama/action-types/createRecipeAction.types';
 import type { RecipeStep } from '@lib/ollama/action-types/createRecipeAction.types';
+import type { ToolCallRuntime, ToolCallResult } from '@lib/ollama/actions/toolCallAction';
+import type { ToolCallResultInfo, AgentToolCallAction } from '@lib/ollama/action-types/toolCallAction.types';
 import { generatedId } from '@utils/generatedId';
 
 const SCROLL_DELAY_MS = 100;
@@ -916,117 +920,78 @@ export function Chat() {
     activeMessageIdRef.current = assistantMessageId;
 
     try {
-      const intent = await detectIntent(modelUsed, allMessagesForIntent);
+      firstTokenReceivedRef.current = true;
 
-      if (abortController.signal.aborted) {
-        if (!firstTokenReceivedRef.current) {
-          dispatch(
-            removeMessage({
-              chatId: chatIdForStream,
-              messageId: assistantMessageId,
-            }),
-          );
-        }
-        return;
-      }
-
-      const handler = getActionHandler(intent);
-
-      if (handler.isMultiStep) {
-        firstTokenReceivedRef.current = true;
-
-        const stepResult = await handler.executeStep(
-          modelUsed,
-          'proposeName',
-          { messages: allMessagesForIntent },
-          {
-            abortSignal: abortController.signal,
+      const toolResult = await toolCallAction.execute(
+        modelUsed,
+        { messages: allMessagesForIntent },
+        {
+          abortSignal: abortController.signal,
+          getState: store.getState,
+          dispatch,
+          userId: authUser?.uid ?? '',
+          onProgress: (content: string) => {
+            dispatch(
+              updateMessageContent({
+                chatId: chatIdForStream,
+                messageId: assistantMessageId,
+                content,
+              }),
+            );
           },
-        );
+          onToolCallStart: (toolCalls: ToolCallResultInfo[]) => {
+            dispatch(
+              initToolCalls({
+                chatId: chatIdForStream,
+                messageId: assistantMessageId,
+                toolCalls,
+              }),
+            );
+          },
+          onToolCallComplete: (index: number, toolResult: ToolCallResultInfo) => {
+            dispatch(
+              updateToolCallStatus({
+                chatId: chatIdForStream,
+                messageId: assistantMessageId,
+                toolIndex: index,
+                status: toolResult.status,
+                result: toolResult.result,
+              }),
+            );
+          },
+        } as ToolCallRuntime,
+      );
 
-        if (stepResult.cancelled) return;
-
-        const proposedNameFromStep = stepResult.data.name;
-        const proposedName =
-          typeof proposedNameFromStep === 'string' &&
-          proposedNameFromStep.trim().length > 0
-            ? proposedNameFromStep
-            : null;
-
-        if (abortController.signal.aborted) return;
+      if (!abortController.signal.aborted && !toolResult.cancelled) {
+        const messageContentUpdates =
+          toolCallAction.getUpdatedMessageContentFromResult!(toolResult.data as ToolCallResult);
 
         dispatch(
           updateMessageContent({
             chatId: chatIdForStream,
             messageId: assistantMessageId,
-            content: proposedName
-              ? `I can help you create a recipe for **${proposedName}**! Shall I go ahead?`
-              : "I'd like to help you create a recipe! I wasn't able to detect the dish name — could you confirm what you'd like me to make?",
-            agentAction: {
-              type: 'create_recipe',
-              status: 'pending_confirmation',
-              proposedName: proposedName ?? '',
-              recipes: [],
-              recipe: null,
-              completedSteps: null,
-              updatingFields: null,
-              shoppingListDecision: null,
-              shoppingListItemsAdded: null,
-            },
+            model: modelUsed,
+            ...messageContentUpdates,
           }),
         );
-      } else {
-        firstTokenReceivedRef.current = true;
 
-        const result = await handler.execute(
+        generateSummary(
           modelUsed,
-          { messages: allMessagesForIntent },
-          {
-            abortSignal: abortController.signal,
-            // The handler streams partial content via this callback; the consumer owns the dispatch.
-            onProgress: (content) => {
+          messageContent,
+          messageContentUpdates.content,
+        )
+          .then((summary) => {
+            if (summary) {
               dispatch(
-                updateMessageContent({
+                updateMessageSummary({
                   chatId: chatIdForStream,
                   messageId: assistantMessageId,
-                  content,
+                  summary,
                 }),
               );
-            },
-          },
-        );
-
-        if (!abortController.signal.aborted && !result.cancelled) {
-          const messageContentUpdates =
-            handler.getUpdatedMessageContentFromResult(result.data);
-
-          dispatch(
-            updateMessageContent({
-              chatId: chatIdForStream,
-              messageId: assistantMessageId,
-              model: modelUsed,
-              ...messageContentUpdates,
-            }),
-          );
-
-          generateSummary(
-            modelUsed,
-            messageContent,
-            messageContentUpdates.content,
-          )
-            .then((summary) => {
-              if (summary) {
-                dispatch(
-                  updateMessageSummary({
-                    chatId: chatIdForStream,
-                    messageId: assistantMessageId,
-                    summary,
-                  }),
-                );
-              }
-            })
-            .catch((err) => console.warn('Summary generation failed', err));
-        }
+            }
+          })
+          .catch((err) => console.warn('Summary generation failed', err));
       }
     } catch (err) {
       if (!abortController.signal.aborted) {
@@ -1071,6 +1036,23 @@ export function Chat() {
   const handleDeleteChat = (chatId: string) => {
     dispatch(deleteConversation(chatId));
   };
+
+  const chatHistoryText = useMemo(() => {
+    if (!currentChat) return '';
+    const lines = currentChat.messages.map((m) => {
+      const role = m.role === 'user' ? 'User' : 'Assistant';
+      let toolInfo = '';
+      if (m.agentAction?.type === 'tool_call') {
+        const toolAction = m.agentAction as AgentToolCallAction;
+        const toolNames = toolAction.toolCalls.map((t) => t.toolName).join(', ');
+        toolInfo = ` [tools: ${toolNames}]`;
+      }
+      const result = `[${role}]${toolInfo}\n${m.content}`;
+      return result;
+    });
+    const result = lines.join('\n\n---\n\n');
+    return result;
+  }, [currentChat]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1175,6 +1157,20 @@ export function Chat() {
                   onCheckedChange={() => setShowDetails((v) => !v)}
                   aria-label='Toggle message details'
                 />
+
+                {currentChat && currentChat.messages.length > 0 && (
+                  <>
+                    <div className='bg-border mx-1 h-4 w-px' />
+                    <CopyButton
+                      variant='tertiary'
+                      size='sm'
+                      textToCopy={chatHistoryText}
+                      aria-label='Copy chat history'
+                    >
+                      Copy chat
+                    </CopyButton>
+                  </>
+                )}
 
                 <OllamaModelControl disabled={isSending} />
               </div>

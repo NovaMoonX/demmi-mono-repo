@@ -10,6 +10,7 @@ import chatsReducer from '@store/slices/chatsSlice';
 import calendarReducer from '@store/slices/calendarSlice';
 import shoppingListReducer from '@store/slices/shoppingListSlice';
 import userProfileReducer from '@store/slices/userProfileSlice';
+import memoryReducer from '@store/slices/memorySlice';
 import { openFoodFactsApi } from '@store/api/openFoodFactsApi';
 import { AuthProvider } from './AuthContext';
 import { useAuth } from '@hooks/useAuth';
@@ -45,6 +46,7 @@ function createTestStore() {
       demo: demoReducer,
       shoppingList: shoppingListReducer,
       userProfile: userProfileReducer,
+      memory: memoryReducer,
       [openFoodFactsApi.reducerPath]: openFoodFactsApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>

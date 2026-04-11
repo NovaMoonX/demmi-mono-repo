@@ -7,6 +7,7 @@ import calendarReducer from './slices/calendarSlice';
 import demoReducer from './slices/demoSlice';
 import shoppingListReducer from './slices/shoppingListSlice';
 import userProfileReducer from './slices/userProfileSlice';
+import memoryReducer from './slices/memorySlice';
 import { openFoodFactsApi } from './api/openFoodFactsApi';
 
 export const store = configureStore({
@@ -19,6 +20,7 @@ export const store = configureStore({
     demo: demoReducer,
     shoppingList: shoppingListReducer,
     userProfile: userProfileReducer,
+    memory: memoryReducer,
     [openFoodFactsApi.reducerPath]: openFoodFactsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>

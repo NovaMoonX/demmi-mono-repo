@@ -3,6 +3,8 @@ import { CopyButton } from '@moondreamsdev/dreamer-ui/components';
 import { join } from '@moondreamsdev/dreamer-ui/utils';
 import ReactMarkdown from 'react-markdown';
 import { CreateRecipeAgentActionCard } from './agent-action-cards/CreateRecipeAgentActionCard';
+import { ToolCallActionCard } from './agent-action-cards/ToolCallActionCard';
+import type { AgentToolCallAction } from '@lib/ollama/action-types/toolCallAction.types';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -15,6 +17,8 @@ interface ChatMessageProps {
   onRejectAction?: (messageId: string) => void;
   onAddToShoppingList?: (messageId: string) => Promise<number>;
   onSkipShoppingList?: (messageId: string) => void;
+  onConfirmToolCall?: (messageId: string, toolIndex: number) => void;
+  onRejectToolCall?: (messageId: string, toolIndex: number) => void;
 }
 
 function formatTimestamp(ts: number): string {
@@ -35,6 +39,8 @@ export function ChatMessage({
   onRejectAction,
   onAddToShoppingList,
   onSkipShoppingList,
+  onConfirmToolCall,
+  onRejectToolCall,
 }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
@@ -42,6 +48,8 @@ export function ChatMessage({
   const showActions = !isStreaming && messageContent !== '';
 
   const displayAgentAction = message.agentAction && !isUser;
+  const hasToolCallAction = message.agentAction?.type === 'tool_call';
+  const isToolsExecuting = hasToolCallAction && isStreaming;
   return (
     <div
       className={join(
@@ -58,7 +66,7 @@ export function ChatMessage({
             : 'w-full max-w-[85%] items-start md:max-w-[75%]',
         )}
       >
-        {(isStreaming || messageContent !== '') && (
+        {(isStreaming || messageContent !== '') && !isToolsExecuting && (
           <div
             className={join(
               'min-w-fit rounded-2xl px-4 py-3',
@@ -88,6 +96,19 @@ export function ChatMessage({
           </div>
         )}
 
+        {messageContent !== '' && isToolsExecuting && (
+          <div
+            className={join(
+              'min-w-fit rounded-2xl px-4 py-3',
+              'bg-muted text-foreground',
+            )}
+          >
+            <div className='prose prose-sm dark:prose-invert max-w-none'>
+              <ReactMarkdown>{messageContent}</ReactMarkdown>
+            </div>
+          </div>
+        )}
+
         {message.agentAction?.type === 'create_recipe' &&
           onConfirmIntent &&
           onRejectIntent &&
@@ -111,6 +132,22 @@ export function ChatMessage({
               }
             />
           )}
+
+        {message.agentAction?.type === 'tool_call' && (
+          <ToolCallActionCard
+            action={message.agentAction as AgentToolCallAction}
+            onConfirmToolCall={
+              onConfirmToolCall
+                ? (toolIndex: number) => onConfirmToolCall(message.id, toolIndex)
+                : undefined
+            }
+            onRejectToolCall={
+              onRejectToolCall
+                ? (toolIndex: number) => onRejectToolCall(message.id, toolIndex)
+                : undefined
+            }
+          />
+        )}
 
         {showActions && (
           <div

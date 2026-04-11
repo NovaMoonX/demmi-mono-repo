@@ -4,9 +4,15 @@ import type {
   AgentCreateRecipeAction,
   AgentRecipeProposal,
   AgentPartialRecipe,
+  CreateRecipeAgentActionStatus,
   RecipeIterableField,
   RecipeStep,
 } from '@lib/ollama/action-types/createRecipeAction.types';
+import type {
+  AgentToolCallAction,
+  ToolCallResultInfo,
+  ToolCallAgentActionStatus,
+} from '@lib/ollama/action-types/toolCallAction.types';
 import { generatedId } from '@utils/generatedId';
 import {
   fetchChats,
@@ -198,7 +204,7 @@ const chatsSlice = createSlice({
           (m) => m.id === action.payload.messageId,
         );
         if (message?.agentAction) {
-          message.agentAction.status = action.payload.status;
+          (message.agentAction as { status: AgentActionStatus }).status = action.payload.status;
           if (
             action.payload.recipes !== undefined &&
             message.agentAction.type === 'create_recipe'
@@ -257,7 +263,7 @@ const chatsSlice = createSlice({
       // Maps each completed step to the next generation status.
       // 'instructions' is the final step — status stays at 'generating_instructions'
       // until createRecipeAction.onComplete transitions to 'pending_approval'.
-      const stepStatusMap: Partial<Record<RecipeStep, AgentActionStatus>> = {
+      const stepStatusMap: Partial<Record<RecipeStep, CreateRecipeAgentActionStatus>> = {
         name: 'generating_info',
         info: 'generating_description',
         description: 'generating_ingredients',
@@ -314,6 +320,100 @@ const chatsSlice = createSlice({
         const recipeAction = message.agentAction as AgentCreateRecipeAction;
         recipeAction.shoppingListDecision = action.payload.decision;
         recipeAction.shoppingListItemsAdded = action.payload.itemsAdded;
+      }
+    },
+    initToolCalls: (
+      state,
+      action: PayloadAction<{
+        chatId: string;
+        messageId: string;
+        toolCalls: ToolCallResultInfo[];
+      }>,
+    ) => {
+      const chat = state.conversations.find((c) => c.id === action.payload.chatId);
+      const message = chat?.messages.find((m) => m.id === action.payload.messageId);
+      if (message) {
+        const toolCallAction: AgentToolCallAction = {
+          type: 'tool_call',
+          status: 'calling_tools',
+          toolCalls: action.payload.toolCalls,
+          currentToolIndex: 0,
+        };
+        message.agentAction = toolCallAction;
+      }
+    },
+    updateToolCallStatus: (
+      state,
+      action: PayloadAction<{
+        chatId: string;
+        messageId: string;
+        toolIndex: number;
+        status: ToolCallResultInfo['status'];
+        result?: ToolCallResultInfo['result'];
+      }>,
+    ) => {
+      const chat = state.conversations.find((c) => c.id === action.payload.chatId);
+      const message = chat?.messages.find((m) => m.id === action.payload.messageId);
+      if (message?.agentAction?.type === 'tool_call') {
+        const toolAction = message.agentAction as AgentToolCallAction;
+        const toolCall = toolAction.toolCalls[action.payload.toolIndex];
+        if (toolCall) {
+          toolCall.status = action.payload.status;
+          if (action.payload.result !== undefined) {
+            toolCall.result = action.payload.result;
+          }
+        }
+        toolAction.currentToolIndex = action.payload.toolIndex;
+      }
+    },
+    setToolCallActionStatus: (
+      state,
+      action: PayloadAction<{
+        chatId: string;
+        messageId: string;
+        status: ToolCallAgentActionStatus;
+      }>,
+    ) => {
+      const chat = state.conversations.find((c) => c.id === action.payload.chatId);
+      const message = chat?.messages.find((m) => m.id === action.payload.messageId);
+      if (message?.agentAction?.type === 'tool_call') {
+        (message.agentAction as AgentToolCallAction).status = action.payload.status;
+      }
+    },
+    confirmToolCall: (
+      state,
+      action: PayloadAction<{
+        chatId: string;
+        messageId: string;
+        toolIndex: number;
+      }>,
+    ) => {
+      const chat = state.conversations.find((c) => c.id === action.payload.chatId);
+      const message = chat?.messages.find((m) => m.id === action.payload.messageId);
+      if (message?.agentAction?.type === 'tool_call') {
+        const toolAction = message.agentAction as AgentToolCallAction;
+        const toolCall = toolAction.toolCalls[action.payload.toolIndex];
+        if (toolCall) {
+          toolCall.status = 'confirmed';
+        }
+      }
+    },
+    rejectToolCall: (
+      state,
+      action: PayloadAction<{
+        chatId: string;
+        messageId: string;
+        toolIndex: number;
+      }>,
+    ) => {
+      const chat = state.conversations.find((c) => c.id === action.payload.chatId);
+      const message = chat?.messages.find((m) => m.id === action.payload.messageId);
+      if (message?.agentAction?.type === 'tool_call') {
+        const toolAction = message.agentAction as AgentToolCallAction;
+        const toolCall = toolAction.toolCalls[action.payload.toolIndex];
+        if (toolCall) {
+          toolCall.status = 'rejected';
+        }
       }
     },
     resetChats: (state) => {
@@ -390,6 +490,11 @@ export const {
   startRecipeGeneration,
   updateRecipeStep,
   cancelRecipeGeneration,
+  initToolCalls,
+  updateToolCallStatus,
+  setToolCallActionStatus,
+  confirmToolCall,
+  rejectToolCall,
   resetChats,
 } = chatsSlice.actions;
 

@@ -17,6 +17,7 @@ vi.mock('@components/account', () => ({
       <button onClick={onCancel}>Cancel</button>
     </div>
   ),
+  AgentMemorySection: () => <div data-testid='agent-memory-section' />,
 }));
 
 const mockProfile: UserProfile = {

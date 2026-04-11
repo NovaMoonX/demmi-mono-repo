@@ -14,6 +14,7 @@ import recipesReducer from '@store/slices/recipesSlice';
 import shoppingListReducer from '@store/slices/shoppingListSlice';
 import userReducer from '@store/slices/userSlice';
 import userProfileReducer from '@store/slices/userProfileSlice';
+import memoryReducer from '@store/slices/memorySlice';
 
 interface GenerateTestWrapperOptions extends Omit<RenderOptions, 'wrapper'> {
   /** The initial state for the Redux store */
@@ -52,6 +53,7 @@ export function generateTestWrapper(options?: GenerateTestWrapperOptions) {
       demo: demoReducer,
       shoppingList: shoppingListReducer,
       userProfile: userProfileReducer,
+      memory: memoryReducer,
       [openFoodFactsApi.reducerPath]: openFoodFactsApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>

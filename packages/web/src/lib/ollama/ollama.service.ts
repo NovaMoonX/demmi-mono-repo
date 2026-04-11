@@ -1,9 +1,13 @@
-import type { ChatMessage } from '@lib/chat';
-import type { ActionType } from '@lib/ollama/actions/types';
 import type { AbortableAsyncIterator } from 'ollama';
 import type { ProgressResponse } from 'ollama/browser';
 import { Ollama } from 'ollama/browser';
-import { INTENT_ACTION_PROMPT_DESCRIPTION, INTENT_ACTION_SHORT_DESCRIPTIONS, INTENT_ACTIONS } from './ollama.constants';
+import type { LegacyActionType } from './actions';
+import type { ChatMessage } from '@lib/chat';
+import {
+  LEGACY_INTENT_ACTIONS,
+  INTENT_ACTION_PROMPT_DESCRIPTION,
+  INTENT_ACTION_SHORT_DESCRIPTIONS,
+} from './ollama.constants';
 
 const MIN_USER_MESSAGE_LENGTH = 100;
 const MIN_ASSISTANT_MESSAGE_LENGTH = 200;
@@ -23,41 +27,6 @@ export interface OllamaChatStream {
   [Symbol.asyncIterator](): AsyncIterator<{ message: { content: string } }>;
   abort(): void;
 }
-
-/**
- * Intent detection — classifies the user's current message into a supported action type.
- */
-const INTENT_DETECTION_PROMPT = `
-You are Demmi's AI assistant, specialized in cooking, recipes, meal planning, and nutrition.
-
-Your task: Classify the user's CURRENT message intent.
-
-Select ONE action that best matches what the user wants RIGHT NOW:
-${INTENT_ACTIONS.map((a) => `- "${a}": ${INTENT_ACTION_PROMPT_DESCRIPTION[a]}`).join('\n')}
-
-IMPORTANT CLASSIFICATION RULES:
-- Re-evaluate intent with EVERY message — users can transition between action types at any time
-- Focus ONLY on the user's CURRENT request, ignoring previous conversation context
-
-TRANSITION EXAMPLES (users can switch at any time):
-- Previous: "What's a good protein for breakfast?" (general) → Current: "Create an egg benedict recipe" (createRecipe)
-- Previous: "Make me a pasta dish" (createRecipe) → Current: "What's the difference between penne and rigatoni?" (general)
-
-Each message is independent — classify based on what the user wants NOW.
-`;
-
-const INTENT_DETECTION_SCHEMA: Record<string, unknown> = {
-  type: 'object',
-  required: ['action'],
-  properties: {
-    action: {
-      type: 'string',
-      enum: INTENT_ACTIONS,
-      description:
-        `The type of user intent:\n{${INTENT_ACTIONS.map((a) => `— "${a}": ${INTENT_ACTION_SHORT_DESCRIPTIONS[a]}`).join('\n')}}`,
-    },
-  },
-};
 
 export const ollamaClient = new Ollama();
 
@@ -196,6 +165,45 @@ export async function ollamaChatSingle(params: {
 }
 
 /**
+ * Performs a non-streaming chat completion with tool definitions, routing through Electron IPC when available.
+ * Returns a response that may contain tool_calls alongside text content.
+ */
+export async function ollamaChatWithTools(params: {
+  model: string;
+  messages: Array<{ role: string; content: string }>;
+  tools: import('ollama/browser').Tool[];
+  options?: Record<string, unknown>;
+}): Promise<{
+  message: {
+    content: string;
+    tool_calls?: Array<{
+      function: { name: string; arguments: Record<string, unknown> };
+    }>;
+  };
+}> {
+  if (isElectron) {
+    const result = await getElectronAPI().ollamaChat({
+      model: params.model,
+      messages: params.messages,
+      tools: params.tools as unknown,
+      options: params.options as unknown,
+      stream: false,
+    });
+    return result ?? { message: { content: '' } };
+  }
+
+  const response = await ollamaClient.chat({ ...params, stream: false });
+  return response as unknown as {
+    message: {
+      content: string;
+      tool_calls?: Array<{
+        function: { name: string; arguments: Record<string, unknown> };
+      }>;
+    };
+  };
+}
+
+/**
  * Performs a non-streaming generate call, routing through Electron IPC when available.
  */
 export async function ollamaGenerate(params: {
@@ -241,15 +249,53 @@ export async function generateSummary(
   }
 }
 
+export async function pullModelStream(
+  model: string,
+): Promise<AbortableAsyncIterator<ProgressResponse>> {
+  return ollamaClient.pull({ model, stream: true });
+}
+
 /**
- * Detect the user's action type using summaries for context when available.
- * Uses generate() API for classification. Falls back to full messages if no summaries exist.
- * Returns the ActionType: 'general' | 'createRecipe'.
+ * Intent detection for legacy (non-tool-calling) mode.
+ * Classifies the user's current message as 'general' or 'createRecipe'.
+ * Used only when the tool-calling toggle is disabled.
  */
+const INTENT_DETECTION_PROMPT = `
+You are Demmi's AI assistant, specialized in cooking, recipes, meal planning, and nutrition.
+
+Your task: Classify the user's CURRENT message intent.
+
+Select ONE action that best matches what the user wants RIGHT NOW:
+${LEGACY_INTENT_ACTIONS.map((a) => `- "${a}": ${INTENT_ACTION_PROMPT_DESCRIPTION[a]}`).join('\n')}
+
+IMPORTANT CLASSIFICATION RULES:
+- Re-evaluate intent with EVERY message — users can transition between action types at any time
+- Focus ONLY on the user's CURRENT request, ignoring previous conversation context
+
+TRANSITION EXAMPLES (users can switch at any time):
+- Previous: "What's a good protein for breakfast?" (general) → Current: "Create an egg benedict recipe" (createRecipe)
+- Previous: "Make me a pasta dish" (createRecipe) → Current: "What's the difference between penne and rigatoni?" (general)
+
+Each message is independent — classify based on what the user wants NOW.
+`;
+
+const INTENT_DETECTION_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  required: ['action'],
+  properties: {
+    action: {
+      type: 'string',
+      enum: LEGACY_INTENT_ACTIONS,
+      description:
+        `The type of user intent:\n{${LEGACY_INTENT_ACTIONS.map((a) => `— "${a}": ${INTENT_ACTION_SHORT_DESCRIPTIONS[a]}`).join('\n')}}`,
+    },
+  },
+};
+
 export async function detectIntent(
   model: string,
   messages: ChatMessage[],
-): Promise<ActionType> {
+): Promise<LegacyActionType> {
   const recentSummaries = messages
     .slice(-MAX_RECENT_SUMMARIES)
     .filter((m) => m.summary)
@@ -291,20 +337,14 @@ Classify the current message intent.`;
     const parsed = JSON.parse(response.response);
     const action = parsed?.action;
 
-    if (action === 'general' || action === 'createRecipe') {
-      return action;
+    if (LEGACY_INTENT_ACTIONS.includes(action as LegacyActionType)) {
+      return action as LegacyActionType;
     }
 
     return 'general';
   } catch {
     return 'general';
   }
-}
-
-export async function pullModelStream(
-  model: string,
-): Promise<AbortableAsyncIterator<ProgressResponse>> {
-  return ollamaClient.pull({ model, stream: true });
 }
 
 export interface ParsedGeneralResponse {
